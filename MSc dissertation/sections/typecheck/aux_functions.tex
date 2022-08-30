@@ -1,0 +1,80 @@
+\section{Auxiliary functions}
+We first present two functions that will be used in the type rules. As the continuation of a replicated input may be invoked an arbitrary number of times at different time steps, we need to ensure that names used within the continuation are of types that are invariant to time as defined in Definition \ref{def:timeinvariance}, i.e. they may be used at any time step. In Definition \ref{def:readyfunc}, we define a function $\text{ready}(\varphi,\Phi,T)$ that discards use-capabilities from a type to obtain time invariance. For a server type $\forall_I\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T)}$, outputs are well-typed whenever $\varphi;\Phi\vDash I \leq 0$, and so for names of such types, we only discard input capabilities, whenever we can guarantee the constraint judgement $\varphi;\Phi\vDash I \leq 0$. We return to how to guarantee constraint judgements in section \ref{sec:verifyinglinearjudgements}.
+%
+\begin{defi}\label{def:readyfunc}
+We inductively define a function \textit{ready} that transforms a type into one that is time invariant.
+\begin{align*}
+    %\text{ready}(\varphi,\Phi,\epsilon) =&\; \epsilon\\
+    %
+    \text{ready}(\varphi,\Phi,\natinterval{I}{J}) =&\; \natinterval{I}{J}\\
+    %
+    \text{ready}(\varphi,\Phi,\forall_I\widetilde{i}.\texttt{serv}^{\sigma}_K(\widetilde{T})) =&\; \left\{ \begin{matrix}
+        \forall_I\widetilde{i}.\texttt{serv}^{\sigma \cap \{\texttt{out}\}}_K(\widetilde{T}) & \text{if}\; \varphi;\Phi\vDash I \leq 0\\
+        \forall_0\widetilde{i}.\texttt{serv}^{\emptyset}_K(\widetilde{T}) & \text{if}\; \varphi;\Phi\nvDash I \leq 0
+    \end{matrix} \right.\\
+    %
+    %\text{ready}(\varphi,\Phi,\Gamma,a:\oservS{I}{\widetilde{i}}{K}{\widetilde{T}}) =&\; \left\{ \begin{matrix}
+    %    \text{ready}(\varphi,\Phi,\Gamma), a:\oservS{I}{\widetilde{i}}{K}{\widetilde{T}} & \text{if}\; %\varphi;\Phi\vDash I \leq 0\\
+    %    \text{ready}(\varphi,\Phi,\Gamma) & \text{if}\; \varphi;\Phi\nvDash I \leq 0
+    %\end{matrix} \right.\\
+    %%
+    %\text{ready}(\varphi,\Phi,\Gamma,a:\iservS{I}{\widetilde{i}}{K}{\widetilde{T}}) =&\; %\text{ready}(\varphi,\Phi,\Gamma)\\
+    %
+    \text{ready}(\varphi,\Phi,\texttt{ch}^\sigma_I(\widetilde{T})) =&\;\texttt{ch}^\emptyset_0(\widetilde{T})%\\
+    %
+    %\text{ready}(\varphi,\Phi,\Gamma,a:\outchanneltypeS{I}{\widetilde{T}}) =&\; \text{ready}(\varphi,\Phi,\Gamma)\\
+    %
+    %\text{ready}(\varphi,\Phi,\Gamma,a:\inchanneltypeS{I}{\widetilde{T}}) =&\; \text{ready}(\varphi,\Phi,\Gamma)
+\end{align*}
+We extend \textit{ready} to type contexts such that for $v\in\texttt{dom}(\Gamma)$ we have that $\text{ready}(\varphi,\Phi,\Gamma)(v)=\text{ready}(\varphi,\Phi,\Gamma(v))$.
+\end{defi}
+
+% In Definition \ref{def:joinbase}, we introduce a binary function on base types $\uplus_{\varphi;\Phi}$ that computes a base type that is a subtype of both argument types, if such a base type exists. We do this by selecting the least lower bound and the greatest upper bound amongst the two argument base types as the new size bounds. This function will be useful for typing list expressions, as the elements of a list may be typed with different size bounds that we will need a common subtype of.
+
+% \begin{defi}[Joining base types]\label{def:joinbase}
+
+% \begin{align*}
+%     \texttt{Nat}[I,J] \uplus_{\varphi;\Phi} \texttt{Nat}[I',J'] =&\; \left\{
+%     \begin{matrix}
+%         \texttt{Nat}[I,J] & \varphi;\Phi\vDash I \leq I'\;\text{and};\varphi;\Phi\vDash J' \leq J\\
+%         \texttt{Nat}[I',J] & \varphi;\Phi\vDash I' \leq I\;\text{and};\varphi;\Phi\vDash J' \leq J\\
+%         \texttt{Nat}[I,J'] & \varphi;\Phi\vDash I \leq I'\;\text{and};\varphi;\Phi\vDash J \leq J'\\
+%         \texttt{Nat}[I',J'] & \varphi;\Phi\vDash I' \leq I\;\text{and};\varphi;\Phi\vDash J \leq J'
+%     \end{matrix}
+%     \right.\\
+    
+%     \texttt{List}[I,J](\mathcal{B}) \uplus_{\varphi;\Phi} \texttt{List}[I',J'](\mathcal{B}') =&\; \left\{
+%     \begin{matrix}
+%         \texttt{List}[I,J](\mathcal{B} \uplus_{\varphi;\Phi} \mathcal{B}') & \varphi;\Phi\vDash I \leq I'\;\text{and};\varphi;\Phi\vDash J' \leq J\\
+%         \texttt{List}[I',J](\mathcal{B} \uplus_{\varphi;\Phi} \mathcal{B}') & \varphi;\Phi\vDash I' \leq I\;\text{and};\varphi;\Phi\vDash J' \leq J\\
+%         \texttt{List}[I,J'](\mathcal{B} \uplus_{\varphi;\Phi} \mathcal{B}') & \varphi;\Phi\vDash I \leq I'\;\text{and};\varphi;\Phi\vDash J \leq J'\\
+%         \texttt{List}[I',J'](\mathcal{B} \uplus_{\varphi;\Phi} \mathcal{B}') & \varphi;\Phi\vDash I' \leq I\;\text{and};\varphi;\Phi\vDash J \leq J'
+%     \end{matrix}
+%     \right.
+% \end{align*}
+% \end{defi}
+
+% \begin{defi}[Removing servers]
+%     Given a type context $\Gamma$, the function \textit{noserv} removes all server types from the context.
+%     \begin{align*}
+%         \text{noserv}(\emptyset) &= \emptyset\\
+%         \text{noserv}(\Gamma, \natinterval{I}{J}) &= \text{noserv}(\Gamma),\natinterval{I}{J}\\
+%         \text{noserv}(\Gamma, \chant{I}{\sigma}{\widetilde{T}}) &= \text{noserv}(\Gamma),\chant{I}{\sigma}{\widetilde{T}})\\
+%         \text{noserv}(\Gamma, \servt{I}{\widetilde{i}}{\sigma}{K}{\widetilde{T}}) &= \text{noserv}(\Gamma)\\
+%     \end{align*}
+% \end{defi}
+
+
+In Definition \ref{def:instantiatef}, we introduce a function $\text{instantiate}(\widetilde{i},\widetilde{T})$ that assigns the index variables in sequence $\widetilde{i}$ to indices in types of the sequence $\widetilde{T}$, by means of a substitution of indices for index variables. Note that the function is only defined for sequences such that the number of index variables equals the number of indices in the types. This function will be useful for outputs on servers, where the parametric types $\widetilde{S}$ of a server type $\forall_I\widetilde{i}.\texttt{serv}^{\{\texttt{out}\}}_K(\widetilde{S)}$ must match the types of expressions $\widetilde{T}$ to be output. More specifically, there must exist a substitution $\{\widetilde{J}/\widetilde{i}\}$ such that $\widetilde{T} \sqsubseteq \widetilde{S}\{\widetilde{J}/\widetilde{i}\}$. We return to this in Section \ref{section:typeruless}.
+
+\begin{defi}[Server invocation]\label{def:instantiatef}
+We inductively define a function \textit{instantiate} that constructs a substitution of indices for index variables, provided a sequence of index variables and a sequence of types%. The function is only defined for sequences such that the number of index variables equals the number of indices in the types.
+\begin{align*}
+    \text{instantiate}(\epsilon,\epsilon) =&\; \{\}\\
+    \text{instantiate}((\widetilde{i},\widetilde{j}),(T,\widetilde{S})) =&\; \text{instantiate}(\widetilde{i},T),\text{instantiate}(\widetilde{j},\widetilde{S})\\
+    \text{instantiate}((i,j),\texttt{Nat}[I,J]) =&\; \{I/i,J/j\}\\
+    %\text{instantiate}((i,j,\widetilde{k}),\texttt{List}[I,J](\mathcal{B})) =&\; \{I/i,J/j\}, \text{instantiate}(\widetilde{k},\mathcal{B})\\
+    \text{instantiate}((i,\widetilde{j}),\texttt{ch}_I^\sigma(\widetilde{T})) =&\; \{I/i\},\text{instantiate}(\widetilde{j},\widetilde{T})\\
+    \text{instantiate}((i,j,\widetilde{k}),\forall_I\widetilde{l}.\texttt{serv}^\sigma_K(\widetilde{T})) =&\; \{I/i,K/j\},\text{instantiate}(\widetilde{k},\widetilde{T})
+\end{align*}
+\end{defi}

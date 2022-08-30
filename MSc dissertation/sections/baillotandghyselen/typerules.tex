@@ -1,0 +1,122 @@
+\section{Non-algorithmic type rules}
+
+We first consider the type rules for expressions, which are shown in Table \ref{tab:sizedtypedexpressiontypes}. The zero term $0$ intuitively receives the type $\texttt{Nat}[0,0]$ and a successor to a natural term has the same type as its predecessor, but with 1 added to its lower and upper bounds. Finally, a variable receives a type if it is bound in the type context.\\
+%Lists are typed similarly, aside from the addition of an element base type. For the element type of a list, we simply use the least lower bound and greatest upper bound on the size amongst the elements of the list.
+
+\begin{table*}[ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern2em
+        \runa{BG-nzero}\;\infrule{}{\varphi;\Phi;\Gamma\vdash\withtype{0}{\typenat[0,0]}}\kern0em
+        \runa{BG-nsucc}\;\infrule{\varphi;\Phi;\Gamma \vdash \withtype{e}{\typenat[I, J]}}{\varphi;\Phi;\Gamma \vdash \withtype{\succc{e}}{\typenat[I + 1, J + 1]}}\\[-1em]
+        %
+        &\kern1em\runa{BG-sub}\;\infrule{\varphi;\Phi;\Delta\vdash e : S\quad\quad \varphi;\Phi\vdash \Gamma\sqsubseteq \Delta\quad\quad \varphi;\Phi\vdash S \sqsubseteq T}{\varphi;\Phi;\Gamma\vdash e : T}\kern11em\runa{BG-var}\;\infrule{}{\varphi;\Phi;\Gamma, \withtype{v}{T} \vdash \withtype{v}{T}}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Type rules for expressions.}
+    \label{tab:sizedtypedexpressiontypes}
+\end{table*}
+
+Before introducing the type rules for processes, we first introduce a function $\downarrow^{\varphi;\Phi}_I\!\!(T)$ in Definition \ref{def:delaysized} that \textit{advances} the time of type $T$ by $I$ units of time complexity. For a channel type $\texttt{ch}^\sigma_J(\widetilde{S})$, we subtract $I$ from $J$ whenever we can guarantee that $J\geq I$ under the constraints imposed on $\varphi$ by $\Phi$. Otherwise, the advancement of $I$ units of time complexity is undefined for type $\texttt{ch}^\sigma_J(\widetilde{S})$, to ensure bounds on communication are not violated. For a server type $\forall_J\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{S})$, corresponding outputs are well-typed for any timestep $I$ with $I\geq J$, and so a server simply loses input capability whenever we cannot guarantee that $J \geq I$. We extend advancement of time to contexts such that $\downarrow^{\varphi;\Phi}_I(\Gamma)(v)=\;\downarrow^{\varphi;\Phi}_I(\Gamma(v))$. When it is clear from context, we may omit $\varphi$ and $\Phi$.
+
+\begin{defi}[Advancement of Time]\label{def:delaysized}
+Let $\varphi$ be a set of index variables, $\Phi$ a set of constraints on indices, $T$ a type and $J$ an index. Then $T$ after $J$ units of time complexity, $\susume{T}{\varphi}{\Phi}{I}$, is given by the rules below
+\begin{align*}
+    \susume{\natinterval{I}{J}}{\varphi}{\Phi}{I} =&\; \natinterval{I}{J}\\
+    %
+    %\susume{\texttt{List}[J,K](\mathcal{B})}{\varphi}{\Phi}{I} =&\; \texttt{List}[J,K](\mathcal{B})\\
+    %
+    \susume{\texttt{ch}^\sigma_J(\widetilde{T})}{\varphi}{\Phi}{I} =&\; \left\{ \begin{matrix}
+        %\texttt{ch}^\emptyset_J(\widetilde{T}) & \text{if}\; \sigma = \emptyset\\
+        %
+        \texttt{ch}^\sigma_{J-I}(\widetilde{T}) & \text{if}\; \varphi;\Phi \vDash J \geq I\\
+        %
+        \texttt{ch}^\emptyset_{0}(\widetilde{T}) & \text{if}\; \varphi;\Phi \nvDash J \geq I
+    \end{matrix} \right.\\
+    %
+    %\texttt{ch}^\sigma_{J-I}(\widetilde{T}) & \text{if}\; \varphi;\Phi \vDash J \geq I\\
+    %
+    % \susume{\inchanneltypeS{J}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; 
+    %  \inchanneltypeS{J-I}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    % %
+    % \susume{\outchanneltypeS{J}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; 
+    %  \outchanneltypeS{J-I}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    %
+    \susume{\forall_J\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})}{\varphi}{\Phi}{I} =&\; \left\{ \begin{matrix}
+        \forall_{J-I}\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T}) & \text{if}\; \varphi;\Phi \vDash J \geq I\\
+        %
+        \forall_{J-I}\widetilde{i}.\texttt{serv}^{\sigma \cap \{\texttt{out}\}}_K(\widetilde{T}) & \text{if}\; \varphi;\Phi \nvDash J \geq I
+    \end{matrix} \right.
+    %  \servS{J - I}{\widetilde{i}}{K}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    % %
+    % \susume{\servS{J}{\widetilde{i}}{K}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; \oservS{J - I}{\widetilde{i}}{K}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \not\geq I \\          
+    % %
+    % \susume{\iservS{J}{\widetilde{i}}{K}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; 
+    %  \iservS{J - I}{\widetilde{i}}{K}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    % %
+    % \susume{\oservS{J}{\widetilde{i}}{K}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; \oservS{J - I}{\widetilde{i}}{K}{\widetilde{T}}
+\end{align*}
+\end{defi}
+
+\begin{defi}[Time invariance]\label{def:timeinvariance}
+Let $\Gamma$ be a type context. We say that $\Gamma$ is \textit{time invariant} if it only contains variables of either base types or server type with time $0$ and use-capabilities $\sigma$ such that $\sigma\subseteq\{\texttt{out}\}$, i.e. $\forall_0\widetilde{i}.\texttt{serv}^{\sigma}_K(\widetilde{T})$ for some index variables $\widetilde{i}$, types $\widetilde{T}$ and index $K$.
+\end{defi}
+
+We now present the type rules of the type system by Baillot and Ghyselen, adapted to fit our syntax. Type judgements are of the form $\varphi;\Phi;\Gamma \vdash P \triangleleft K$, which means that process $P$ has complexity $K$ given constraints $\Phi$ with index variables in $\varphi$ and given a type environment $\Gamma$. The type rules are defined in Table \ref{tab:bgprocesstypingrules}. Rule $\runa{BG-iserv}$ handles replicated inputs and ensures that name $a$ is bound to a server type with input capability in the type context. We must also make sure that in the continuation $P$, the type context must be time invariant as the replicated input may be invoked any number of times after $I$ units of time have elapsed. Thus, only free naturals and servers with no input capability are safe. Rule $\runa{BS-ich}$ is similar except we do not require the type context in the continuation to be time invariant as it is only used once. Rule $\runa{BG-oserv}$ types output servers and most notably uses polymorphism in the index variables $\widetilde{i}$. As such, when typing the expressions sent on the server, we must ensure that we can \textit{instantiate} the index variables of the server using a substitution. Finally, type rule $\runa{BG-match}$ shows how index constraints are introduced when typing processes by utilizing information gained from the two branches of the match expression.\\
+
+% Examples
+We now show how a server calculating the $n$th digit of the Fibonacci sequence can be typed. Before presenting the process for the implementation of Fibonacci's sequence, we first need to encode addition in the $\pi$-calculus, which we do using the \textit{add} server as follows.
+%
+\begin{align*}
+    P_\text{add}\defeq&\;\bang\inputch{\text{add}}{x,y,r}{}{
+        \texttt{match}\; x\; \{
+             0 \mapsto \asyncoutputch{r}{y}{};
+            \succc{z} \mapsto \asyncoutputch{\text{add}}{z,\succc{y},r}{}\}}
+    %
+\end{align*}
+
+The \textit{add} server needs three inputs $x$, $y$, and $r$. The parameters $x$ and $y$ represent two naturals to be added, and $r$ represents the channel intended for receiving the result. Note that no ticks are included in the server as we assume that addition can be done in constant time. The following process for calculating the $n$th number of the Fibonacci sequence is a naïve recursive implementation calculating $\textit{fib}(n)=\textit{fib}(n-1)+\textit{fib}(n-2)$. The server takes two parameters $n$ and $r$ where $n$ is the number of the Fibonacci sequence to calculate and $r$ represents the channel intended for receiving the result.
+%
+\newcommand{\funcf}[0]{l}
+\newcommand{\funcg}[0]{l}
+\newcommand{\funcgp}[0]{l-1}
+\newcommand{\funcgpp}[0]{l-2}
+\newcommand{\funcgppp}[0]{l-1}
+\begin{align*}
+    P_\text{fib}\defeq&\; \bang\inputch{\text{fib}}{n,r}{}{
+         \texttt{match}\; n\; \{ 0 \mapsto \asyncoutputch{r}{0}{}\!;\;
+              \succc{n_1} \mapsto\\ 
+              &\quad\texttt{match}\; n_1\; \{
+                    0 \mapsto \asyncoutputch{r}{\succc{0}}{}\!;\;
+                    \succc{n_2} \mapsto\\ &\quad\quad\newvar{r_1,r_2,r_3}{(\asyncoutputch{\text{fib}}{n_1,r_1}{}\mid\asyncoutputch{\text{fib}}{n_2,r_2}{}\\
+    &\quad\quad\mid\inputch{r_2}{m_2}{}{\inputch{r_1}{m_1}{}{\tick{\asyncoutputch{\text{add}}{m_1,m_2,r_3}{}}}\mid \inputch{r_3}{m_3}{}{\asyncoutputch{r}{m_3}{}}})}\}\}
+    }
+\end{align*}
+
+Finally we present a type context $\Gamma$ under which the two servers \textit{add} and \textit{fib} are well-typed. Note that even though we use a naïve implementation of the Fibonacci sequence, we can still get a linear bound as the program runs in parallel.
+%
+\begin{align*}
+    \Gamma \defeq&\; \text{add} : \servt{0}{i,j,k}{\{\texttt{in},\texttt{out}\}}{0}{\texttt{Nat}[0,i],\texttt{Nat}[j,k],\channeltypeS{0}{\texttt{Nat}[j,i+k]}},\\
+    &\;\text{fib} : \servt{0}{l}{\{\texttt{in},\texttt{out}\}}{\funcf}{\texttt{Nat}[0,l],\channeltypeS{\funcg}{\texttt{Nat}[0,\textit{fib}(l)]}}
+\end{align*}
+
+\begin{table*}
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern46em\\[-2em] % Stretch frame
+        &\kern0em\runa{BG-zero}\infrule{}{\varphi;\Phi;\Gamma \vdash \withcomplex{\nil}{0}}\!\!
+        \runa{BG-subtype}\;\infrule{\varphi;\Phi;\Delta \vdash \withcomplex{P}{K} \quad \varphi;\Phi \vdash \Gamma \sqsubseteq \Delta \quad \varphi; \Phi \vDash K \leq K'}{\varphi;\Phi;\Gamma \vdash \withcomplex{P}{K'}}
+        \\[-1em]
+        %
+        &\kern-0em\runa{BG-match}\;\infrule{\varphi;\Phi;\Gamma \vdash \withtype{e}{\natinterval{I}{J}} \quad \varphi;\Phi, I \leq 0;\Gamma \vdash \withcomplex{P}{K} \quad \varphi;\Phi, J \geq 1;\Gamma, \withtype{x}{\natinterval{I\monus 1}{J\monus 1}} \vdash \withcomplex{Q}{K}}{\varphi;\Phi;\Gamma \vdash \withcomplex{\match{e}{P}{x}{Q}}{K}}\\[-1em]
+        %
+        &\kern4em\runa{BG-par}\;\infrule{\varphi;\Phi;\Gamma\vdash P \triangleleft K\quad \varphi;\Phi;\Gamma\vdash Q \triangleleft K}{\varphi;\Phi;\Gamma\vdash \parcomp{P}{Q} \triangleleft K}\quad\quad\quad\quad\quad\quad \runa{BG-tick}\;\infrule{\varphi;\Phi;\susumesim{\Gamma}{1}\vdash P \triangleleft K}{\varphi;\Phi;\Gamma\vdash \tick P \triangleleft K + 1}\\[-1em]
+        %
+        &\kern-0em\runa{BG-iserv}\;\infrule{\texttt{in}\in\sigma\quad \varphi;\Phi\vdash\;\susumesim{\Gamma}{I},a:\forall_0\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T}) \sqsubseteq \Gamma'\;\text{and}\; \Gamma'\;\text{time invariant}\quad \varphi,\widetilde{i};\Phi;\Gamma',\widetilde{v} : \widetilde{T}\vdash P \triangleleft K}{\varphi;\Phi;\Gamma,\Delta,a : \servt{I}{\widetilde{i}}{\sigma}{K}{\widetilde{T}}\vdash\; \bang\inputch{a}{\widetilde{v}}{}{P}\triangleleft I}\\[-1em]
+        %
+        &\kern-0em\runa{BG-ich}\;\infrule{\texttt{in}\in\sigma\quad \varphi;\Phi;\susumesim{\Gamma}{I},\widetilde{v} : \widetilde{T}, a : \chant{\sigma}{0}{\widetilde{T}}\vdash P \triangleleft K}{\varphi;\Phi;\Gamma, a : \chant{\sigma}{I}{\widetilde{T}}\vdash \inputch{a}{\widetilde{v}}{}{P}\triangleleft K + I}\kern8.5em \runa{BG-och}\;\infrule{\texttt{out}\in\sigma\quad \varphi;\Phi;\susumesim{\Gamma}{I}\vdash \widetilde{e} : \widetilde{T}}{\varphi;\Phi;\Gamma,a:\chant{\sigma}{I}{\widetilde{T}}\vdash \asyncoutputch{a}{\widetilde{e}}{} \triangleleft I}\\[-1em]
+        %
+        &\kern2em\runa{BG-oserv}\;\infrule{\texttt{out}\in\sigma\quad \varphi;\Phi;\susumesim{\Gamma}{I}\vdash \widetilde{e} : \widetilde{T}\substi{\widetilde{J}}{\widetilde{i}}}{\varphi;\Phi;\Gamma, a : \servt{I}{\widetilde{i}}{\sigma}{K}{\widetilde{T}}\vdash \asyncoutputch{a}{\widetilde{e}}{} \triangleleft K\!\substi{\widetilde{J}}{\widetilde{i}} + I}\kern12em \runa{BG-nu}\;\infrule{\varphi;\Phi;\Gamma,\withtype{a}{T} \vdash \withcomplex{P}{K}}{\varphi;\Phi;\Gamma \vdash \newvar{a}{\withcomplex{P}{K}}}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Sized typing rules for parallel complexity of processes.}
+    \label{tab:bgprocesstypingrules}
+\end{table*}

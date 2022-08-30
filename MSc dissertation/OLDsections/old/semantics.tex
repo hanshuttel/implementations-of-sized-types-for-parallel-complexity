@@ -1,0 +1,468 @@
+\section{Semantics}
+In this section we introduce transition systems for editor expressions and AST nodes. Throughout the section, we will use the metavariables $v \in \mathbf{Val}$, $u \in \mathbf{HVal}$ and $w \in \mathbf{BVal}$. $\mathbf{HVal}$ represents branches in the AST containing holes, which may need further evaluation. $\mathbf{BVal}$ represents branches in the AST containing breakpoints, which must terminate any further evaluation. Finally, $\mathbf{Val}$ represents fully evaluated values, as well as encompassing $\mathbf{HVal}$ and $\mathbf{BVal}$. $\mathbf{Val}$, $\mathbf{HVal}$ and $\mathbf{BVal}$ are defined by the following three syntax.
+\begin{align*}
+    v ::=\;& c \mid \lambda x.a \mid w \mid u\\
+    u ::=\;& \hole \mid u\; v \mid \lambda x.a\; u\\
+    w ::=\;& \breakpoint{a} \mid w\; a \mid \lambda x.a\; w
+\end{align*}
+The term $\lambda x.a$ in $v$ represents abstractions. Due to our defined evaluation order, we always evaluate the left-most term first during function application, hence the two last terms in $u$ and $w$. Notably in $u$, the right-most term in function application may be further evaluated, whereas the same term in $w$ is unaffected.
+
+\subsection*{Cursor context}
+We introduce a cursor context, which we use to locate the subtree containing the cursor, as an alternative to \textit{zipper} rules where a semantic rule would be needed for each type of node in the AST. The cursor context is defined by the following syntax in which we define the possible structural states of the cursor in the AST. 
+\begin{align*}
+    C ::= \; & \cursorctxhole \mid C\; \hat{a} \mid \hat{a}\; C \mid \lambda x.C \mid \breakpoint{C}
+\end{align*}
+Where $\hat{a}$ is an AST without cursors, as defined by the syntax:
+\begin{align*}
+  \hat{a} ::= \; & x \mid c \mid \hat{a}_{1}\;\hat{a}_{2} \mid \lambda x.\hat{a} \mid \breakpoint{\hat{a}} \mid \hole
+\end{align*}
+Our cursor context is inspired by evaluation contexts, which are used as convenient ways of specifying the structure of expressions. As with evaluation contexts, $\left[\cdot\right]$ represents a "hole" in our cursor context. Unlike the holes in ASTs $\hole$, which represent unfinished branches, the hole in the cursor context specifies the subtree $a \in \mathbf{Ast}$ in which the cursor must reside, denoted $\cursorctx{a}$. As neither $C$ nor $\hat{a}$ include any cursor term, the cursor in a cursor context is limited to be within the hole substituted by $a$.
+
+\begin{exmp}
+   Assume we extend the $\lambda$-calculus to include constants representing numerals as well as the plus operator. In a pure $\lambda$-calculus, this could be represented using Church numerals.\\
+    
+    Consider the following $A \in \mathbf{Ast}$, which represents an expression summing three numbers.
+    \begin{equation*}
+        A = \lambda a.\lambda b. \lambda c.(a+\cursor{b+c})\; 1\; \hole\; 7
+    \end{equation*}
+    
+    This AST can also be represented using the cursor context $C$ with its hole substituted by $A'$, that is $A = \cursorctx{A'}$, where
+    
+    \begin{equation*}
+        C = \lambda a.\lambda b. \lambda c.(a+\cursorctxhole)\; 1\; \hole\; 7
+    \end{equation*}
+    \begin{equation*}
+        A' = \cursor{b+c}
+    \end{equation*}
+\end{exmp}
+
+However, while the cursor context indicates where the cursor may be, it does not guarantee that multiple cursors may not exist, or that a cursor exists at all. Therefore, we define \textit{well-formedness} of ASTs.
+
+\theoremstyle{definition}
+\begin{definition}{(Well-formedness)}
+An abstract syntax tree $a$ is \textit{well-formed}, denoted $\wellformed{a}$, if it adheres to the structural constraints of cursor contexts, formally defined as $a$ having a partition $a = \cursorctx{\dot{a}}$, where $\dot{a}$ is of the form:
+\begin{align*}
+    \dot{a} ::=\;& \cursor{\hat{a}} \mid \lambda x.\cursor{\hat{a}} \mid \cursor{\hat{a}_1}\; \hat{a}_2 \mid \hat{a}_1\; \cursor{\hat{a}_2} \mid \breakpoint{\cursor{\hat{a}}}
+\end{align*}
+\end{definition}
+
+\subsection*{Editor expressions}
+We now introduce two labelled transition systems for editor expressions, one system for compound expressions and one for substitution and cursor movement. A labelled transition system is a tuple $(S, \mathcal{L}, \rightarrow)$, where $S$ is a set of states, $\mathcal{L}$ is a set of labels and $\rightarrow\; \subseteq S \times \mathcal{L} \times S$ is the transition relation. We write a labelled transition $(S,\; \upalpha,\; S') \in\; \rightarrow$ as
+\begin{equation*}
+    S \xrightarrow{\upalpha} S'
+\end{equation*}
+which represents a transition from state $S$ to state $S'$ with label $\upalpha \in \mathcal{L}$. \\
+
+We first present the transition system for compound editor expressions, $\left(S_E,\; \mathcal{L}_E,\; \rightarrow \right)$. Here transitions are of the format $\conf{E,\;a} \xrightarrow{\upalpha} \conf{E',\;a'}$. That is, given an editor expression $E$ and an AST node $a$, we reduce the editor expression and transform the AST node accordingly.\\
+
+$S_E = \mathbf{Edt} \times \mathbf{Ast}$ \\
+$\mathcal{L}_E = \mathbf{Val} \cup \mathbf{Aep} \cup \{\epsilon\}$ \\
+
+The set of labels is defined as such since it can contain both evaluation results and editor actions. We also include $\{\epsilon\}$ due to conditionals having no result or explicit action.\\
+
+\begin{sloppypar}
+Finally we introduce the transition system for substitution and cursor movement, $\left(S_\pi,\; \mathcal{L}_\pi,\; \rightarrow \right)$. Given an AST node $a$, we either substitute in a node modification or move the cursor, based on the given editor prefix. Therefore transitions are of the format $a \xrightarrow{\pi} a'$.\\
+\end{sloppypar}
+
+$S_\pi = \mathbf{Ast}$ \\
+$\mathcal{L}_\pi = \mathbf{Aep}$\\
+%
+
+%\subsubsection*{Transition rules}
+We now introduce the reduction rules for editor expressions. The rules concerning compound editor expressions can be seen in table \ref{tab:EEsem}. Rules \runa{cond-1} and \runa{cond-2} account for conditioned expressions, which are evaluated iff the condition holds. Note that the usual notation within logic is used, where $a \vDash \phi$ denotes that $\phi$ holds and $a \nvDash \phi$ denotes the opposite. By rule \runa{struct}, we account for recursive terms and the trivial case of sequential composition $\mathbf{0} \ggg E$.\\
+
+Atomic prefixes $\pi$ are handled by rules \runa{eval} and \runa{context}. In \runa{context}, we use cursor contexts to locate the subtree containing the cursor. We use the labeled transition system for ASTs for cursor movement and substitution. The corresponding rules are in tables \ref{tab:CMsem} and \ref{tab:SUBsem}. Notice that the original AST is kept after evaluation in \runa{eval}. Evaluation terminates upon a breakpoint, such that step-wise evaluation can be expressed by iteratively inserting breakpoints.
+\vspace*{-0.8cm}
+
+\begin{table}[H]
+    \centering
+    \begin{multicols}{2}
+      \begin{equation*}
+        \runa{cond-1}\; \infrule{a \vDash \phi}{\conf{\phi \Rightarrow E,\; a} \xrightarrow{\epsilon} \conf{E,\; a}}      
+      \end{equation*}
+    \end{multicols}
+    \vspace*{-1.5cm}
+    \begin{multicols}{2}
+      \begin{equation*}
+        \runa{cond-2}\; \infrule{a \nvDash \phi}{\conf{\phi \Rightarrow E,\; a} \xrightarrow{\epsilon} \conf{\mathbf{0},\; a}}
+      \end{equation*}\break
+      \begin{equation*}
+          \runa{seq}\; \infrule{\conf{E_1,\; a} \xrightarrow{\upalpha} \conf{E_1',\; a'}}{\conf{E_1 \ggg E_2,\; a} \xrightarrow{\upalpha} \conf{E'_1 \ggg E_2,\; a'}}
+      \end{equation*}
+    \end{multicols}
+    \vspace*{-1.5cm}
+    \begin{multicols}{2}
+      \begin{equation*}
+        \runa{eval}\; \infrule{a \rightarrow v}{\conf{\texttt{eval}.E,\; a} \xrightarrow{v} \conf{E,\; a}}
+    \end{equation*}\break
+    \begin{equation*}
+          \runa{struct}\; \infrule{E_1 \equiv E_2 \quad \conf{E_2,\; a} \xrightarrow{\upalpha} \conf{E_2',\; a'} \quad E_2' \equiv E_1'}{\conf{E_1,\; a} \xrightarrow{\upalpha} \conf{E_1',\; a'}}
+      \end{equation*}
+    \end{multicols}
+    \vspace{-1cm}
+    \begin{equation*}
+        \runa{context}\; \condinfrule{a \xrightarrow{\pi} a'}{\conf{\pi.E,\; \cursorctx{a}} \xrightarrow{\pi} \conf{E,\; \cursorctx{a'}}}{\text{where}\; \pi \neq \texttt{eval}}
+    \end{equation*}
+    \caption{Editor expression reduction rules.}
+    \label{tab:EEsem}
+\end{table}
+
+\subsubsection*{Substitution rules}
+% Skriv her til substitution rules
+We handle the substitution prefix $\replace{D}$ with the rules in table \ref{tab:SUBsem}. The rules \runa{var}, \runa{hole} and \runa{const} handle simple expressions through direct substitution on the given node without altering the structure of the AST. Rules \runa{app} and \runa{lambda} \textit{build} the AST. That is, they insert holes, such that the tree grows. Lastly, \runa{break-1} and \runa{break-2} cover breakpoint \textit{toggling}.
+\vspace*{-0.8cm}
+
+\begin{table}[H]
+    \centering
+    \begin{adjmulticols}{3}{-56pt}{-1in}
+    \begin{equation*}
+        \runa{var}\; \infrule{}{\cursor{\hat{a}} \xrightarrow{\replace{\texttt{var}\; x}} \cursor{x}}         
+    \end{equation*}\break
+    \begin{equation*}
+        \runa{hole}\; \infrule{}{\cursor{\hat{a}} \xrightarrow{\replace{\texttt{hole}}} \cursor{\hole}}  
+    \end{equation*}\break
+    \begin{equation*}
+        \runa{const}\; \infrule{}{\cursor{\hat{a}} \xrightarrow{\replace{\texttt{const}\; c}} \cursor{c}}  
+    \end{equation*}
+    \vspace*{-0.6cm}
+    \end{adjmulticols}
+    \vspace*{-1.5cm}
+    \begin{adjmulticols}{3}{-56pt}{-1in}
+    \begin{equation*}
+        \runa{app}\; \infrule{}{\cursor{\hat{a}} \xrightarrow{\replace{\texttt{app}}} \cursor{\hole\; \hole}}  
+    \end{equation*}\break
+    \begin{equation*}
+          \runa{break-1}\; \infrule{}{\cursor{\hat{a}} \xrightarrow{\replace{\texttt{break}}} \cursor{\breakpoint{\hat{a}}}}
+    \end{equation*}\break
+    \begin{equation*}
+          \runa{break-2}\; \infrule{}{\cursor{\breakpoint{\hat{a}}} \xrightarrow{\replace{\texttt{break}}} \cursor{\hat{a}}}
+    \end{equation*}
+    \end{adjmulticols}
+    \vspace*{-1cm}
+    %\begin{adjmulticols}{2}{12pt}{0.4in}
+    % \begin{equation*}
+    %       \runa{break-1}\; \infrule{}{\cursor{\hat{a}} \xrightarrow{\replace{\texttt{break}}} \cursor{\breakpoint{\hat{a}}}}
+    %   \end{equation*}\break
+    %   \begin{equation*}
+    %       \runa{break-2}\; \infrule{}{\cursor{\breakpoint{\hat{a}}} \xrightarrow{\replace{\texttt{break}}} \cursor{\hat{a}}}
+    %   \end{equation*}
+    %\end{adjmulticols}
+    \vspace*{-0.5cm}
+    \begin{adjmulticols}{1}{62pt}{0.4in}
+        \begin{equation*}
+        \runa{lambda}\; \infrule{}{\cursor{\hat{a}} \xrightarrow{\replace{\texttt{lambda}\; x}} \cursor{\lambda x.\hole}}
+      \end{equation*}
+    \end{adjmulticols}
+    \caption{Substitution reduction rules.}
+    \label{tab:SUBsem}
+\end{table}
+
+\subsubsection*{Cursor movement rules}
+% Skriv her til cursor movement rules
+Movement of the cursor in the AST is handled according to the rules in table \ref{tab:CMsem}. Moving the cursor is defined intuitively in the context of a tree due to the straightforward naming of the editor prefixes \texttt{child} n and \texttt{parent}. Notice however that breakpoints are handled slightly differently by moving the cursor in and out of breakpoint casings instead of up and down nodes.
+\vspace*{-0.8cm}
+
+\begin{table}[H]
+    \centering
+    \begin{adjmulticols}{3}{-56pt}{-1in}
+    \begin{equation*}
+            \runa{appc-1}\; \infrule{}{\cursor{\hat{a}_1\; \hat{a}_2} \xrightarrow{\texttt{child}\; 1}  \cursor{\hat{a}_1}\; \hat{a}_2}
+    \end{equation*}\break
+    \begin{equation*}
+            \runa{appc-2}\; \infrule{}{\cursor{\hat{a}_1\; \hat{a}_2} \xrightarrow{\texttt{child}\; 2} \hat{a}_1\; \cursor{\hat{a}_2}}
+    \end{equation*}\break
+    \begin{equation*}
+            \runa{appp-1}\; \infrule{}{\cursor{\hat{a}_1}\; \hat{a}_2 \xrightarrow{\texttt{parent}} \cursor{\hat{a}_1\; \hat{a_2}}}
+    \end{equation*}
+    \end{adjmulticols}
+    \vspace*{-1.5cm}
+    \begin{adjmulticols}{3}{-56pt}{-1in}
+    \begin{equation*}
+            \runa{appp-2}\; \infrule{}{\hat{a}_1\; \cursor{\hat{a}_2} \xrightarrow{\texttt{parent}} \cursor{\hat{a}_1\; \hat{a_2}}}
+    \end{equation*}\break
+    \begin{equation*}
+            \runa{lambdac}\; \infrule{}{\cursor{\lambda x.\hat{a}} \xrightarrow{\texttt{child}\; 1} \lambda x.\cursor{\hat{a}}}
+    \end{equation*}\break
+    \begin{equation*}
+            \runa{lambdap}\; \infrule{}{\lambda x.\cursor{\hat{a}} \xrightarrow{\texttt{parent}} \cursor{\lambda x.\hat{a}}}
+    \end{equation*}
+    \end{adjmulticols}
+    \vspace*{-1.5cm}
+    \begin{adjmulticols}{2}{-20pt}{-1in}
+    % \begin{equation*}
+    %     \runa{neholec}\; \infrule{}{\cursor{\nehole{\hat{a}}} \xrightarrow{\texttt{child}\; 1} \nehole{\cursor{\hat{a}}}}
+    % \end{equation*}\break
+    % \begin{equation*}
+    %     \runa{neholep}\; \infrule{}{\nehole{\cursor{\hat{a}}} \xrightarrow{\texttt{parent}} \cursor{\nehole{\hat{a}}}}
+    % \end{equation*}\break
+    \begin{equation*}
+        \runa{breakc}\; \infrule{}{\cursor{\breakpoint{\hat{a}}} \xrightarrow{\texttt{child}\; 1} \breakpoint{\cursor{\hat{a}}}}
+    \end{equation*} \break
+    \begin{equation*}
+        \runa{breakp}\; \infrule{}{\breakpoint{\cursor{\hat{a}}} \xrightarrow{\texttt{parent}} \cursor{\breakpoint{\hat{a}}}}
+    \end{equation*}
+    \end{adjmulticols}
+    \caption{Cursor movement reduction rules.}
+    \label{tab:CMsem}
+\end{table}
+
+% \begin{table}[H]
+%     \centering
+%     \begin{adjmulticols}{2}{-126pt}{-.6in}
+%         \begin{equation*}
+%             \runa{lambdac}\; \infrule{}{\conf{(\texttt{child}\; 1).E,\; \cursor{\lambda x.\hat{a}}} \xrightarrow{\texttt{child}\; 1} \conf{E,\; \lambda x.\cursor{\hat{a}}}}
+%         \end{equation*}\break
+%         \begin{equation*}
+%             \runa{blambdac}\; \infrule{}{\conf{(\texttt{child}\; 1).E,\; \cursor{\breakpoint{\lambda x.\hat{a}}}} \xrightarrow{\texttt{child}\; 1} \conf{E,\; \breakpoint{\lambda x.\cursor{\hat{a}}}}}
+%         \end{equation*}
+%         \begin{equation*}
+%             \runa{appc-2}\; \infrule{}{\conf{(\texttt{child}\; 2).E,\; \cursor{\hat{a}_1\; \hat{a}_2}} \xrightarrow{\texttt{child}\; 2} \conf{E,\; \hat{a}_1\; \cursor{\hat{a}_2}}}
+%         \end{equation*}\break
+%         \begin{equation*}
+%             \runa{bappc-2}\; \infrule{}{\conf{(\texttt{child}\; 2).E,\; \cursor{\breakpoint{\hat{a}_1\; \hat{a}_2}}} \xrightarrow{\texttt{child}\; 2} \conf{E,\; \breakpoint{\hat{a}_1\; \cursor{\hat{a}_2}}}}
+%         \end{equation*}
+%     \end{adjmulticols}
+%     \vspace*{-1cm}
+%     \begin{adjmulticols}{2}{-126pt}{-.6in}
+%         \begin{equation*}
+%             \runa{lambdap}\; \infrule{}{\conf{\texttt{parent}.E,\; \lambda x.\cursor{\hat{a}}} \xrightarrow{\texttt{parent}} \conf{E,\; \cursor{\lambda x.\hat{a}}}}
+%         \end{equation*}\break
+%         \begin{equation*}
+%             \runa{blambdap}\; \infrule{}{\conf{\texttt{parent}.E,\; \breakpoint{\lambda x.\cursor{\hat{a}}}} \xrightarrow{\texttt{parent}} \conf{E,\; \cursor{\breakpoint{\lambda x.\hat{a}}}}}
+%         \end{equation*}\break
+%         \begin{equation*}
+%             \runa{appp-1}\; \infrule{}{\conf{\texttt{parent}.E,\; \cursor{\hat{a_1}}\; \hat{a}_2} \xrightarrow{\texttt{parent}} \conf{E,\; \cursor{\hat{a}_1\; \hat{a_2}}}}
+%         \end{equation*}\break
+%         \begin{equation*}
+%             \runa{bappp-1}\; \infrule{}{\conf{\texttt{parent}.E,\; \breakpoint{\cursor{\hat{a_1}}\; \hat{a}_2}} \xrightarrow{\texttt{parent}} \conf{E,\; \cursor{\breakpoint{\hat{a}_1\; \hat{a_2}}}}}
+%         \end{equation*}
+%     \end{adjmulticols}
+%     \vspace*{-1cm}
+%     \begin{adjmulticols}{2}{-126pt}{-.6in}
+%         \begin{equation*}
+%             \runa{appc-1}\; \infrule{}{\conf{(\texttt{child}\; 1).E,\; \cursor{\hat{a}_1\; \hat{a}_2}} \xrightarrow{\texttt{child}\; 1} \conf{E,\; \cursor{\hat{a}_1}\; \hat{a}_2}}
+%         \end{equation*}\break
+%         \begin{equation*}
+%             \runa{bappc-1}\; \infrule{}{\conf{(\texttt{child}\; 1).E,\; \cursor{\breakpoint{\hat{a}_1\; \hat{a}_2}}} \xrightarrow{\texttt{child}\; 1} \conf{E,\; \breakpoint{\cursor{\hat{a}_1}\; \hat{a}_2}}}
+%         \end{equation*}\break
+%         \begin{equation*}
+%             \runa{appp-2}\; \infrule{}{\conf{\texttt{parent}.E,\; \hat{a}_1\; \cursor{\hat{a}_2}} \xrightarrow{\texttt{parent}} \conf{E,\; \cursor{\hat{a}_1\; \hat{a_2}}}}
+%         \end{equation*}\break
+%         \begin{equation*}
+%             \runa{bappp-2}\; \infrule{}{\conf{\texttt{parent}.E,\; \breakpoint{\hat{a}_1\; \cursor{\hat{a}_2}}} \xrightarrow{\texttt{parent}} \conf{E,\; \cursor{\breakpoint{\hat{a}_1\; \hat{a_2}}}}}
+%         \end{equation*}
+%     \end{adjmulticols}
+%     %%NYE REGLER IMAN
+%     \begin{equation*}
+%         \runa{neholec}\; \infrule{}{\conf{(\texttt{child}\; 1).E,\; \cursor{\nehole{\hat{a}}}} \xrightarrow{\texttt{child}\; 1} \conf{E,\; \nehole{\cursor{\hat{a}}}}}
+%     \end{equation*}
+%     \begin{equation*}
+%         \runa{neholep}\; \infrule{}{\conf{\texttt{child}.E,\; \nehole{\cursor{\hat{a}}}} \xrightarrow{\texttt{parent}} \conf{E,\; \cursor{\nehole{\hat{a}}}}}
+%     \end{equation*}
+%     %%END NYE REGLER
+%     \caption{Cursor movement reduction rules}
+%     \label{tab:MOVEsem}
+% \end{table}
+
+%% INTROUCER CURSOR MOVEMENT, SUBSTITUTION, EDITOR EXPRESSIONS HER
+%% INTRODUCER AST REGLER HER
+
+%\begin{table}[h]
+%    \centering
+%    \begin{multicols}{2}
+%    \begin{equation*}
+%        \runa{ctx}\; \infrule{e \rightarrow_a e'}{E\left[e\right] \rightarrow_a E\left[e'\right]}          
+%      \end{equation*}\break
+%      \begin{equation*}
+%        \runa{$\beta$\text{-reduction}}\; \infrule{}{(\lambda x.e)v \rightarrow_a e\!\left\{v/x\right\}}          
+%      \end{equation*}
+%    \end{multicols}
+%    \caption{Big-step reduction rules}
+%    \label{tab:ASTsem}
+%\end{table}
+
+\subsection*{Conditions}
+We now introduce rules for derivating conditions, thereby also explicitly defining the underlying structure of the three search conditions: $@ D$, $\lozenge D$ and $\Box D$. Note that rules related to $@D$ are prefixed by \textit{AT}, while rules related to $\lozenge D$ and $\Box D$ are prefixed by \textit{POS} (Possibly) and \textit{NEC} (Necessarily), respectively. The rules for the basic logical operators and $@ D$ are shown in table \ref{tab:EEsemcond1}. The basic logical operators $\land$, $\lor$ and $\neg$ are defined as expected. The search condition $@D$ is defined by providing a rule for each possible $@$ search, that define the exact AST node that would accept that exact search.\\
+%
+\begin{table}[H]
+    \centering
+    \begin{multicols}{2}
+    \begin{equation*}
+        \runa{land}\; \infrule{a \vDash \phi_1 \quad a \vDash \phi_2}{a \vDash \phi_1 \land \phi_2}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{lor-1}\; \infrule{a \vDash \phi_1}{a \vDash \phi_1 \lor \phi_2}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{lor-2}\; \infrule{a \nvDash \phi_1 \quad a \vDash \phi_2}{a \vDash \phi_1 \lor \phi_2}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{neg}\; \infrule{a \nvDash \phi}{a \vDash \neg \phi}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{at-var}\; \infrule{}{x \vDash @ \texttt{(var}\; y)} 
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{at-const}\; \infrule{}{c \vDash @ \texttt{(const}\; c)} 
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{at-hole}\; \infrule{}{\hole \vDash @ \texttt{hole}} 
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{at-app}\; \infrule{}{\hat{a}_1\; \hat{a}_2 \vDash @ \texttt{app}} 
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{at-lambda}\; \infrule{}{\lambda x.\hat{a} \vDash @ \texttt{(lambda}\; y)} 
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{at-break}\; \infrule{}{\breakpoint{\hat{a}} \vDash @ \texttt{break}} 
+    \end{equation*}\break
+    %
+    \end{multicols}
+    \caption{Condition rules for basic logical operators and $@ D$.}
+    \label{tab:EEsemcond1}
+\end{table}
+%
+The rules for $\lozenge D$ and $\Box D$ are shown in table \ref{tab:EEsemcond2}. These two search conditions are defined by recursively navigating through the tree, using \textit{APP}, \textit{LAMBDA} and \textit{BREAK} rules, until the trivial base case is reached where we can check for existence directly using $@D$. The base case is defined by the \textit{TRIVIAL} rules. The difference between $\lozenge D$ and $\Box D$ is expressed clearly in the difference between the \textit{APP} rules. Since $\Box D$ requires existence of $D$ in every subtree we require both $a_1$ and $a_2$ to contain $D$. This is different from $\lozenge D$ where we only require existence in at least one subtree, defined by returning true if $a_1$ contains $D$ or if $a_1$ does not contain $D$ but $a_2$ does. Since search conditions are restricted to only being called from the position of the cursor we include the rule \runa{cond-context} to find the initial position that we further derive from using the above described rules. \\
+%
+\begin{table}[H]
+    \centering
+    \begin{multicols}{2}
+    %
+    \begin{equation*}
+        \runa{pos-trivial}\; \infrule{\hat{a} \vDash @D}{\hat{a} \vDash \lozenge D}        
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{pos-app-1}\; \infrule{\hat{a}_1 \vDash \lozenge D}{\hat{a}_1\; \hat{a}_2 \vDash \lozenge D}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{pos-app-2}\; \infrule{\hat{a_1} \nvDash \lozenge D \quad \hat{a_2} \vDash \lozenge D}{\hat{a}_1 \; \hat{a}_2 \vDash \lozenge D}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{pos-lambda}\; \infrule{\hat{a} \vDash \lozenge D}{\lambda x.\hat{a} \vDash \lozenge D}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{pos-break}\; \infrule{\hat{a} \vDash \lozenge D}{\breakpoint{\hat{a}} \vDash \lozenge D}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{nec-trivial}\; \infrule{\hat{a} \vDash @D}{\hat{a} \vDash \Box D}        
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{nec-app}\; \infrule{\hat{a}_1 \vDash \Box D \quad \hat{a}_2 \vDash \Box D}{\hat{a}_1\; \hat{a}_2 \vDash \Box D}        
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{nec-lambda}\; \infrule{\hat{a} \vDash \Box D}{\lambda x.\hat{a}  \vDash \Box D}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{nec-break}\; \infrule{\hat{a} \vDash \Box D}{\breakpoint{\hat{a}}  \vDash \Box D}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{cond-context}\; \infrule{\hat{a} \vDash \phi}{\cursorctx{\cursor{\hat{a}}} \vDash \phi}
+    \end{equation*}
+    %
+    \end{multicols}
+    \caption{Condition rules for $\lozenge D$ and $\Box D$.}
+    \label{tab:EEsemcond2}
+\end{table}
+%
+\subsection*{AST evaluation}
+\begin{sloppypar}
+We next introduce the big-step semantics for evaluating abstract syntax trees, $\left(\mathbf{Ast},\; \rightarrow,\; \mathbf{Val}\right)$, in which transition rules are of the format $a \rightarrow v$. That is, a given AST $a$ evaluates to a value that may be in $\mathbf{HVal}$ or $\mathbf{BVal}$. The transition rules use call-by-value such that we can easily distinguish evaluation of a completed subtree from evaluation of subtrees containing holes or breakpoints.\\
+
+We first consider the transition rules of completed trees, which are in table \ref{tab:big-step-ast}. We introduce trivial transition rules for variables, constants and abstractions, and a rule to omit cursors. The non-trivial rule \runa{b-app} accounts for function application, in which the left subtree evaluates to an abstraction, and its subtree evaluates to a value when its bound variable is substituted for the resulting value of the right subtree. Note that we ensure that evaluation of the right subtree does not encounter a breakpoint for this rule to be applicable, whereas the subtree of the lambda term $a_1'$ may result in a partial or uncompleted evaluation after substitution, as the subtree of a function term can contain holes and breakpoints.
+\end{sloppypar}
+\vspace*{-0.8cm}
+%
+\begin{table}[H]
+    \centering
+    \begin{adjmulticols}{2}{35pt}{-0.3in}
+    %  \begin{equation*}
+    %    \runa{b-var}\;\hspace{-1cm} \infrule{}{x \rightarrow x}
+    %\end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{b-const}\;\hspace{-1cm} \infrule{}{c \rightarrow c}    
+    \end{equation*}
+    %
+    \end{adjmulticols}
+    \vspace*{-1cm}
+    \begin{adjmulticols}{2}{35pt}{-0.3in}
+    \begin{equation*}
+        \runa{b-lambda}\;\hspace{-1cm} \infrule{}{\lambda x.a \rightarrow \lambda x.a}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+        \runa{b-cursor}\;\hspace{-1cm} \infrule{a \rightarrow v}{\cursor{a} \rightarrow v}
+    \end{equation*}
+    %
+    \end{adjmulticols}
+    \vspace*{-1cm}
+    \begin{adjmulticols}{1}{-35pt}{0.7in}
+    \begin{equation*}
+        \runa{b-app}\; \condinfrule{a_1 \rightarrow \lambda x.a_1' \quad a_2 \rightarrow v \quad a_1'\!\left\{v/x\right\} \rightarrow v'}{a_1\; a_2 \rightarrow v'}{\text{where}\; v \notin \mathbf{BVal} \cup \mathbf{HVal}}
+    \end{equation*}
+    \end{adjmulticols}
+    %
+    \caption{Big-step transition rules for completed trees.}
+    \label{tab:big-step-ast}
+\end{table}
+%
+\subsubsection*{Breakpoints and uncompleted trees}
+We next introduce the transition rules of breakpoints and uncompleted trees, which are in table \ref{tab:big-step-ast-partial}. Upon a breakpoint, we terminate evaluation of the AST. The trivial case is an AST encapsulated by a breakpoint, as in rule \runa{b-breakb}. To ensure evaluation terminates, we must account for the different components of a function application, in which the breakpoint may reside. In transition rule \runa{b-appb-1}, the breakpoint is encountered during evaluation of the left subtree, in which case the right subtree is left unevaluated. In \runa{b-appb-2}, evaluation encounters a breakpoint in the right subtree, and so the function is not applied.\\
+
+Transition rule \runa{b-holeh} accounts for the trivial uncompleted tree, the hole term $\hole$. Contrary to termination of evaluation upon a breakpoint, we evaluate as much of the uncompleted tree as possible. This is reflected in rule \runa{b-apph}, in which we evaluate the right-side subtree of a function application term, although the left-side is not a completed AST. Notice that the right-side subtree may still be uncompleted or contain breakpoints, as either subtree can contain holes and breakpoints.
+\vspace*{-1cm}
+\begin{table}[H]
+    \centering
+    \begin{adjmulticols}{3}{-25pt}{-0.8in}
+        \begin{equation*}
+        \runa{b-breakb}\;\hspace{-1cm} \infrule{}{\breakpoint{a} \rightarrow \breakpoint{a}}
+    \end{equation*}\break
+    %
+    \vspace*{0.2cm}
+    \begin{equation*}
+        \runa{b-appb-1}\;\hspace{-1cm} \infrule{a_1 \rightarrow w}{a_1\; a_2 \rightarrow w\; a_2}
+    \end{equation*}\break
+    %
+    \vspace*{0.2cm}
+    \begin{equation*}
+        \runa{b-appb-2}\;\hspace{-0.3cm}\vspace{1.8cm} \infrule{a_1 \rightarrow \lambda x.a_1' \quad a_2 \rightarrow w}{a_1\; a_2 \rightarrow \lambda x.a_1'\; w}
+    \end{equation*}
+    \vspace*{-1.6cm}
+    \end{adjmulticols}
+    \vspace*{-1.9cm}
+    \begin{adjmulticols}{3}{-25pt}{-0.8in}
+    \begin{equation*}
+        \runa{b-holeh}\;\hspace{-1cm}\vspace*{0.3cm} \infrule{}{\hole \rightarrow \hole}
+    \end{equation*}\break
+    %
+    \begin{equation*}
+            \runa{b-apph-1}\;\hspace{-0.8cm} \infrule{a_1 \rightarrow u \quad a_2 \rightarrow v}{a_1\; a_2 \rightarrow u\; v}
+    \end{equation*}\break
+    %
+    %\vspace*{-0.3cm}
+    \begin{equation*}
+        \runa{b-apph-2}\;\vspace*{0.4cm} \infrule{a_1 \rightarrow \lambda x.a_1' \quad a_2 \rightarrow u}{a_1\; a_2 \rightarrow \lambda x.a_1'\; u}
+    \end{equation*}
+    \end{adjmulticols}
+    \caption{Big-step transition rules for breakpoints and uncompleted trees.}
+    \label{tab:big-step-ast-partial}
+\end{table}

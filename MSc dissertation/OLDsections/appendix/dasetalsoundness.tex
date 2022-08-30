@@ -1,0 +1,798 @@
+\chapter{Session type soundness}\label{app:dasetallsoundness}
+\setcounter{theorem}{11}
+%
+
+\begin{lemma}
+Let $P$ be an arbitrary process such that $b$ is not free in $P$. 
+\begin{enumerate}
+\item If $\Delta,a:A\vdash P :: c\!:\!C$ then $\Delta,b:A\vdash P[a\mapsto b] :: c\!:\!C$.
+
+\item If $\Delta\vdash P :: a\!:\!A$ then $\Delta\vdash P[a\mapsto b] :: b\!:\!A$.
+\end{enumerate}
+\begin{proof}
+By induction on the type rules
+\begin{description}
+\item[$\runa{TS-$\mathbf{1}$L}$] We have that $\Delta,a:\mathbf{1} \vdash P :: c\!:\!C$ because $\Delta \vdash P :: c\!:\!C$. We consider the cases separately
+\begin{enumerate}
+    \item Let $d\in\text{dom}(\Delta)$. Then there exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$. By induction we then have that $\Delta',b:D\vdash P[d\mapsto b] :: c\!:\!C$, and by application of $\runa{TS-$\mathbf{1}$L}$ we obtain $\Delta',b:D,a:\mathbf{1}\vdash P[d\mapsto b] :: c\!:\!C$ as required. We obtain the special case $\Delta,b:\mathbf{1}\vdash P[a\mapsto b] :: c\!:\!C$ directly from application of \runa{TS-$\mathbf{1}$L}.
+    
+    \item By induction we have that $\Delta\vdash P[c\mapsto b] :: b\!:\!C$, then by application of $\runa{TS-$\mathbf{1}$L}$ we obtain $\Delta,a:\mathbf{1}\vdash P[c\mapsto b] :: b\!:\!C$, as required.
+\end{enumerate}
+
+% We consider (1) first. Then for $P[d\mapsto b]$ we either have $d=a$ or $\Delta = \Delta',d:D$. In the first case we obtain $\Delta,b:\mathbf{1}\vdash P[a\mapsto b] :: c\!:\!C$ directly from \runa{TS-$\mathbf{1}$L} as $P[a\mapsto b]=P$ and $P$ can consume a session of type $\mathbf{1}$ for any name. For the second case we have by induction that $\Delta',b:D\vdash P[d\mapsto b] :: c\!:\!C$, and from $\runa{TS-$\mathbf{1}$L}$ we obtain $\Delta',b:D,a:\mathbf{1}\vdash P[d\mapsto b] :: c\!:\!C$.\\
+
+% We then consider (2). For $P[d\mapsto b]$ we have $d=c$. Then we have by induction that $\Delta\vdash P[c\mapsto b] :: b\!:\!C$, and it follows from $\runa{TS-$\mathbf{1}$L}$ that also $\Delta,a:\mathbf{1}\vdash P[c\mapsto b] :: b\!:\!C$.
+
+\item[$\runa{TS-$\mathbf{1}$R}$] We have that $\cdot\vdash \mathbf{0} :: a\!:\!\mathbf{1}$ and $\mathbf{0}[a\mapsto b]=\mathbf{0}$. (1) does not apply, as $\cdot$ is the empty type context. For (2) we obtain $\cdot \vdash \mathbf{0}[a\mapsto b] :: b\!:\!\mathbf{1}$ directly by application of $\runa{TS-$\mathbf{1}$R}$, as $\mathbf{0}$ can provide a session on any name.
+
+\item[$\runa{TS-$\otimes$L}$] We have that $\Delta,a:A\otimes B \vdash \inputch{a}{v}{}{P'} :: c\!:\!C$ because $\Delta,v:A,a:B\vdash P' :: c\!:\!C$. We consider the cases separately
+\begin{enumerate}
+    \item We either replace $a$ or some $d\in\text{dom}(\Delta)$. We consider them separately
+    \begin{itemize}
+        \item We have that $(\inputch{a}{v}{}{P'})[a\mapsto b]=\inputch{b}{v}{}{P'}[a\mapsto b]$. By induction $\Delta,v:A,b:B\vdash P[a\mapsto b] :: c\!:\!C$ and by application of $\runa{TS-$\otimes$L}$ we obtain $\Delta,b:A\otimes B\vdash \inputch{b}{v}{}{P[a\mapsto b]} :: c\!:\!C$ as required.
+        
+        \item There exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$ and we have that $(\inputch{a}{v}{}{P'})[d\mapsto b]=\inputch{a}{v}{}{P'}[d\mapsto b]$. By induction $\Delta',b:D,v:a,a:B\vdash P[d\mapsto b] :: c\!:\!C$ and by application of $\runa{TS-$\otimes$L}$ we obtain $\Delta',b:D,a:A\otimes B\vdash \inputch{a}{v}{}{P[d\mapsto b]} :: c\!:\!C$ as required. 
+    \end{itemize}
+    
+    \item We have that $(\inputch{a}{v}{}{P'})[c\mapsto b]=\inputch{a}{v}{}{P'[c\mapsto b]}$. By induction we have that $\Delta,v:A,a:B\vdash P'[c\mapsto b] :: b\!:\!C$, and by application of $\runa{TS-$\otimes$L}$ we obtain $\Delta,a:A\otimes B \vdash \inputch{a}{v}{}{P'[c\mapsto b]} :: b\!:\!C$ as required.
+\end{enumerate}
+
+\item[$\runa{TS-$\otimes$R}$] We have that $\Delta,v:A\vdash \outputch{a}{v}{}{P'} :: a\!:\!A\otimes B$ because $\Delta\vdash P' :: a\!:\!B$. We consider the cases separately
+\begin{enumerate}
+    \item We replace some $d\in\text{dom}(\Delta)$ or $v$. We consider them separately
+    \begin{itemize}
+        \item There exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$ and we have that $(\outputch{a}{v}{}{P'})[d\mapsto b]=\outputch{a}{v}{}{P'}[d\mapsto b]$. By induction $\Delta',b:D\vdash P[d\mapsto b] :: a\!:\!B$ and by application of $\runa{TS-$\otimes$R}$ we obtain $\Delta',b:D,v:A\vdash \outputch{a}{v}{}{P[d\mapsto b]} :: a\!:\!A\otimes B$ as required. 
+        
+        \item We have that $(\outputch{a}{v}{}{P'})[v\mapsto b]=\outputch{a}{b}{}{P'}$. From $\Delta\vdash P' :: a\!:\!B$ we then obtain $\Delta,b:A\vdash \outputch{a}{b}{}{P'} :: a\!:\!A\otimes B$ directly by application of $\runa{TS-$\otimes$R}$.
+    \end{itemize}
+    
+    \item We have that $(\outputch{a}{v}{}{P'})[a\mapsto b]=\outputch{b}{v}{}{P'[a\mapsto b]}$. By induction we have that $\Delta\vdash P'[a\mapsto b] :: b\!:\!B$, and by application of $\runa{TS-$\otimes$R}$ we obtain $\Delta,v:A \vdash \outputch{b}{v}{}{P'[a\mapsto b]} :: b\!:\!A\otimes B$ as required.
+\end{enumerate}
+
+%We have that $\Delta,v:A \vdash \outputch{a}{v}{}{P'} :: a\!:\!A\otimes B$ and $\Delta\vdash P' :: a\!:\!B$. The first part of the lemma applies to $(\outputch{a}{v}{}{P'})[v\mapsto b]=\outputch{a}{b}{}{P'[v\mapsto b]}$ and to $(\outputch{a}{v}{}{P'})[d\mapsto b]=\outputch{a}{v}{}{P'[d\mapsto b]}$ when $\Delta=\Delta',d:D$. For the first case we obtain $\Delta,b:A\vdash \outputch{a}{b}{}{P'[v\mapsto b]} :: a\!:\!A\otimes B$ directly from $\runa{TS-$\otimes$R}$, as it must be that $P'[v\mapsto b]=P'$ since $\Delta\vdash P' :: a\!:\!B$. In the second case we have by induction that $\Delta',b:D\vdash P'[d\mapsto b] :: a\!:\!B$ and from $\runa{TS-$\otimes$R}$ we obtain $\Delta',b:D,v:A \vdash \outputch{a}{v}{}{P'[d\mapsto b]} :: a\!:\!A\otimes B$. The second part of the lemma applies to $(\outputch{a}{v}{}{P'})[a\mapsto b]=\outputch{b}{v}{}{P'[a\mapsto b]}$. Then we have by induction that $\Delta\vdash P'[a\mapsto b] :: b\!:\!B$, and it follows from $\runa{TS-$\otimes$R}$ that also $\Delta,v:A \vdash \outputch{b}{v}{}{P'[a\mapsto b]} :: b\!:\!A\otimes B$.
+
+\item[$\runa{TS-$\multimap$L}$] We have that $\Delta,a:A\multimap B,v:a \vdash \outputch{a}{v}{}{P'} :: c\!:\!C$ because $\Delta,a:B\vdash P' :: c\!:\!C$. We consider the cases separately
+\begin{enumerate}
+    \item We either replace $a$, some $d\in\text{dom}(\Delta)$ or $v$. We consider them separately
+    \begin{itemize}
+        \item We have that $(\outputch{a}{v}{}{P'})[a\mapsto b]=\outputch{b}{v}{}{P'}[a\mapsto b]$. By induction $\Delta,b:B\vdash P[a\mapsto b] :: c\!:\!C$ and by application of $\runa{TS-$\multimap$L}$ we obtain $\Delta,b:A\multimap B,v:A\vdash \outputch{b}{v}{}{P[a\mapsto b]} :: c\!:\!C$ as required.
+        
+        \item There exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$ and we have that $(\outputch{a}{v}{}{P'})[d\mapsto b]=\outputch{a}{v}{}{P'}[d\mapsto b]$. By induction $\Delta',b:D,a:B\vdash P[d\mapsto b] :: c\!:\!C$ and by application of $\runa{TS-$\multimap$L}$ we obtain $\Delta',b:D,a:A\multimap B,v:A\vdash \outputch{a}{v}{}{P[d\mapsto b]} :: c\!:\!C$ as required. 
+        
+        \item We have that $(\outputch{a}{v}{}{P'})[v\mapsto b]=\outputch{a}{b}{}{P'}$. From $\Delta,a:B\vdash P' :: c\!:\!C$ we then obtain $\Delta,a:A\multimap B,b:A\vdash \outputch{a}{b}{}{P'} :: c\!:\!C$ directly by application of $\runa{TS-$\multimap$L}$.
+    \end{itemize}
+    
+    \item We have that $(\outputch{a}{v}{}{P'})[c\mapsto b]=\outputch{a}{v}{}{P'[c\mapsto b]}$. By induction we have that $\Delta,a:B\vdash P'[c\mapsto b] :: b\!:\!C$, and by application of $\runa{TS-$\multimap$L}$ we obtain $\Delta,a:A\multimap B,v:A \vdash \outputch{a}{v}{}{P'[c\mapsto b]} :: b\!:\!C$ as required.
+\end{enumerate}
+
+%We have that $\Delta,a:A\multimap B,v:A \vdash \outputch{a}{v}{}{P'} :: c\!:\!C$ and $\Delta,a:B\vdash P' :: c\!:\!C$. The first part of the lemma applies to $(\outputch{a}{v}{}{P'})[v\mapsto b]=\outputch{a}{b}{}{P'[v\mapsto b]}$, $(\outputch{a}{v}{}{P'})[a\mapsto b]=\outputch{b}{v}{}{P'[a\mapsto b]}$ and to $(\outputch{a}{v}{}{P'})[d\mapsto b]=\outputch{a}{v}{}{P'[d\mapsto b]}$ when $\Delta=\Delta',d:D$. For the first case we obtain $\Delta,a:A\multimap B, b:A\vdash \outputch{a}{b}{}{P'[v\mapsto b]} :: c\!:\!C$ directly from $\runa{TS-$\multimap$L}$, as it must be that $P'[v\mapsto b]=P'$ since $\Delta,a:B\vdash P' :: c\!:\!C$. In the second case we have by induction that $\Delta,b:B\vdash P'[a\mapsto b] :: c\!:\!C$ and from $\runa{TS-$\multimap$L}$ we obtain $\Delta,b:A\multimap B,v:A \vdash \outputch{b}{v}{}{P'[a\mapsto b]} :: c\!:\!C$. For the third case we have by induction $\Delta',b:D,a:B\vdash P'[d\mapsto b] :: c\!:\!C$ and from $\runa{TS-$\multimap$L}$ we obtain $\Delta',b:D,a:A\multimap B,v:A \vdash \outputch{a}{v}{}{P'[d\mapsto b]} :: c\!:\!C$. The second part of the lemma applies to $(\outputch{a}{v}{}{P'})[c\mapsto b]=\outputch{a}{v}{}{P'[c\mapsto b]}$. Then we have by induction that $\Delta,a:B\vdash P'[c\mapsto b] :: b\!:\!C$, and it follows from $\runa{TS-$\multimap$L}$ that also $\Delta,a:A\otimes B,v:A \vdash \outputch{a}{v}{}{P'[c\mapsto b]} :: b\!:\!C$.
+
+\item[$\runa{TS-$\multimap$R}$] We have that $\Delta\vdash \inputch{a}{v}{}{P'} :: a\!:\!A\multimap B$ because $\Delta,v:A\vdash P' :: a\!:\!B$. We consider the cases separately
+\begin{enumerate}
+    \item We replace some $d\in\text{dom}(\Delta)$. There exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$ and we have that $(\inputch{a}{v}{}{P'})[d\mapsto b]=\inputch{a}{v}{}{P'}[d\mapsto b]$. By induction $\Delta',b:D,v:A\vdash P[d\mapsto b] :: a\!:\!B$ and by application of $\runa{TS-$\multimap$R}$ we obtain $\Delta',b:D\vdash \inputch{a}{v}{}{P[d\mapsto b]} :: a\!:\!A\otimes B$ as required. 
+    
+    \item We have that $(\inputch{a}{v}{}{P'})[a\mapsto b]=\inputch{b}{v}{}{P'[a\mapsto b]}$. By induction we have that $\Delta,v:A\vdash P'[a\mapsto b] :: b\!:\!B$, and by application of $\runa{TS-$\multimap$R}$ we obtain $\Delta\vdash \inputch{b}{v}{}{P'[a\mapsto b]} :: b\!:\!A\otimes B$ as required.
+\end{enumerate}
+
+%We have that $\Delta\vdash \inputch{a}{v}{}{P'} :: a\!:\!A\multimap B$ and $\Delta,v:A\vdash P' :: a\!:\!B$. The first part of the lemma applies to $(\inputch{a}{v}{}{P'})[d\mapsto b]=\inputch{a}{v}{}{P'[d\mapsto b]}$ when $\Delta=\Delta',d:D$. We have by induction that $\Delta',b:D,v:A\vdash P'[d\mapsto b] :: a\!:\!B$ and from $\runa{TS-$\multimap$R}$ we obtain $\Delta',b:D\vdash \inputch{a}{v}{}{P'[d\mapsto b]} :: a\!:\!A\multimap B$. The second part of the lemma applies to $(\inputch{a}{v}{}{P'})[a\mapsto b]=\inputch{b}{v}{}{P'[a\mapsto b]}$. Then we have by induction that $\Delta,v:A\vdash P'[a\mapsto b] :: b\!:\!B$, and it follows from $\runa{TS-$\multimap$R}$ that also $\Delta \vdash \inputch{b}{v}{}{P'[a\mapsto b]} :: b\!:\!A\otimes B$.
+
+\item[$\runa{TS-cut}$] We have that $\Delta_1,\Delta_2\vdash \newvar{a}{(P' \mid P'') :: c\!:\!C}$ because $\Delta_1\vdash P' :: a\!:\!A$ and $\Delta_2,a:A\vdash P'' :: c\!:\!C$. Then $(\newvar{a}{(P' \mid P'')})[d\mapsto b]=\newvar{a}{(P'[d\mapsto b] \mid P''[d\mapsto b])}$ and we can assume that $d\neq a$, as $\Delta_1,\Delta_2\vdash \newvar{a}{(P' \mid P'') :: c\!:\!C}$ does not hold when $a\in \text{dom}(\Delta_1,\Delta_2)$ or $a=c$. We consider the cases separately
+\begin{enumerate}
+    \item We replace some $d\in\text{dom}(\Delta_1)$ or $d\in\text{dom}(\Delta_2)$, such that either $\Delta_1=\Delta_1',d:D$ or $\Delta_2=\Delta_2',d:D$, and so by induction we have either $\Delta_1',b:D\vdash P'[d\mapsto b] :: a\!:\!A$ or $\Delta_2',a:A,b:D\vdash P''[d\mapsto b] :: c\!:\!C$. Thus we obtain either $\Delta_1',b:D,\Delta_2\vdash \newvar{a}{(P'[d\mapsto b] \mid P''[d\mapsto b])} :: c\!:\!C$ or $\Delta_1,\Delta_2',b:D\vdash \newvar{a}{(P'[d\mapsto b] \mid P''[d\mapsto b])} :: c\!:\!C$ by application of $\runa{TS-cut}$ as required.
+    
+    \item We need only consider $P''$ as $d\neq a$, and so if $d=c$ we have by induction that $\Delta_2,a:A\vdash P''[d\mapsto b] :: b\!:\!C$. Then we obtain $\Delta_1,\Delta_2\vdash \newvar{a}{(P'[c\mapsto b] \mid P''[c\mapsto b])} :: b\!:\!C$ directly by application of $\runa{TS-cut}$ as required. 
+\end{enumerate}
+
+%The first part of the lemma applies when either $\Delta_1=\Delta_1',d:D$ or $\Delta_2=\Delta_2',d:D$, and so by induction we have either $\Delta_1',b:D\vdash P'[d\mapsto b] :: a\!:\!A$ or $\Delta_2',a:A,b:D\vdash P''[d\mapsto b] :: c\!:\!C$. Thus we obtain either $\Delta_1',b:D,\Delta_2\vdash \newvar{a}{(P'[d\mapsto b] \mid P''[d\mapsto b])} :: c\!:\!C$ or $\Delta_1,\Delta_2',b:D\vdash \newvar{a}{(P'[d\mapsto b] \mid P''[d\mapsto b])} :: c\!:\!C$ by $\runa{TS-cut}$.
+
+%The second part of the lemma can only apply to $P''$ as $d\neq a$, and so if $d=c$ we have by induction that $\Delta_2,a:A\vdash P''[d\mapsto b] :: b\!:\!C$. Then we obtain $\Delta_1,\Delta_2\vdash \newvar{a}{(P'[c\mapsto b] \mid P''[c\mapsto b])} :: b\!:\!C$ directly from $\runa{TS-cut}$. 
+
+\item[$\runa{TS-id}$] We have that $b:A\vdash a \leftarrow b :: a\!:\!A$, $(a \leftarrow b)[a\mapsto c]= c \leftarrow b$ and $(a\leftarrow b)[b\mapsto c]=a\leftarrow c$. We obtain $c:A\vdash a\leftarrow c :: a\!:\!A$ and $b:A\vdash c \leftarrow b :: c\!:\!A$ directly by application of $\runa{TS-id}$ as required.
+
+\item[$\runa{TS-$\oplus$L}$] We have that $\Delta,a : \oplus\{l:A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L} :: c\!:\!C$ because for $l \in L$ we also have $\Delta,a:A_l \vdash P_l :: c\!:\!C$. We consider the cases separately
+\begin{enumerate}
+    \item We either replace $a$ or some $d\in\text{dom}(\Delta)$. We consider them separately
+    \begin{itemize}
+        \item We have that $(a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L})[a\mapsto b]=b.\texttt{case}\{l\Rightarrow P_l[a\mapsto b]\}_{l\in L}$. Then for $l\in L$ we have by induction that $\Delta,b:A_l\vdash P_l[a\mapsto b] :: c\!:\!C$, and by application of $\runa{TS-$\oplus$L}$ we obtain $\Delta,b:\oplus\{l:A_l\}_{l\in L}\vdash b.\texttt{case}\{l\Rightarrow P_l[a\mapsto b]\}_{l\in L} :: c\!:\!C$ as required.
+        
+        \item There exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$ and we have that $(a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L})[d\mapsto b]=a.\texttt{case}\{l\Rightarrow P_l[d\mapsto b]\}_{l\in L}$. Then for $l\in L$ we have by induction that $\Delta',b:D,a:A_l\vdash P_l[d\mapsto b] :: c\!:\!C$, and by application of $\runa{TS-$\oplus$L}$ we obtain $\Delta',b:D,a:\oplus\{l:A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l[d\mapsto b]\}_{l\in L} :: c\!:\!C$ as required.
+    \end{itemize}
+    
+    \item We have that $(a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L})[c\mapsto b]=a.\texttt{case}\{l\Rightarrow P_l[c\mapsto b]\}_{l\in L}$. Then for $l\in L$ we have by induction that $\Delta',b:D,a:A_l\vdash P_l[d\mapsto b] :: c\!:\!C$, and by application of $\runa{TS-$\oplus$L}$ we obtain $\Delta',b:D,a:\oplus\{l:A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l[d\mapsto b]\}_{l\in L} :: c\!:\!C$ as required.
+\end{enumerate}
+
+% The first part of the lemma applies to $(a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L})[a\mapsto b]=b.\texttt{case}\{l\Rightarrow P_l[a\mapsto b]\}_{l\in L}$ and to $(a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L})[d\mapsto b]=a.\texttt{case}\{l\Rightarrow P_l[d\mapsto b]\}_{l\in L}$ when $\Delta=\Delta',d:D$. In the first case we have by induction for $l\in L$ that $\Delta,b:A_l\vdash P_l[a\mapsto b] :: c\!:\!C$, and so by $\runa{TS-$\oplus$L}$ we obtain $\Delta,b:\oplus\{l:A_l\}_{l\in L}\vdash b.\texttt{case}\{l\Rightarrow P_l[a\mapsto b]\}_{l\in L} :: c\!:\!C$.
+% For the second case we have by induction for $l\in L$ that $\Delta',b:D,a:A_l\vdash P_l[d\mapsto b] :: c\!:\!C$, and so by $\runa{TS-$\oplus$L}$ we obtain $\Delta',b:D,a:\oplus\{l:A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l[d\mapsto b]\}_{l\in L} :: c\!:\!C$.
+% The second part of the lemma applies to $(a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L})[c\mapsto b]=a.\texttt{case}\{l\Rightarrow P_l[c\mapsto b]\}_{l\in L}$. We have by induction for $l\in L$ that $\Delta,a:A_l\vdash P_l[c\mapsto b] :: b\!:\!C$, and so by $\runa{TS-$\oplus$L}$ we obtain $\Delta,a:\oplus\{l:A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l[c\mapsto b]\}_{l\in L} :: b\!:\!C$.
+
+\item[$\runa{TS-$\oplus$R}$] We have that $\Delta\vdash a.k; P' :: a\!:\!\oplus\{l:A_l\}_{l\in L}$ because $k \in L$ and $\Delta \vdash P' :: a\!:\!A_k$. We consider the cases separately
+\begin{enumerate}
+    \item We replace some $d\in\text{dom}(\Delta)$. There exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$ and we have that $(a.k; P')[d\mapsto b]=a.k; P'[d\mapsto b]$. Then we have by induction that $\Delta',b:D\vdash P'[d\mapsto b] :: a\!:\!a_k$, and by application of $\runa{TS-$\oplus$R}$ we obtain $\Delta',b:D\vdash a.k; P'[d\mapsto b] :: a\!:\!\oplus\{l:A_l\}_{l\in L}$ as required.
+    
+    \item We have that $(a.k; P')[a\mapsto b]=b.k; P'[a\mapsto b]$. Then we have by induction that $\Delta\vdash P'[a\mapsto b] :: b\!:\!A_k$, and by application of $\runa{TS-$\oplus$L}$ we obtain $\Delta\vdash b.k; P'[a\mapsto b] :: b\!:\!\oplus\{l:A_l\}_{l\in L}$ as required.
+\end{enumerate}
+
+%We have that $\Delta\vdash a.k; P' :: a\!:\!\oplus\{l:A_l\}_{l\in L}$ such that $k \in L$ and $\Delta \vdash P' :: a\!:\!A_k$. The first part of the lemma applies to $(a.k; P')[d\mapsto b]=a.k; P'[d\mapsto b]$ when $\Delta=\Delta',d:D$. We have by induction that $\Delta',b:D\vdash P'[d\mapsto b] :: a\!:\!a_k$, and so by $\runa{TS-$\oplus$R}$ we obtain $\Delta',b:D\vdash a.k; P'[d\mapsto b] :: a\!:\!\oplus\{l:A_l\}_{l\in L}$. The second part of the lemma applies to $(a.k; P')[a\mapsto b]=b.k; P'[a\mapsto b]$. We have by induction that $\Delta\vdash P'[a\mapsto b] :: b\!:\!A_k$, and so by $\runa{TS-$\oplus$L}$ we obtain $\Delta\vdash b.k; P'[a\mapsto b] :: b\!:\!\oplus\{l:A_l\}_{l\in L}$.
+
+\item[$\runa{TS-$\&$L}$] We have that $\Delta,a : \&\{l:A_l\}_{l\in L}\vdash a.k; P' :: c\!:\!C$ because $k \in L$ and $\Delta,a:A_k \vdash P' :: c\!:\!C$. We consider the cases separately
+\begin{enumerate}
+    \item We either replace $a$ or some $d\in\text{dom}(\Delta)$. We consider them separately
+    \begin{itemize}
+        \item We have that $(a.k; P')[a\mapsto b]=b.k; P'[a\mapsto b]$. Then we have by induction that $\Delta,b:A_k\vdash P'[a\mapsto b] :: c\!:\!C$, and by application of $\runa{TS-$\&$L}$ we obtain $\Delta,b:\&\{l:A_l\}_{l\in L}\vdash b.k; P'[a\mapsto b] :: c\!:\!C$ as required.
+        
+        \item There exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$ and we have that $(a.k; P')[d\mapsto b]=a.k; P'[d\mapsto b]$. Then we have by induction that $\Delta',b:D,a:A_k\vdash P'[d\mapsto b] :: c\!:\!C$, and by application of $\runa{TS-$\&$L}$ we obtain $\Delta',b:D,a:\&\{l:A_l\}_{l\in L}\vdash a.k; P'[d\mapsto b] :: c\!:\!C$ as required.
+    \end{itemize}
+    
+    \item We have that $(a.k; P')[c\mapsto b]=a.k; P'[c\mapsto b]$. Then we have by induction that $\Delta,a:A_k\vdash P'[c\mapsto b] :: b\!:\!C$, and by application of $\runa{TS-$\&$L}$ we obtain $\Delta,a:\&\{l:A_l\}_{l\in L}\vdash a.k; P'[c\mapsto b] :: b\!:\!C$ as required.
+\end{enumerate}
+
+%We have that $\Delta,a : \&\{l:A_l\}_{l\in L}\vdash a.k; P' :: c\!:\!C$ such that $k \in L$ and $\Delta,a:A_k \vdash P' :: c\!:\!C$. The first part of the lemma applies to $(a.k; P')[a\mapsto b]=b.k; P'[a\mapsto b]$ and to $(a.k; P')[d\mapsto b]=a.k; P'[d\mapsto b]$ when $\Delta=\Delta',d:D$. In the first case we have by induction that $\Delta,b:A_k\vdash P'[a\mapsto b] :: c\!:\!C$, and so by $\runa{TS-$\&$L}$ we obtain $\Delta,b:\&\{l:A_l\}_{l\in L}\vdash b.k; P'[a\mapsto b] :: c\!:\!C$. For the second case we have by induction that $\Delta',b:D,a:A_k\vdash P'[d\mapsto b] :: c\!:\!C$, and so by $\runa{TS-$\&$L}$ we obtain $\Delta',b:D,a:\&\{l:A_l\}_{l\in L}\vdash a.k; P'[d\mapsto b] :: c\!:\!C$. The second part of the lemma applies to $(a.k; P')[c\mapsto b]=a.k; P'[c\mapsto b]$. We have by induction that $\Delta,a:A_k\vdash P'[c\mapsto b] :: b\!:\!C$, and so by $\runa{TS-$\&$L}$ we obtain $\Delta,a:\&\{l:A_l\}_{l\in L}\vdash a.k; P'[c\mapsto b] :: b\!:\!C$.
+
+\item[$\runa{TS-$\&$R}$] We have that $\Delta\vdash a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L} :: a\!:\!\&\{l:A_l\}_{l\in L}$ because for $l\in L$ we also have that $\Delta \vdash P_l :: a\!:\!A_l$. We consider the cases separately
+\begin{enumerate}
+    \item We replace some $d\in\text{dom}(\Delta)$. There exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$ and we have that $(a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L})[d\mapsto b]=a.\texttt{case}\{l\Rightarrow P_l[d\mapsto b]\}_{l\in L}$. Then for $l\in L$ we have by induction that $\Delta',b:D\vdash P_l[d\mapsto b] :: a\!:\!a_l$, and by application of $\runa{TS-$\&$R}$ we obtain $\Delta',b:D\vdash a.\texttt{case}\{l\Rightarrow P_l[d\mapsto b]\}_{l\in L} :: a\!:\!\&\{l:A_l\}_{l\in L}$ as required.
+    
+    \item We have that $(a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L})[a\mapsto b]=b.\texttt{case}\{l\Rightarrow P_l[a\mapsto b]\}_{l\in L}$. Then for $l\in L$ we have by induction that $\Delta\vdash P_l[a\mapsto b] :: b\!:\!A_l$, and by application of $\runa{TS-$\&$L}$ we obtain $\Delta\vdash b.\texttt{case}\{l\Rightarrow P_l[a\mapsto b]\}_{l\in L} :: b\!:\!\&\{l:A_l\}_{l\in L}$ as required.
+\end{enumerate}
+
+%We have that $\Delta\vdash a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L} :: a\!:\!\&\{l:A_l\}_{l\in L}$ such that for $l\in L$ we also have that $\Delta \vdash P_l :: a\!:\!A_l$. The first part of the lemma applies to $(a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L})[d\mapsto b]=a.\texttt{case}\{l\Rightarrow P_l[d\mapsto b]\}_{l\in L}$ when $\Delta=\Delta',d:D$. We have by induction for $l\in L$ that $\Delta',b:D\vdash P_l[d\mapsto b] :: a\!:\!a_l$, and so by $\runa{TS-$\&$R}$ we obtain $\Delta',b:D\vdash a.\texttt{case}\{l\Rightarrow P_l[d\mapsto b]\}_{l\in L} :: a\!:\!\&\{l:A_l\}_{l\in L}$. The second part of the lemma applies to $(a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L})[a\mapsto b]=b.\texttt{case}\{l\Rightarrow P_l[a\mapsto b]\}_{l\in L}$. We have by induction for $l\in L$ that $\Delta\vdash P_l[a\mapsto b] :: b\!:\!A_l$, and so by $\runa{TS-$\&$L}$ we obtain $\Delta\vdash b.\texttt{case}\{l\Rightarrow P_l[a\mapsto b]\}_{l\in L} :: b\!:\!\&\{l:A_l\}_{l\in L}$.
+
+\item[$\runa{TS-def}$] We have that $\Delta,\widetilde{b}:\widetilde{B}\vdash \newvar{a}{(a \leftarrow f \leftarrow \widetilde{b} \mid P'')} :: c\!:\!C$ because $(\widetilde{v}:\widetilde{B}\vdash f = Q' :: g\!:\!A)\in\Sigma$ and $\Delta,a:A\vdash P'' :: c\!:\!C$. Then $(\newvar{a}{(a\leftarrow f \leftarrow\widetilde{b} \mid P'')})[d\mapsto h]=\newvar{a}{((a\leftarrow f \leftarrow\widetilde{b})[d\mapsto h] \mid P''[d\mapsto h])}$ and we can assume that $d\neq a$, as $\Delta,\widetilde{b}:\widetilde{B}\vdash \newvar{a}{(a\leftarrow f \leftarrow\widetilde{b} \mid P'') :: c\!:\!C}$ does not hold when $a\in \text{dom}(\Delta,\widetilde{b}:\widetilde{B})$ or $a=c$. We consider the cases separately
+\begin{enumerate}
+    \item We either have that $d\in\text{dom}(\Delta)$ or $d\in\text{dom}(\widetilde{b}:\widetilde{B})$. We consider them separately
+    \begin{itemize}
+        \item There exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$ and by induction we have that $\Delta',h:D,a:A\vdash P''[d\mapsto h] :: c\!:C$. By application of $\runa{TS-def}$ we obtain $\Delta',h:D,\widetilde{b}:\widetilde{B}\vdash \newvar{a}{((a\leftarrow f \leftarrow\widetilde{b})[d\mapsto h] \mid P''[d\mapsto h])} :: c\!:\!C$ as required.
+        
+        \item There exists $\widetilde{b'}$, $\widetilde{B'}$ and $D$ such that $\widetilde{b}:\widetilde{B}=\widetilde{b'}:\widetilde{B'},d:D$ and by induction we have that $\Delta',h:D,a:A\vdash P''[d\mapsto h] :: c\!:C$. By application of $\runa{TS-def}$ we obtain $\Delta',h:D,\widetilde{b}:\widetilde{B}\vdash \newvar{a}{((a\leftarrow f \leftarrow\widetilde{b})[d\mapsto h] \mid P''[d\mapsto h])} :: c\!:\!C$ as required.
+    \end{itemize}
+    
+    \item We need only consider $P''$ as $d\neq a$, and so $d=c$. By induction we have that $\Delta,a:A\vdash P''[c\mapsto b] :: b\!:\!C$, and by application of $\runa{TS-def}$ we obtain $\Delta',h:D,\widetilde{b}:\widetilde{B}\vdash \newvar{a}{((a\leftarrow f \leftarrow\widetilde{b})[d\mapsto h] \mid P''[d\mapsto h])} :: c\!:\!C$ as required.
+\end{enumerate}
+
+% The first part of the lemma applies when either
+% \begin{enumerate}
+%     \item $\widetilde{b}:\widetilde{B}=\widetilde{b'}:\widetilde{B'},d:D$ such that $(a\leftarrow f \leftarrow\widetilde{b})[d\mapsto h]=a\leftarrow f \leftarrow \widetilde{b'}:\widetilde{B'},h:D$, and so we obtain $\Delta,\widetilde{b'}:\widetilde{B'},h:D\vdash \newvar{a}{(a\leftarrow f \leftarrow \widetilde{b'}:\widetilde{B'},h:D \mid P''[d\mapsto h]) :: c\!:\!C}$ from $\runa{TS-def}$.
+    
+%     \item $\Delta=\Delta',d:D$, and so by induction we obtain $\Delta',h:D,a:A\vdash P''[d\mapsto h] :: c\!:C$. It follows from $\runa{TS-def}$ that $\Delta',h:D,\widetilde{b}:\widetilde{B}\vdash \newvar{a}{((a\leftarrow f \leftarrow\widetilde{b})[d\mapsto h] \mid P''[d\mapsto h])} :: c\!:\!C$.
+% \end{enumerate}
+% The second part of the lemma can only apply to $P''$ as $d\neq a$, and so if $d=c$ we have by induction that $\Delta,a:A\vdash P''[d\mapsto b] :: b\!:\!C$. Then we obtain $\Delta,\widetilde{b}:\widetilde{B}\vdash \newvar{a}{((a\leftarrow f \leftarrow\widetilde{b})[d\mapsto h] \mid P''[d\mapsto h])} :: b\!:\!C$ directly from $\runa{TS-def}$. 
+
+\item[$\runa{TS-$\ocircle$LR'}$] We have that $\Delta\vdash \tick P' :: a\!:\!A$ because $[\Delta]^{-1}_L\vdash P' :: a\!:\![A]^{-1}_R$. We consider the cases separately
+\begin{enumerate}
+    \item We replace some $d\in\text{dom}(\Delta)$, and so there exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$. Then we have that $(\tick P')[d\mapsto b]=\tick P'[d\mapsto b]$, and by induction we have that $[\Delta']^{-1}_L,b:[D]^{-1}_L\vdash P'[d\mapsto b] :: a\!:\![A]^{-1}_R$. By application of $\runa{TS-$\ocircle$LR'}$ we obtain $\Delta',b:D\vdash \tick P'[d\mapsto b] :: a\!:\!A$ as required.
+    
+    \item We have that $(\tick P')[a\mapsto b]=\tick P'[a\mapsto b]$, and so by induction we have that $[\Delta]^{-1}_L\vdash P'[a\mapsto b] :: b\!:\![A]^{-1}_R$. By application of $\runa{TS-$\ocircle$LR'}$ we obtain $\Delta\vdash \tick P'[a\mapsto b] :: b\!:\!A$ as required.
+\end{enumerate}
+
+%The first part of the lemma applies to $(\tick P')[d\mapsto b]=\tick P'[d\mapsto b]$ when $\Delta=\Delta',d:D$. We have by induction that $[\Delta']^{-1}_L,b:[D]^{-1}_L\vdash P'[d\mapsto b] :: a\!:\![A]^{-1}_R$, and so by $\runa{TS-$\ocircle$LR'}$ we obtain $\Delta',b:D\vdash \tick P'[d\mapsto b] :: a\!:\!A$. The second part of the lemma applies to $(\tick P')[a\mapsto b]=\tick P'[a\mapsto b]$. We have by induction that $[\Delta]^{-1}_L\vdash P'[a\mapsto b] :: b\!:\![A]^{-1}_R$, and so by $\runa{TS-$\ocircle$LR'}$ we obtain $\Delta\vdash \tick P'[a\mapsto b] :: b\!:\!A$.
+
+\item[$\runa{TS-$\ocircle$LR}$] We have that $\Delta\vdash P :: a\!:\!A$ because $[\Delta]^{-1}_L\vdash P :: a\!:\![A]^{-1}_R$. We consider the cases separately
+\begin{enumerate}
+    \item We replace some $d\in\text{dom}(\Delta)$, and so there exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$. Then by induction we have that $[\Delta']^{-1}_L,b:[D]^{-1}_L\vdash P[d\mapsto b] :: a\!:\![A]^{-1}_R$. By application of $\runa{TS-$\ocircle$LR}$ we obtain $\Delta',b:D\vdash P[d\mapsto b] :: a\!:\!A$ as required.
+    
+    \item We replace $a$, and so by induction we have that $[\Delta]^{-1}_L\vdash P[a\mapsto b] :: b\!:\![A]^{-1}_R$. By application of $\runa{TS-$\ocircle$LR}$ we obtain $\Delta\vdash P[a\mapsto b] :: b\!:\!A$ as required.
+\end{enumerate}
+
+%The first part of the lemma applies to $P[d\mapsto b]$ when $\Delta=\Delta',d:D$. We have by induction that $[\Delta']^{-1}_L,b:[D]^{-1}_L\vdash P[d\mapsto b] :: a\!:\![A]^{-1}_R$, and so by $\runa{TS-$\ocircle$LR}$ we obtain $\Delta',b:D\vdash P[d\mapsto b] :: a\!:\!A$. The second part of the lemma applies to $P[a\mapsto b]$. We have by induction that $[\Delta]^{-1}_L\vdash P[a\mapsto b] :: b\!:\![A]^{-1}_R$, and so by $\runa{TS-$\ocircle$LR}$ we obtain $\Delta\vdash P[a\mapsto b] :: b\!:\!A$.
+
+\item[$\runa{TS-$\lozenge$L}$] We have that $\Delta,a:\lozenge A\vdash P :: c\!:\!C$ because $\Delta\;\texttt{delayed}^\Box$, $C\;\texttt{delayed}^\lozenge$ and $\Delta,a:A\vdash P :: c\!:\!C$. We consider the cases separately
+\begin{enumerate}
+    \item We either replace $a$ or some $d\in\text{dom}(\Delta)$. We consider them separately
+    \begin{itemize}
+        \item By induction we have that $\Delta,b:A\vdash P[a\mapsto b] :: c\!:\!C$, and by application of $\runa{TS-$\lozenge$L}$ we obtain $\Delta,b:\lozenge A\vdash P[a\mapsto b] :: c\!:\!C$ as required.
+        
+        \item There exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$, and so by induction we have that $\Delta',b:D,a:A\vdash P[d\mapsto b] :: c\!:\!C$. As the types are unchanged it follows that also $\Delta',b:D\;\texttt{delayed}^\Box$. Then by application of $\runa{TS-$\lozenge$L}$ we obtain $\Delta',b:D,a:\lozenge A\vdash P[d\mapsto b] :: c\!:\!C$ as required.
+    \end{itemize}
+    
+    \item We replace $c$, and so by induction we have that $\Delta, a:A\vdash P[c\mapsto b] :: b\!:\!C$. By application of $\runa{TS-$\lozenge$L}$ we obtain $\Delta,a:\lozenge A\vdash P[c\mapsto b] :: b\!:\!C$ as required.
+\end{enumerate}
+
+%The first part of the lemma applies to $P[d\mapsto b]$ when either $d=a$ or $\Delta = \Delta',d:D$. In the first case we have by induction that $\Delta,b:A\vdash P[a\mapsto b] :: c\!:\!C$, and so from $\runa{TS-$\lozenge$L}$ we obtain $\Delta,b:\lozenge A\vdash P[a\mapsto b] :: c\!:\!C$. For the second case we have by induction that $\Delta',b:D,a:A\vdash P[d\mapsto b] :: c\!:\!C$, and as the types are unchanged it follows that also $\Delta',b:D\;\texttt{delayed}^\Box$. Then from  and from $\runa{TS-$\lozenge$L}$ we obtain $\Delta',b:D,a:\lozenge A\vdash P[d\mapsto b] :: c\!:\!C$. The second part of the lemma applies to $P[d\mapsto b]$ when $d=c$. Then we have by induction that $\Delta, a:A\vdash P[c\mapsto b] :: b\!:\!C$, and it follows from $\runa{TS-$\lozenge$L}$ that also $\Delta,a:\lozenge A\vdash P[c\mapsto b] :: b\!:\!C$.
+
+\item[$\runa{TS-$\lozenge$R}$] We have that $\Delta\vdash P :: c\!:\!\lozenge C$ because $\Delta\vdash P :: c\!:\!C$. We consider the cases separately
+\begin{enumerate}
+    \item We replace some $d\in\text{dom}(\Delta)$, and so there exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$. By induction we have that $\Delta',b:D\vdash P[d\mapsto b] :: c\!:\!C$, and by application of $\runa{TS-$\lozenge$R}$ we obtain $\Delta',b:D\vdash P[d\mapsto b] :: c\!:\!C$ as required.
+    
+    \item We replace $c$, and so by induction we have that $\Delta\vdash P[c\mapsto b] :: b\!:\!C$. By application of $\runa{TS-$\lozenge$R}$ we obtain $\Delta\vdash P[c\mapsto b] :: b\!:\!\lozenge C$ as required.
+\end{enumerate}
+
+%The first part of the lemma applies to $P[d\mapsto b]$ when $\Delta = \Delta',d:D$. We have by induction that $\Delta',b:D\vdash P[d\mapsto b] :: c\!:\!C$, and from $\runa{TS-$\lozenge$R}$ we obtain $\Delta',b:D\vdash P[d\mapsto b] :: c\!:\!C$. The second part of the lemma applies to $P[d\mapsto b]$ when $d=c$. Then we have by induction that $\Delta\vdash P[c\mapsto b] :: b\!:\!C$, and it follows from $\runa{TS-$\lozenge$R}$ that also $\Delta\vdash P[c\mapsto b] :: b\!:\!\lozenge C$.
+
+\item[$\runa{TS-$\Box$L}$] We have that $\Delta,a:\Box A\vdash P :: c\!:\!C$ because $\Delta,a:A\vdash P :: c\!:\!C$. We consider the cases separately
+\begin{enumerate}
+    \item We either replace $a$ or some $d\in\text{dom}(\Delta)$. We consider them separately
+    \begin{itemize}
+        \item By induction we have that $\Delta,b:A\vdash P[a\mapsto b] :: c\!:\!C$ and by application of $\runa{TS-$\Box$L}$ we obtain $\Delta,b:\Box A\vdash P[a\mapsto b] :: c\!:\!C$ as required.
+        
+        \item There exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$, and so by induction we have that $\Delta',b:D,a:A\vdash P[d\mapsto b] :: c\!:\!C$. By application of $\runa{TS-$\Box$L}$ we obtain $\Delta',b:D,a:\Box A\vdash P[d\mapsto b] :: c\!:\!C$ as required.
+    \end{itemize}
+    
+    \item We replace $c$, and so by induction we have that $\Delta, a:A\vdash P[c\mapsto b] :: b\!:\!C$, and by application of $\runa{TS-$\Box$L}$ we obtain $\Delta,a:\Box A\vdash P[c\mapsto b] :: b\!:\!C$ as required.
+\end{enumerate}
+
+%The first part of the lemma applies to $P[d\mapsto b]$ when either $d=a$ or $\Delta = \Delta',d:D$. In the first case we have by induction that $\Delta,b:A\vdash P[a\mapsto b] :: c\!:\!C$ and so we obtain from $\runa{TS-$\Box$L}$ that also $\Delta,b:\Box A\vdash P[a\mapsto b] :: c\!:\!C$. For the second case we have by induction that $\Delta',b:D,a:A\vdash P[d\mapsto b] :: c\!:\!C$, and from $\runa{TS-$\Box$L}$ we obtain $\Delta',b:D,a:\Box A\vdash P[d\mapsto b] :: c\!:\!C$. The second part of the lemma applies to $P[d\mapsto b]$ when $d=c$. Then we have by induction that $\Delta, a:A\vdash P[c\mapsto b] :: b\!:\!C$, and it follows from $\runa{TS-$\Box$L}$ that also $\Delta,a:\Box A\vdash P[c\mapsto b] :: b\!:\!C$.
+
+\item[$\runa{TS-$\Box$R}$] We have that $\Delta\vdash P :: c\!:\!\Box C$ because $\Delta\;\texttt{delayed}^\Box$ and $\Delta\vdash P :: c\!:\!C$. We consider the cases separately
+\begin{enumerate}
+    \item We replace some $d\in\text{dom}(\Delta)$, and so there exists $\Delta'$ and $D$ such that $\Delta=\Delta',d:D$. By induction we have that $\Delta',b:D\vdash P[d\mapsto b] :: c\!:\!C$. Then, as the types are unchanged, it follows that also $\Delta',b:D\;\texttt{delayed}^\Box$. By application of $\runa{TS-$\Box$R}$ we then obtain $\Delta',b:D\vdash P[d\mapsto b] :: c\!:\!\Box C$ as required.
+    
+    \item We replace $c$, and so by induction we have that $\Delta\vdash P[c\mapsto b] :: b\!:\!C$, and by application of $\runa{TS-$\Box$R}$ we obtain $\Delta\vdash P[c\mapsto b] :: b\!:\!\Box C$ as required.
+\end{enumerate}
+
+%The first part of the lemma applies to $P[d\mapsto b]$ when $\Delta = \Delta',d:D$. We have by induction that $\Delta',b:D\vdash P[d\mapsto b] :: c\!:\!C$, and as the types are unchanged it follows that also $\Delta',b:D\;\texttt{delayed}^\Box$. Then from $\runa{TS-$\Box$R}$ we obtain $\Delta',b:D\vdash P[d\mapsto b] :: c\!:\!\Box C$. The second part of the lemma applies to $P[d\mapsto b]$ when $d=c$. Then we have by induction that $\Delta\vdash P[c\mapsto b] :: b\!:\!C$, and it follows from $\runa{TS-$\Box$R}$ that also $\Delta\vdash P[c\mapsto b] :: b\!:\!\Box C$.
+
+\end{description}
+\end{proof}
+\end{lemma}
+
+
+% \begin{lemma}\label{lemma:contextredex}
+% If $P$ is a redex and $\Delta\vdash C[P] :: a\!:\!A$ such that $P\longrightarrow P'$ then $\Delta\vdash C[P'] :: a\!:\!A$.
+% \begin{proof}
+% By induction on the reduction rules 
+% \end{proof}
+% \end{lemma}
+
+
+
+
+\begin{theorem}[Subject reduction]
+If $\Delta \vdash P :: a\!:\!A$ and $P \longrightarrow Q$ then $\Delta\vdash Q :: a\!:\!A$.
+\begin{proof}
+By induction on the reduction rules. For a process to be well-typed and reduce, it must be typed with either $\runa{TS-$\ocircle$LR'}$, $\runa{TS-cut}$ or $\runa{TS-def}$, and so it suffices to consider $\runa{R-tick}$, $\runa{R-res}$, $\runa{R-id}$ and $\runa{R-struct}$. We omit $\runa{R-struct}$ as typability is closed under structural congruence. We consider the cases separately
+\begin{description}
+\item[$\runa{R-tick}$] We have that $P=\texttt{tick}.P'$ and $Q = P'$. Then by $\runa{TS-$\ocircle$LR'}$, we have that $[\Delta]^{-1}_L \vdash P' :: [a:A]^{-1}_R$ such that $\Delta \vdash \texttt{tick}.P' :: a\!:\!A$. It follows from type rule $\runa{TS-$\ocircle$LR}$ that also $\Delta \vdash P' :: a\!:\!A$.
+
+\item[$\runa{R-res}$] We have that $P\equiv\newvar{a}{(P'' \mid P'')}$. Then for $P$ to be well-typed, we must use either $\runa{TS-cut}$ or $\runa{TS-def}$. We consider the cases separately
+\begin{description}
+    \item[$\runa{TS-cut}$] We have that $\Delta\vdash \newvar{a}{(P' \mid P'') :: c\!:\!C}$ with $\Delta=\Delta_1,\Delta_2$ such that $\Delta_1\vdash P' :: a\!:\!A$ and $\Delta_2,a:A\vdash P'' :: c\!:\!C$. Then either $P' \longrightarrow Q'$ or $P''\longrightarrow Q''$ by $\runa{R-par}$ or $P' \mid P'' \longrightarrow Q'\mid Q''$ such that $P'\neq Q'$ and $P''\neq Q''$. In the two first cases we obtain $\Delta_1\vdash Q' :: a\!:\!A$ by induction from $\Delta_1\vdash P' :: a\!:\!A$ and $\Delta_2,a:A\vdash Q'' :: c\!:\!C$ by induction from $\Delta_2,a:A\vdash P'' :: c\!:\!C$, respectively, from which we obtain $\Delta\vdash Q :: c\!:\!C$ by $\runa{TS-cut}$. In the third case as $P' \mid P''$ reduces, $P'$ and $P''$ must synchronize. We then have the canonical form $P\equiv\newvar{\widetilde{d}}{(R_1 \mid R_2 \mid \cdots \mid R_n)}$ such that $R_1$ and $R_2$ correspond to the prefixes that synchronize in $P'$ and $P''$, and so we have $R_1 \mid R_2 \longrightarrow R_1' \mid R_2'$. Then for $P$ to be well-typed, each parallel composition must be wrapped in a restriction and be typed with either $\runa{TS-cut}$ or $\runa{TS-def}$, such that $\widetilde{d}$ contains $n-1$ names. By premise of these rules, there must be some partitions $\Delta_1=\Delta_1',\Delta_1''$ and $\Delta_2=\Delta_2',\Delta_2''$ such that $\Delta_1'\vdash R_1 :: a\!:\!A$ and $\Delta_2',a:A\vdash R_2 :: b\!:\!B$. For $Q$ to also be well-typed under the same typing as $P$, it then suffices to show that there exists some new partition $\Delta_1',\Delta_2'=\Delta_3,\Delta_4$ and type $A'$ such that $\Delta_3\vdash R_1' :: a\!:\!A'$ and $\Delta_4,a:A'\vdash R_2' :: b\!:\!B$. We consider the cases of the reduction 
+    \begin{description}
+    \item[$\runa{R-comm}$]
+    Assume we reduce by $\runa{R-comm}$ then $R_1 \mid R_2 \equiv \inputch{a}{v}{}{R_1'} \mid \outputch{a}{w}{}{R_2'}$ for some name $w$ and processes $R_1'$ and $R_2'$, such that $\inputch{a}{v}{}{R_1'} \mid \outputch{a}{b}{}{R_2'} \longrightarrow R_1'[v\mapsto b] \mid R_2'$. Then $R_1$ and $R_2$ have two possible typings
+    \begin{enumerate}
+    \item $A=A'\multimap A''$ and $\Delta_2'=\Delta_3',w:A'$ such that $\Delta_1' \vdash \inputch{a}{v}{}{R_1'} :: a\!:\!A' \multimap A''$ and $\Delta_3',a : A'\multimap A'', w : A' \vdash \outputch{a}{w}{}{R_2'} :: b\!:\!B$ by $\runa{TS-$\multimap$R}$ and $\runa{TS-$\multimap$L}$. By the premises to these rules we have that $\Delta_1',v : A' \vdash R_1' :: a\!:\!A''$ and $\Delta_3',a:A''\vdash R_2' :: b\!:\!B$. This implies $\Delta_1',w : A'\vdash R'[v\mapsto w] :: a\!:\!A''$ by Lemma \ref{lemma:substlem}, and $\Delta_1',\Delta_2'=\Delta_1',w:A',\Delta_3'$. %so by $\runa{TS-cut}$ it follows that $(\Delta',b : A'),\Delta_3\vdash \newvar{a}{(R'[v\mapsto b] \mid R'') :: c\!:\!C}$ and $\Delta = (\Delta',b : A'),\Delta_3$.
+    
+    %
+    
+    \item $A=A'\otimes A''$ and $\Delta_1'=\Delta_3',w:A$ such that $\Delta_3,w:A' \vdash \outputch{a}{w}{}{R_1'} :: a\!:\!A'\otimes A''$ and $\Delta_2',a : A'\otimes A''\vdash \inputch{a}{v}{}{R_2'} :: b\!:\!B$ by $\runa{TS-$\otimes$R}$ and $\runa{TS-$\otimes$L}$. By the premises to these rules we have that $\Delta_3'\vdash R_1' :: a\!:\!A''$ and $\Delta_2',a:A'',v:A'\vdash R_2' :: b\!:\!B$. This implies $\Delta_2',a:A'',w:A'\vdash R_2'[v\mapsto w] :: b\!:\!B$ by Lemma \ref{lemma:substlem}, and $\Delta_1',\Delta_2'=\Delta_3',\Delta_2',w:A'$. %so by $\runa{TS-cut}$ it follows that $\Delta_3,(\Delta'',b : A')\vdash \newvar{a}{(R'' \mid R'[v\mapsto b])} :: c\!:\!C$ and $\Delta = \Delta_3,(\Delta'',b : A')$.
+\end{enumerate}
+    
+    %
+    
+    
+    \item[$\runa{R-choice}$] Assume we reduce by $\runa{R-choice}$ then $R_1 \mid R_2 \equiv a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R$ for some label $k$ and set of labels $L$, such that $k\in L$ and $a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R \longrightarrow P_k \mid R$. Then $R_1$ and $R_2$ have two possible typings
+\begin{enumerate}
+    \item $A=\&\{l : A_l\}_{l\in L}$ and $\Delta_1'\vdash a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L} :: a\!:\!\&\{l : A_l\}_{l\in L}$ and $\Delta_2', a : \&\{l : A_l\}_{l\in L}\vdash a.k; R :: b\!:\!B$ by $\runa{TS-$\&$R}$ and $\runa{TS-$\&$L}$. By the premises of these rules we have that $\Delta_1' \vdash P_k :: a\!:\!A_k$ and $\Delta_2',a : A_k\vdash R :: b\!:\!B$, such that $R_1' = P_k$ and $R_2'=R$ and so we obtain $\Delta_1',\Delta_2'=\Delta_1',\Delta_2'$ directly.
+        
+    %
+    
+    \item $A=\oplus\{l : A_l\}_{l\in L}$ and $\Delta_1'\vdash a.k; R :: a\!:\!\oplus\{l : A_l\}_{l\in L}$ and $\Delta_2',a : \oplus\{l : A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L} :: b\!:\!B$ by $\runa{TS-$\oplus$R}$ and $\runa{TS-$\oplus$L}$. By the premises of these rules we have that $\Delta_1'\vdash R :: a\!:\!A_k$ and $\Delta_2',a : A_k\vdash P_k :: b\!:\!B$, such that $R_1'=R$ and $R_2'=P_k$ and so we obtain $\Delta_1',\Delta_2'=\Delta_1',\Delta_2'$ directly.
+    
+\end{enumerate}
+    
+    \end{description}
+    
+    
+    %$R_1 \mid R_2$ must be a redex such that $R_1 \mid R_2 \longrightarrow R_1' \mid R_2'$, and so we obtain $\Delta\vdash\newvar{\widetilde{b}}{([R_1' \mid R_2'] \mid R_\text{rem})} :: c\!:\!C$ from $\Delta\vdash\newvar{\widetilde{b}}{([R_1 \mid R_2] \mid R_\text{rem})} :: c\!:\!C$ by Lemma \ref{lemma:contextredex}.
+    
+    \item[$\runa{TS-def}$] We have that $\Delta\vdash \newvar{a}{(a \leftarrow f \leftarrow \widetilde{b} \mid P'')} :: c\!:\!C$ with $\Delta=\Delta',\widetilde{b} : \widetilde{B}$ such that $(\widetilde{d} :\widetilde{B} \vdash f = Q' :: g\!:\!A) \in \Sigma$ and $\Delta',a:A\vdash P'' :: c\!:\!C$. Then either $a \leftarrow f \leftarrow \widetilde{b} \longrightarrow Q'[g\mapsto a, \widetilde{d}\mapsto\widetilde{b}]$ by $\runa{R-par}$ and $\runa{R-def}$ or $P''\longrightarrow Q''$ by $\runa{R-par}$. In the first case we obtain $\widetilde{b}:\widetilde{B}\vdash Q'[g\mapsto a, \widetilde{d}\mapsto\widetilde{b}] :: a\!:\!A$ from $\widetilde{d} :\widetilde{B} \vdash Q' :: g\!:\!A$ by Lemma \ref{lemma:substlem}. It follows from $\runa{TS-cut}$ that $\Delta\vdash \newvar{a}{(Q'[g\mapsto a, \widetilde{d}\mapsto\widetilde{b}] \mid P'')} :: c\!:\!C$. In the second case we obtain $\Delta',a:A\vdash Q'' :: c\!:\!C$ by induction from $\Delta',a:A\vdash P'' :: c\!:\!C$. It follows from $\runa{TS-def}$ that $\Delta\vdash \newvar{a}{(a \leftarrow f \leftarrow \widetilde{b} \mid Q'')} :: c\!:\!C$.
+\end{description}
+
+\item[$\runa{R-id}$] We have that $P \equiv \newvar{a}{\newvar{b}{(P' \mid a \leftarrow b)}}$ such that $Q \equiv \newvar{h}{(P'[a\mapsto h,b\mapsto h])}$ for some name $h$ not free in $P'$. Then, as restrictions are only typable by $\runa{TS-cut}$ and $\runa{TS-def}$, $P'$ must be of the form $R' \mid R''$ such that $P \equiv \newvar{a}{(R' \mid \newvar{b}{(R'' \mid a \leftarrow b)})}$ or $P \equiv \newvar{b}{(R' \mid \newvar{a}{(R'' \mid a \leftarrow b)})}$. We consider the cases separately
+\begin{enumerate}
+    \item $\Delta'',a:A \vdash R' :: c\!:\!C$ such that $\Delta'\vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$ and $\Delta',\Delta''\vdash P :: c\!:\!C$ using $\runa{TS-cut}$. Then we can type $\newvar{b}{(R'' \mid a \leftarrow b)}$ with either $\runa{TS-cut}$ or $\runa{TS-def}$
+    \begin{enumerate}
+        \item $\Delta' \vdash R'' :: b\!:\!A$ such that $b:A\vdash a \leftarrow b :: a\!:\!A$ and $\Delta' \vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$. Then it follows by Lemma \ref{lemma:substlem} that $\Delta''\vdash R''[a\mapsto h,b\mapsto h] :: h\!:\!A$ and $\Delta'',h:A \vdash R' :: c\!:\!C$ such that $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid R''[a\mapsto h,b\mapsto h]) :: c\!:\!C}$.
+        
+        \item $R'' = b \leftarrow f \leftarrow \widetilde{d}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta' = \widetilde{d}:\widetilde{B}$, $b:A\vdash a \leftarrow b :: a\!:\!A$ and $\Delta' \vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$. Then it follows by Lemma \ref{lemma:substlem} that $\Delta'',h:A \vdash R' :: c\!:\!C$ such that $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid h \leftarrow f \leftarrow \widetilde{d}) :: c\!:\!C}$.
+    \end{enumerate}
+    
+    %
+    
+    \item Either $\Delta' \vdash R' :: b\!:\!A$ or $b \leftarrow f \leftarrow \widetilde{d}$, $\Delta' = \widetilde{d}:\widetilde{B}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta'',b:A\vdash \newvar{a}{(R'' \mid a \leftarrow b)} :: c\!:\!C$ and $\Delta',\Delta''\vdash P :: c\!:\!C$ using $\runa{TS-cut}$ or $\runa{TS-def}$, respectively. In either case we must use $\runa{TS-cut}$ to get $\Delta'',b:A\vdash \newvar{a}{(R'' \mid a \leftarrow b)} :: c\!:\!C$, as we have that $b:A\vdash a\leftarrow b :: a\!:\!A$ and $\Delta'',a:A\vdash R'' :: c\!:\!C$. Then we reach $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid R''[a\mapsto h,b\mapsto h])} :: c\!:\!C$ by either $\runa{TS-cut}$ or $\runa{TS-def}$. In either case we have that $\Delta'',h:A\vdash R''[a\mapsto h,b\mapsto h] :: c\!:\!C$. In the first case we have that $\Delta' \vdash R'[a\mapsto h,b\mapsto h] :: h\!:\!A$ and the latter case trivially follows by $R'[a\mapsto h,b\mapsto h] = h \leftarrow f \leftarrow \widetilde{d}$, concluding the proof.
+\end{enumerate}
+\end{description}
+
+% OLD BEGIN !
+
+% by induction on the extended reduction rules. The proof uses the fact that a well-typed process cannot \textit{consume} the session it provides on reduction, by type rules $\runa{TS-cut}$ and $\runa{TS-def}$. The proof is slightly tedious, as the type rules are not syntax directed.
+% \begin{description}
+% \item[$\runa{R-tick}$] Assume that $P$ reduces by $\runa{R-tick}$, such that $P$ is of the form $\texttt{tick}.P'$ and $Q = P'$. Then by $\runa{TS-$\ocircle$LR'}$, we have that $[\Delta]^{-1}_L \vdash P' :: [a:A]^{-1}_R$ such that $\Delta \vdash \texttt{tick}.P' :: a\!:\!A$. It follows from type rule $\runa{TS-$\ocircle$LR}$ that also $\Delta \vdash P' :: a\!:\!A$.
+
+% %
+
+% \item[$\runa{R-id}$] Assume that $P$ reduces by $\runa{R-id}$ then we have that $P \equiv \newvar{a}{\newvar{b}{(P' \mid a \leftarrow b)}}$ such that $Q \equiv \newvar{h}{(P'[a\mapsto h,b\mapsto h])}$ for some name $h \notin fv(P')$. Then, as restrictions are only typable by $\runa{TS-cut}$ and $\runa{TS-def}$, $P'$ must be of the form $R' \mid R''$ such that $P \equiv \newvar{a}{(R' \mid \newvar{b}{(R'' \mid a \leftarrow b)})}$ or $P \equiv \newvar{b}{(R' \mid \newvar{a}{(R'' \mid a \leftarrow b)})}$. We consider the cases separately
+% \begin{enumerate}
+%     \item $\Delta'',a:A \vdash R' :: c\!:\!C$ such that $\Delta'\vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$ and $\Delta',\Delta''\vdash P :: c\!:\!C$ using $\runa{TS-cut}$. Then we can type $\newvar{b}{(R'' \mid a \leftarrow b)}$ with either $\runa{TS-cut}$ or $\runa{TS-def}$
+%     \begin{enumerate}
+%         \item $\Delta' \vdash R'' :: b\!:\!A$ such that $b:A\vdash a \leftarrow b :: a\!:\!A$ and $\Delta' \vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$. Then it follows by Lemma \ref{lemma:substlem} that $\Delta''\vdash R''[a\mapsto h,b\mapsto h] :: h\!:\!A$ and $\Delta'',h:A \vdash R' :: c\!:\!C$ such that $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid R''[a\mapsto h,b\mapsto h]) :: c\!:\!C}$.
+        
+%         \item $R'' = b \leftarrow f \leftarrow \widetilde{d}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta' = \widetilde{d}:\widetilde{B}$, $b:A\vdash a \leftarrow b :: a\!:\!A$ and $\Delta' \vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$. Then it follows by Lemma \ref{lemma:substlem} that $\Delta'',h:A \vdash R' :: c\!:\!C$ such that $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid h \leftarrow f \leftarrow \widetilde{d}) :: c\!:\!C}$.
+%     \end{enumerate}
+    
+%     %
+    
+%     \item Either $\Delta' \vdash R' :: b\!:\!A$ or $b \leftarrow f \leftarrow \widetilde{d}$, $\Delta' = \widetilde{d}:\widetilde{B}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta'',b:A\vdash \newvar{a}{(R'' \mid a \leftarrow b)} :: c\!:\!C$ and $\Delta',\Delta''\vdash P :: c\!:\!C$ using $\runa{TS-cut}$ or $\runa{TS-def}$, respectively. In either case we must use $\runa{TS-cut}$ to get $\Delta'',b:A\vdash \newvar{a}{(R'' \mid a \leftarrow b)} :: c\!:\!C$, as we have that $b:A\vdash a\leftarrow b :: a\!:\!A$ and $\Delta'',a:A\vdash R'' :: c\!:\!C$. Then we reach $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid R''[a\mapsto h,b\mapsto h])} :: c\!:\!C$ by either $\runa{TS-cut}$ or $\runa{TS-def}$. In either case we have that $\Delta'',h:A\vdash R''[a\mapsto h,b\mapsto h] :: c\!:\!C$. In the first case we have that $\Delta' \vdash R'[a\mapsto h,b\mapsto h] :: h\!:\!A$ and the latter case trivially follows by $R'[a\mapsto h,b\mapsto h] = h \leftarrow f \leftarrow \widetilde{d}$.
+% \end{enumerate}
+
+% %
+
+% \item[$\runa{R-comm}$] Assume we reduce $P$ by $\runa{R-comm}$ then $P \equiv \inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''}$ for some name $b$ and processes $R'$ and $R''$, such that $\inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''} \longrightarrow R'[v\mapsto b] \mid R''$. For $P$ to be well-typed, it must be part of a larger process $\Delta',\Delta''\vdash\newvar{a}{P} :: c\!:\!C$ typed with $\runa{TS-cut}$ for which we have two cases
+% \begin{enumerate}
+%     \item $\Delta' \vdash \inputch{a}{v}{}{R'} :: a\!:\!A' \multimap A''$ and $\Delta_3,a : A'\multimap A'', b : A' \vdash \outputch{a}{b}{}{R''} :: c\!:\!C$ by $\runa{TS-$\multimap$R}$ and $\runa{TS-$\multimap$L}$ such that $\Delta'' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta',v : A' \vdash R' :: a\!:\!A''$ and $\Delta_3,a:A''\vdash R'' :: c\!:\!C$. This implies $\Delta',b : A'\vdash R'[v\mapsto b] :: a\!:\!A''$, and so by $\runa{TS-cut}$ it follows that $(\Delta',b : A'),\Delta_3\vdash \newvar{a}{(R'[v\mapsto b] \mid R'') :: c\!:\!C}$ and $\Delta = (\Delta',b : A'),\Delta_3$.
+    
+%     %
+    
+%     \item $\Delta_3,b:A' \vdash \outputch{a}{b}{}{R''} :: a\!:\!A'\otimes A''$ and $\Delta'',a : A'\otimes A''\vdash \inputch{a}{v}{}{R'} :: c\!:\!C$ by $\runa{TS-$\otimes$R}$ and $\runa{TS-$\otimes$L}$ such that $\Delta' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta_3\vdash R'' :: a\!:\!A''$ and $\Delta'',a:A'',v:A'\vdash R' :: c\!:\!C$. This implies $\Delta'',a:A'',b:A'\vdash R'[v\mapsto b] :: c\!:\!C$, and so by $\runa{TS-cut}$ it follows that $\Delta_3,(\Delta'',b : A')\vdash \newvar{a}{(R'' \mid R'[v\mapsto b])} :: c\!:\!C$ and $\Delta = \Delta_3,(\Delta'',b : A')$.
+% \end{enumerate}
+
+% %
+
+% \item[$\runa{R-choice}$] Assume we reduce $P$ by $\runa{R-choice}$ then $P \equiv a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R$ for some label $k$ and set of labels $L$, such that $k\in L$ and $a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R \longrightarrow P_k \mid R$. For $P$ to be well-typed, it must be part of a larger process $\Delta',\Delta''\vdash \newvar{a}{P} :: c\!:\!C$ typed with $\runa{TS-cut}$ for which we have two cases
+% \begin{enumerate}
+%     \item $\Delta'\vdash a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L} :: a\!:\!\&\{l : A_l\}_{l\in L}$ and $\Delta'', a : \&\{l : A_l\}_{l\in L}\vdash a.k; R :: c\!:\!C$ by $\runa{TS-$\&$R}$ and $\runa{TS-$\&$L}$. By the premises of these rules we have that $\Delta' \vdash P_k :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash R :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(P_k \mid R) :: c\!:\!C}$.
+        
+%     %
+    
+%     \item $\Delta'\vdash a.k; R :: a\!:\!\oplus\{l : A_l\}_{l\in L}$ and $\Delta'',a : \oplus\{l : A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L} :: c\!:\!C$ by $\runa{TS-$\oplus$R}$ and $\runa{TS-$\oplus$L}$. By the premises of these rules we have that $\Delta'\vdash R :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash P_k :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(R \mid P_k)} :: c\!:\!C$.
+    
+% \end{enumerate}
+
+% %
+
+% \item[$\runa{R-def}$] Assume $P$ reduces by $\runa{R-def}$ then $P = b \leftarrow f \leftarrow \widetilde{d}$ and $(\widetilde{c}:\widetilde{B}\vdash f = P' :: a\!:\!A) \in \Sigma$, such that $Q = P'[a\mapsto b,\widetilde{c}\mapsto\widetilde{d}]$. For $P$ to be well-typed it must be part of a larger process $\widetilde{d}:\widetilde{B},\Delta'\vdash \newvar{b}{(P \mid R)} :: c\!:\!C$ typed with $\runa{TS-def}$ such that $\Delta',b:A\vdash R :: c\!:\!C$. By Lemma \ref{lemma:substlem} we have that $\widetilde{d}:\widetilde{B}\vdash P'[a\mapsto b,\widetilde{c}\mapsto\widetilde{d}] :: b\!:\!B$ and so by $\runa{TS-cut}$ we have that $\widetilde{d}:\widetilde{B},\Delta'\vdash \newvar{b}{(Q \mid R)} :: c\!:\!C$.
+
+% %
+
+% \item[$\runa{R-res}$] Assume that $P$ reduces by $\runa{R-res}$ then we have that $P \equiv \newvar{a}{P'}$ for some name $a$ such that $P' \longrightarrow Q'$. Then $P$ must be typed either with $\runa{TS-cut}$ or $\runa{TS-def}$ and so $P' \equiv R' \mid R''$ yielding two cases
+% \begin{enumerate}
+%     \item $\Delta'\vdash R' :: a\!:\!A$ such that $\Delta'',a:A\vdash R'' :: c\!:\!C$ and $\Delta',\Delta''\vdash \newvar{a}{P'}::c\!:\!C$. Either $R' \mid R''$ reduces by $\runa{R-par}$, $\runa{R-comm}$, $\runa{R-choice}$ or $\runa{R-struct}$. The first three cases are covered by the clauses for the corresponding rules, and the last case holds by induction as typability is closed under structural congruence.
+    
+%     \item $R' = a \leftarrow f \leftarrow \widetilde{b}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta' = \widetilde{b}:\widetilde{B}$, $\Delta'',a:A\vdash R'' :: c\!:\!C$ and $\Delta',\Delta''\vdash \newvar{a}{P'}::c\!:\!C$. Then either $R' \mid R''$ reduces by $\runa{R-par}$ or $\runa{R-struct}$. The first case is covered by the clause for $\runa{R-par}$, and the last case holds by induction as typability is closed under structural congruence.
+% \end{enumerate}
+
+% %
+
+% \item[$\runa{R-par}$] Assume that $P$ reduces by $\runa{R-par}$ then we have that $P \equiv P' \mid P''$ such that $P' \longrightarrow Q'$. For $P$ to be well-typed, it must be part of a larger well-typed process $\newvar{a}{(P'\mid P'')}$ typed with either $\runa{TS-cut}$ or $\runa{TS-def}$ such that either
+% \begin{enumerate}
+%     \item $\Delta'\vdash P' :: a\!:\!A$ such that $\Delta'',a:A\vdash P'' :: c\!:\!C$ and $\Delta',\Delta''\vdash \newvar{a}{(P'\mid P'')}::c\!:\!C$. Then by induction we have that $\Delta'\vdash Q' :: a\!:\!A$ and so it follows that $\Delta',\Delta''\vdash \newvar{a}{(Q' \mid P'')}::c\!:\!C$
+    
+%     \item $P' = a \leftarrow f \leftarrow \widetilde{b}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta' = \widetilde{b}:\widetilde{B}$, $\Delta'',a:A\vdash P'' :: c\!:\!C$ and $\widetilde{b}:\widetilde{B},\Delta''\vdash \newvar{a}{P' \mid P''}::c\!:\!C$. Then it must be that $P'$ reduces to $Q'$ by $\runa{TS-def}$ such that $Q' = R[g\mapsto a,\widetilde{e}\mapsto\widetilde{b}]$. By renaming $\widetilde{e} : \widetilde{B}\vdash R :: g\!:\!A$ implies $\widetilde{b} : \widetilde{B}\vdash Q' :: a\!:\!A$ such that $\widetilde{b}:\widetilde{B},\Delta''\vdash \newvar{a}{(Q' \mid P''):: c\!:\!C}$ by $\runa{T-cut}$.
+% \end{enumerate}
+
+%%%
+%%
+%%
+%%%
+
+%when they contain no named processes, for $P$ to be well-typed, $P$ must be a subprocess of a larger well-typed process $R \equiv \newvar{a}{\newvar{b}{P}} \equiv \newvar{a}{(\outputch{a}{d}{}{P'} \mid \newvar{b}{(\inputch{b}{v}{}{P''} \mid b \leftarrow a}))}$ such that $\Delta',\Delta''\vdash R :: c\!:\!C$. Then from the premises of $\runa{TS-cut}$, we have that $\Delta'',a:A\vdash \outputch{a}{d}{}{P'} ::c\!:\!C$ and (by $\runa{TS-cut}$ again) $\Delta'\vdash \newvar{b}{(\inputch{b}{v}{}{P''} \mid b \leftarrow a}) :: a\!:\!A$ such that $\Delta' \vdash \inputch{b}{v}{}{P''} :: b\!:\!A$ by $\runa{TS-$\multimap$R}$ and $b : A\vdash b \leftarrow a :: a\!:\!A$ by $\runa{TS-id}$. The full reduced process is then $\newvar{a}{\newvar{b}{(P' \mid P''[v\mapsto d])}}$
+
+%
+%%%%%%%%%%
+%
+
+% \item[$\runa{R-res}$] Assume that $P$ reduces by $\runa{R-res}$. Then for $P$ to be well-typed, $P$ must be typed by either $\runa{TS-cut}$ or $\runa{TS-def}$. We consider the cases separately
+% \begin{description}
+% \item[$\runa{TS-cut}$] We have that $P$ is of the form $\newvar{a}{(P'\mid P'')}$ such that $\Delta' \vdash P' :: a\!:\!A$, $\Delta'', a : A\vdash P'' :: c\!:\!C$ and $\Delta',\Delta'' \vdash \newvar{a}{(P'\mid P'')} :: c\!:\!C$. By $\runa{R-res}$ we have that $P' \mid P''$ must reduce, for which several rules apply
+% \begin{description}
+% \item[$\runa{R-comm}$] If we reduce the parallel composition by $\runa{R-comm}$ then $P' \mid P'' \equiv \inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''}$ for some name $b$ and processes $R'$ and $R''$, such that $\inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''} \longrightarrow R'[v\mapsto b] \mid R''$. We have two cases
+% \begin{enumerate}
+%     \item $\Delta' \vdash \inputch{a}{v}{}{R'} :: a\!:\!A' \multimap A''$ and $\Delta_3,a : A'\multimap A'', b : A' \vdash \outputch{a}{b}{}{R''} :: c\!:\!C$ by $\runa{TS-$\multimap$R}$ and $\runa{TS-$\multimap$L}$ such that $\Delta'' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta',v : A' \vdash R' :: a\!:\!A''$ and $\Delta_3,a:A''\vdash R'' :: c\!:\!C$. This implies $\Delta',b : A'\vdash R'[v\mapsto b] :: a\!:\!A''$, and so by $\runa{TS-cut}$ it follows that $(\Delta',b : A'),\Delta_3\vdash \newvar{a}{(R'[v\mapsto b] \mid R'') :: c\!:\!C}$ and $\Delta = (\Delta',b : A'),\Delta_3$.
+    
+%     %
+    
+%     \item $\Delta_3,b:A' \vdash \outputch{a}{b}{}{R''} :: a\!:\!A'\otimes A''$ and $\Delta'',a : A'\otimes A''\vdash \inputch{a}{v}{}{R'} :: c\!:\!C$ by $\runa{TS-$\otimes$R}$ and $\runa{TS-$\otimes$L}$ such that $\Delta' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta_3\vdash R'' :: a\!:\!A''$ and $\Delta'',a:A'',v:A'\vdash R' :: c\!:\!C$. This implies $\Delta'',a:A'',b:A'\vdash R'[v\mapsto b] :: c\!:\!C$, and so by $\runa{TS-cut}$ it follows that $\Delta_3,(\Delta'',b : A')\vdash \newvar{a}{(R'' \mid R'[v\mapsto b])} :: c\!:\!C$ and $\Delta = \Delta_3,(\Delta'',b : A')$.
+% \end{enumerate}
+
+% \item[$\runa{R-choice}$] If we reduce the parallel composition by $\runa{R-choice}$ then $P' \mid P'' \equiv a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R$ for some label and set of labels $k$ and $L$, such that $k\in L$ and $a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R \longrightarrow P_k \mid R$. We have two cases
+% \begin{enumerate}
+%     \item $\Delta'\vdash a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L} :: a\!:\!\&\{l : A_l\}_{l\in L}$ and $\Delta'', a : \&\{l : A_l\}_{l\in L}\vdash a.k; R :: c\!:\!C$ by $\runa{TS-$\&$R}$ and $\runa{TS-$\&$L}$. By the premises of these rules we have that $\Delta' \vdash P_k :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash R :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(P_k \mid R) :: c\!:\!C}$.
+        
+%     %
+    
+%     \item $\Delta'\vdash a.k; R :: a\!:\!\oplus\{l : A_l\}_{l\in L}$ and $\Delta'',a : \oplus\{l : A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L} :: c\!:\!C$ by $\runa{TS-$\oplus$R}$ and $\runa{TS-$\oplus$L}$. By the premises of these rules we have that $\Delta'\vdash R :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash P_k :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(R \mid P_k)} :: c\!:\!C$.
+    
+% \end{enumerate}
+
+% \item[$\runa{R-id-1}$]
+% \item[$\runa{R-id-2}$]
+% \item[$\runa{R-par}$] If we reduce the parallel composition by $\runa{R-par}$ then $P' \longrightarrow Q'$. Here we can apply induction, as $P'$ cannot be typed as $\Delta' \vdash P' :: a\!:\!A$ and reduce unless it is prefixed by a tick or is wrapped with a restriction (or is structurally congruent to such a process by $\runa{R-struct}$). And so, it follows that $\Delta' \vdash Q' :: a\!:\!A$, such that $\Delta',\Delta'' \vdash \newvar{a}{(Q'\mid P'')} :: c\!:\!C$.
+% \item[$\runa{R-struct}$] todo: induction (with R-par after).
+% \end{description}
+% \item[$\runa{TS-def}$] We have that $P$ is of the form $\newvar{a}{(a\leftarrow f \leftarrow \widetilde{b} \mid P')}$ such that $(\widetilde{d} : \widetilde{B}\vdash f = P :: g\!:\!A) \in \Sigma$, $\Delta',a : A \vdash P' :: c\!:\!C$ and $\Delta',\widetilde{b} : \widetilde{B}\vdash \newvar{a}{(a\leftarrow f \leftarrow \widetilde{b} \mid P') :: c\!:\!C}$. By $\runa{R-res}$ we have that $a\leftarrow f \leftarrow \widetilde{b} \mid P'$ must reduce, for which $\runa{R-par}$ and $\runa{R-struct}$ apply. Note that the parallel composition cannot reduce by $\runa{R-par}$, as  does not  several rules apply.
+% \begin{description}
+% \item[$\runa{R-par}$] todo: R-def --> can type with R-cut after.
+% \item[$\runa{R-struct}$] todo: induction (with R-par after). 
+% \end{description}
+% \end{description}
+
+
+% \item[$\runa{R-struct}$] Assume that $P$ reduces by $\runa{R-struct}$. Then $P \equiv P'$, $P' \longrightarrow Q'$ and $Q' \equiv Q$. As typability is closed under structural congruence and $\Delta \vdash P :: c\!:\!C$ it follows that $\Delta \vdash P' :: c\!:\!C$. By induction this implies $\Delta \vdash Q' :: c\!:\!C$, and as $Q' \equiv Q$ we have that $\Delta\vdash Q :: c\!:\!C$.
+% \end{description}
+\end{proof}
+\end{theorem}
+%
+%
+% \begin{lemma}
+% For any session type $A$ for which $[A]^{-1}_R$ is defined, $\text{time}(A) - 1 \geq \text{time}([A]^{-1}_R)$.
+% \begin{proof}
+% by case analysis on $[A]^{-1}_R$
+% \begin{description}
+% \item[$\dasfwr{\ocircle A'}$] We have that $\dasfwr{\ocircle A'} = A'$ and $\text{time}(\ocircle A') = 1 + \text{time}(A')$. It follows that $\text{time}(\ocircle A') - 1 \geq \text{time}(A')$.
+
+% \item[$\dasfwr{\lozenge A'}$] We have that $\dasfwr{\lozenge A'} = \lozenge A'$ and $\text{time}(\lozenge A') = \infty$. As $\infty - 1 = \infty$ it follows that $\text{time}(\lozenge A') - 1 \geq \text{time}(\lozenge A')$.
+% \end{description}
+% \end{proof}
+% \end{lemma}
+
+\begin{lemma}
+Let $\hat{A}[A]$ and $\hat{A}[[A]^{-1}_R]$ be session types then $\text{time}(\hat{A}[A])-1\geq\text{time}(\hat{A[[A]^{-1}_R]})$.
+\begin{proof}
+On the shape of $\hat{A}[\cdot]$. By definition $\hat{A}[\cdot]$ is a prefix of modalities. If the prefix contains an $\lozenge$ or $\Box$ modality, then $\text{time}(\hat{A}[A])=\text{time}(\hat{A}[[A]^{-1}_R])=\infty$ for any two session types $A$ and $[A]^{-1}_R$. As $\infty-1 = \infty$ we obtain $\text{time}(\hat{A}[A])-1\geq\text{time}(\hat{A}[[A]^{-1}_R])$. Otherwise, $\hat{A}[\cdot]$ only contains $\ocircle$ modalities, and so $\text{time}(\hat{A}[A])$ is equal to $\text{time}(A)$ plus the count of $\ocircle$ modalities in $\hat{A}[\cdot]$ which is constant. Then it remains to show that $\text{time}(A)-1\geq\text{time}([A]^{-1}_R)$. As $[A]^{-1}_R$ is defined we have that either
+\begin{enumerate}
+    \item $A=\dasfwr{\ocircle A'}$ with $\dasfwr{\ocircle A'} = A'$ and $\text{time}(\ocircle A') = 1 + \text{time}(A')$. It follows that $\text{time}(\ocircle A') - 1 \geq \text{time}(A')$.
+    
+    \item $A=\dasfwr{\lozenge A'}$ with $\dasfwr{\lozenge A'} = \lozenge A'$ and $\text{time}(\lozenge A') = \infty$. As $\infty - 1 = \infty$ it follows that $\text{time}(\lozenge A') - 1 \geq \text{time}(\lozenge A')$.
+\end{enumerate}
+% \item[$\dasfwr{\ocircle A'}$] We have that $\dasfwr{\ocircle A'} = A'$ and $\text{time}(\ocircle A') = 1 + \text{time}(A')$. It follows that $\text{time}(\ocircle A') - 1 \geq \text{time}(A')$.
+
+% \item[$\dasfwr{\lozenge A'}$] We have that $\dasfwr{\lozenge A'} = \lozenge A'$ and $\text{time}(\lozenge A') = \infty$. As $\infty - 1 = \infty$ it follows that $\text{time}(\lozenge A') - 1 \geq \text{time}(\lozenge A')$.
+% \end{description}
+\end{proof}
+\end{lemma}
+
+\begin{lemma}
+If $\hat{B}[B]\;\texttt{delayed}^\Box$ then also $\hat{B}[[B]^{-1}_L]\;\texttt{delayed}^\Box$ and if $\hat{A}[A]\;\texttt{delayed}^\lozenge$ then also $\hat{A}[[A]^{-1}_R]\;\texttt{delayed}^\lozenge$.
+\begin{proof}
+On the shapes of $\hat{B}[B]$, $\hat{B}[[B]^{-1}_L]$, $\hat{A}[A]$ and $\hat{A}[[A]^{-1}_R]$. We consider $\texttt{delayed}^\Box$ and $\texttt{delayed}^\lozenge$ separately
+\begin{enumerate}
+    \item If $\hat{B}[B]\;\texttt{delayed}^\Box$ then either $\hat{B}[\cdot]=\ocircle^*\Box$ or $\hat{B}[\cdot]=\ocircle^*$ and $B=\ocircle^*\Box$. The first case is obtained directly and the second case holds by the fact that $[\cdot]^{-1}_L$ preserves $\Box$ by definition.
+    
+    \item If $\hat{A}[A]\;\texttt{delayed}^\lozenge$ then either $\hat{A}[\cdot]=\ocircle^*\lozenge$ or $\hat{A}[\cdot]=\ocircle^*$ and $A=\ocircle^*\lozenge$. The first case is obtained directly and the second case holds by the fact that $[\cdot]^{-1}_R$ preserves $\lozenge$ by definition.
+    
+\end{enumerate}
+\end{proof}
+\end{lemma}
+
+
+% \begin{lemma}
+% Let $P$ be an arbitrary process.
+% \begin{enumerate}
+%     \item If $\Delta,a:\hat{A}[\lozenge A']\vdash P :: c\!:\!C$ then there exists $\hat{\Delta'}[\Delta']=\Delta$ and $\hat{C'}[C']$ such that $\Delta'\;\texttt{delayed}^\Box$ and $C'\;\texttt{delayed}^\lozenge$.
+    
+%     \item If $\Delta\vdash P :: a\!:\!\hat{A}[\Box A']$ then there exists $\hat{\Delta'}[\Delta']=\Delta$ such that $\Delta'\;\texttt{delayed}^\Box$.
+% \end{enumerate}
+% \begin{proof}
+% By induction on the type rules. We only show the interesting cases
+% \begin{description}
+% \item[$\runa{TS-$\ocircle$LR'}$] Consider first (1).\\
+
+% Consider then (2). If $P$ is well-typed with $\runa{TS-$\ocircle$LR'}$ then $P = \tick P'$ such that $\Delta\vdash \tick P' :: a\!:\!\hat{A}[\Box A']$ and $[\Delta]^{-1}_L\vdash P' :: a\!:\![\hat{A}[\Box A']^{-1}_R]$. By induction we have $\hat{\Delta'}[\Delta']=[\Delta]^{-1}_L$ such that $\Delta'\;\texttt{delayed}^\Box$. Then there also exists $\hat{\Delta''}[\Delta']=\Delta$.
+
+% \item[$\runa{TS-$\ocircle$LR}$] Consider first (1).\\
+
+% Consider then (2). If $P$ is well-typed with $\runa{TS-$\ocircle$LR}$ then $\Delta\vdash P :: a\!:\!\hat{A}[\Box A']$ and $[\Delta]^{-1}_L\vdash P :: a\!:\![\hat{A}[\Box A']^{-1}_R]$. By induction we have $\hat{\Delta'}[\Delta']=[\Delta]^{-1}_L$ such that $\Delta'\;\texttt{delayed}^\Box$. Then there also exists $\hat{\Delta''}[\Delta']=\Delta$.
+
+% \item[$\runa{TS-$\lozenge$L}$] Consider first (1).\\
+
+% Consider then (2). If $P$ is well-typed with $\runa{TS-$\lozenge$L}$ then $\Delta,b:\lozenge B \vdash P :: a\!:\!\hat{A}[\Box A']$ and $\Delta,b:B\vdash P :: a\!:\!\hat{A}[\Box A']$. By induction we have $\hat{\Delta'}[\Delta'],b:\hat{B'}[B']=\Delta,b:B$ such that $\Delta',b:B'\;\texttt{delayed}^\Box$. Then there also exists $\hat{\Delta'}[\Delta'],b:\lozenge\hat{B'}[B']=\Delta,b:\lozenge B$.
+
+% \item[$\runa{TS-$\lozenge$R}$] Consider first (1).\\
+
+% Consider then (2). If $P$ is well-typed with $\runa{TS-$\lozenge$R}$ then $\Delta \vdash P :: a\!:\!\lozenge\hat{A}[\Box A']$ and $\Delta \vdash P :: a\!:\!\hat{A}[\Box A']$. By induction we have $\hat{\Delta'}[\Delta']=\Delta$ such that $\Delta'\;\texttt{delayed}^\Box$. 
+
+% \item[$\runa{TS-$\Box$L}$] Consider first (1).\\
+
+% Consider then (2). If $P$ is well-typed with $\runa{TS-$\Box$L}$ then $\Delta,b:\Box B \vdash P :: a\!:\!\hat{A}[\Box A']$ and $\Delta,b:B \vdash P :: a\!:\!\hat{A}[\Box A']$. By induction we have $\hat{\Delta'}[\Delta'],b:\hat{B'}[B']=\Delta,b:B$ such that $\Delta',b:B'\;\texttt{delayed}^\Box$. Then there also exists $\hat{\Delta'}[\Delta'],b:\Box\hat{B'}[B']=\Delta,b:\Box B$. 
+
+% \item[$\runa{TS-$\Box$R}$] Consider first (1).\\
+
+% Consider then (2).
+
+% \item[$\runa{TS-cut}$] Consider first (1).\\
+
+% Consider then (2). 
+
+% \end{description}
+% \end{proof}
+% \end{lemma}
+
+
+% \begin{lemma}
+% If $\Delta\vdash P :: a\!:\!A$ such that $P$ is not prefixed on $a$ and $A$ contains no $\lozenge$ with $P \Longrightarrow^{-1} Q$ such that $P \neq Q$ and $P\!\not\!\leadsto$ then there exists $\hat{\Delta'}[\Delta']=\Delta$ and $\hat{A'}[A']=A$ such that $\hat{\Delta'}[[\Delta']^{-1}_L]\vdash Q :: a\!:\!\hat{A'}[[A']^{-1}_R]$.
+% \begin{proof}
+% By induction on the type rules. We need not consider type rule $\runa{TS-def}$ as that would imply $P\!\!\leadsto$ by $\runa{R-res}$, $\runa{R-par}$ and $\runa{R-def}$. We also need not consider type rules for process prefixes except for $\runa{TS-$\ocircle$LR'}$, as $P\Longrightarrow^{-1} Q$ is productive iff at least one tick is not prefixed. We consider the cases
+% \begin{description}
+% \item[$\runa{TS-$\ocircle$LR'}$] We have that $\Delta\vdash \tick P' :: a\!:\!A$ such that $[\Delta]^{-1}_L\vdash P' :: a\!:\![A]^{-1}_R$. Then as $Q = P'$, we obtain $\hat{\Delta'}[[\Delta']^{-1}_L]\vdash Q :: a\!:\!\hat{A'}[[A']^{-1}_R]$ where $\hat{A'}=[\cdot]$, $\text{dom}(\Delta)=\text{dom}(\hat{\Delta'})$ and for $b\in\text{dom}(\hat{\Delta'})$ we have $\hat{\Delta'}(b)=[\cdot]$.
+
+% \item[$\runa{TS-$\ocircle$LR}$] We have that $\Delta\vdash P :: a\!:\!A$ and $[\Delta]^{-1}_L\vdash P :: a\!:\![A]^{-1}_R$. By induction there exists $\hat{\Delta'}[\Delta']=[\Delta]^{-1}_L$ and $\hat{A'}[A']=[A]^{-1}_R$ such that $\hat{\Delta'}[[\Delta']^{-1}_L]\vdash Q :: a\!:\!\hat{A'}[[A']^{-1}_R]$. As $\hat{\Delta'}[\Delta']=[\Delta]^{-1}_L$ and $\hat{A'}[A']=[A]^{-1}_R$ it must be that $\hat{\Delta'}[\Delta']=[\hat{\Delta''}[\Delta'']]^{-1}_L$ and $\hat{A'}[A']=[\hat{A''}[A'']]^{-1}_R$ for some $\hat{\Delta''}[\Delta'']$ and $\hat{A''}[A'']$ such that also $[\hat{\Delta''}[[\Delta'']^{-1}_L]]^{-1}_L\vdash Q :: a\!:\![\hat{A''}[[A'']^{-1}_R]]^{-1}_R$. It follows from $\runa{TS-$\ocircle$LR}$ that also $\hat{\Delta''}[[\Delta'']^{-1}_L]\vdash Q :: a\!:\!\hat{A''}[[A'']^{-1}_R]$.
+
+% \item[$\runa{TS-$\lozenge$L}$] We have that $\Delta,a:\lozenge A\vdash P :: b\!:\!B$, such that $\Delta\;\texttt{delayed}^\Box$, $B\;\texttt{delayed}^\lozenge$ and $\Delta,a:A\vdash P :: b\!:\!B$. By induction there exists $\hat{\Delta'}[\Delta'],a:\hat{A'}[A']=\Delta,a:A$ and $\hat{B'}[B']=B$ such that $\hat{\Delta'}[[\Delta']^{-1}_L],a:\hat{A'}[[A']^{-1}_L]\vdash Q :: b\!:\!\hat{B'}[[B']^{-1}_R]$ and by Lemma \ref{lemma:progdel} $\hat{\Delta'}[\Delta']\;\texttt{delayed}^\Box$ implies $\hat{\Delta'}[[\Delta']^{-1}_L]\;\texttt{delayed}^\Box$ and $\hat{B'}[B']\;\texttt{delayed}^\lozenge$ implies $\hat{B'}[[B']^{-1}_R]\;\texttt{delayed}^\lozenge$ and so by $\runa{TS-$\lozenge$L}$ we obtain $\hat{\Delta'}[[\Delta']^{-1}_L],a:\lozenge\hat{A'}[[A']^{-1}_L]\vdash Q :: b\!:\!\hat{B'}[[B']^{-1}_R]$.
+
+% \item[$\runa{TS-$\lozenge$R}$] We have that $\Delta\vdash P :: a\!:\!\lozenge A$ and $\Delta\vdash P :: a\!:\!A$. By induction there exists $\hat{\Delta'}[\Delta']=\Delta$ and $\hat{A'}[A']=A$ such that $\hat{\Delta'}[[\Delta']^{-1}_L]\vdash Q :: a\!:\!\hat{A'}[[A']^{-1}_R]$. It follows directly from $\runa{TS-$\lozenge$R}$ that also $\hat{\Delta'}[[\Delta']^{-1}_L]\vdash Q :: a\!:\!\lozenge\hat{A'}[[A']^{-1}_R]$.
+
+% \item[$\runa{TS-$\Box$L}$] We have that $\Delta,a:\Box A\vdash P :: b\!:\!B$ and $\Delta,a:A\vdash P :: b\!:\!B$. By induction there exists $\hat{\Delta'}[\Delta'],a:\hat{A'}[A']=\Delta,a:A$ and $\hat{B'}[B']=B$ such that $\hat{\Delta'}[[\Delta']^{-1}_L],a:\hat{A'}[[A']^{-1}_L]\vdash Q :: b\!:\!\hat{B'}[[B']^{-1}_R]$. It follows directly from $\runa{TS-$\Box$L}$ that also $\hat{\Delta'}[[\Delta']^{-1}_L],a:\Box\hat{A'}[[A']^{-1}_L]\vdash Q :: b\!:\!\hat{B'}[[B']^{-1}_R]$.
+
+% \item[$\runa{TS-$\Box$R}$] We have that $\Delta\vdash P :: a\!:\!\Box A$, $\Delta\;\texttt{delayed}^\Box$ and $\Delta\vdash P :: a\!:\!A$. By induction there exists $\hat{\Delta'}[\Delta']=\Delta$ and $\hat{A'}[A']=A$ such that $\hat{\Delta'}[[\Delta']^{-1}_L]\vdash Q :: a\!:\!\hat{A'}[[A']^{-1}_R]$ and from Lemma \ref{lemma:progdel} $\hat{\Delta'}[[\Delta']^{-1}_L]\;\texttt{delayed}^\Box$ follows from $\hat{\Delta'}[\Delta']\;\texttt{delayed}^\Box$, and so by $\runa{TS-$\Box$R}$ we obtain $\hat{\Delta'}[[\Delta']^{-1}_L]\vdash Q :: a\!:\!\Box\hat{A'}[[A']^{-1}_R]$.
+
+% \item[$\runa{TS-cut}$] We have that $\Delta_1,\Delta_2\vdash \newvar{a}{(P'\mid 
+% P'')} :: c\!:\!C$ with $\Delta_1\vdash P' :: a\!:\!A$ and $\Delta_2,a:A\vdash P'' :: c\!:\!C$. We identify three cases where $P \Longrightarrow^{-1} Q$ is productive
+% \begin{enumerate}
+%     \item $\newvar{a}{(P'\mid P'')} \Longrightarrow^{-1} \newvar{a}{(Q' \mid P'')}$ with $P' \neq Q'$. For $P$ to not be prefixed on $c$, $P''$ also cannot be prefixed on $c$. Then as $P'' \Longrightarrow^{-1} P''$ and $P\!\not\!\leadsto$ the subprocess that provides a session on $A$ in $P'$ must be prefixed with a tick or be $\mathbf{0}$. Thus, $P'$ cannot be prefixed on $a$. Then by induction there exists $\hat{\Delta_1'}[\Delta_1']=\Delta_1$ and $\hat{A'}[A']=A$ such that $\hat{\Delta_1'}[[\Delta_1']^{-1}_L]\vdash Q' :: a\!:\!\hat{A'}[[A']^{-1}_R]$. As $\hat{A'}[[A']^{-1}_R]$ is defined it must be that either
+%     \begin{itemize}
+%         \item $\hat{A'}[A']=\hat{A'}[\lozenge A'']$ for some session type $A''$ and so $\hat{A'}[A']=\hat{A'}[[A']^{-1}_R]$. From this we obtain $\Delta_2,a:\hat{A'}[\lozenge A'']\vdash P'' :: c\!:\!C$. However, by Lemma \ref{lemma:deldiaimp} $C$ then contains an $\lozenge$ modality, contradicting our assumption. %there exists $\Delta_2=\hat{\Delta_2'}[\Delta_2']$ and $C=\hat{C'}[C']$ such that $\Delta_2'\;\texttt{delayed}^\Box$ and $C'\;\texttt{delayed}^\lozenge$. Then $C'=\ocircle^n\lozenge C''$ for some $n\geq 0$ and session type $C''$ and so we obtain $C=\hat{C'}[\ocircle^n[\lozenge C'']]=\hat{C'}[\ocircle^n[[\lozenge C'']^{-1}_R]]=\hat{C''}[[\lozenge C'']^{-1}_R]$ for some $\hat{C''}[\cdot]$, and for $b\in\text{dom}(\Delta_2')$ we have $\Delta_2'(b)=\ocircle^m\Box B'$ for some $m\geq 0$ and session type $B'$ and so $\Delta_2'(b)=\ocircle^m[\Box B']=\ocircle^m[[\Box B']^{-1}_L]$. Thus, there exists $\hat{\Delta_2''}[\Delta_2'']=\Delta_2$ such that $\hat{\Delta_2''}[[\Delta_2'']^{-1}_L],\hat{A'}[[A']^{-1}_R]\vdash P'' :: c\!:\!\hat{C''}[[\lozenge C'']^{-1}_R]$. From $\runa{TS-cut}$ we then obtain $\hat{\Delta_1'}[[\Delta_1']^{-1}_L],\hat{\Delta_2''}[[\Delta_2'']^{-1}_L]\vdash \newvar{a}{(Q'\mid P'') :: c\!:\!\hat{C''}[[\lozenge C'']^{-1}_R]}$.
+        
+%         \item $\hat{A'}[A']=\hat{A'}[\ocircle A'']$ for some session type $A''$ and so $\hat{A'}[[\ocircle A'']^{-1}_R] = \hat{A'}[A'']$. As $P''$ is not prefixed on $c$ and $\Delta_2,a:\hat{A'}[\ocircle A'']\vdash P'' :: c\!:\!C$ with $P''\Longrightarrow^{-1} P''$, $C$ must be prefixed with at least one modality typed with $\runa{TS-$\ocircle$LR}$ corresponding to the $\ocircle$ modality in the prefix of $A$. This implies $\Delta_2=\hat{\Delta_2'}[\Delta_2']$ and $C=\hat{C'}[C']$ such that $\hat{\Delta_2'}[[\Delta_2']^{-1}_L],a:\hat{A'}[A'']\vdash P'' :: c\!:\!\hat{C'}[[C']^{-1}_R]$, and so it follows from $\runa{TS-cut}$ that $\hat{\Delta_1'}[[\Delta_1']^{-1}_L],\hat{\Delta_2'}[[\Delta_2']^{-1}_L]\vdash \newvar{a}{(Q'\mid P'') :: c\!:\!\hat{C'}[[C']^{-1}_R]}$.
+%     \end{itemize}
+    
+%     \item $\newvar{a}{(P'\mid P'')} \Longrightarrow^{-1} \newvar{a}{(P' \mid Q'')}$ with $P'' \neq Q''$. For $P$ to not be prefixed on $c$ $P''$ also cannot be prefixed on $c$, and $C$ contains no $\lozenge$ by assumption. Then by induction there exists $\hat{\Delta_2'}[\Delta_2'],a:\hat{A''}[A'']=\Delta_2,a:A$ and $\hat{C'}[C']=C$ such that $\hat{\Delta_2'}[[\Delta_2']^{-1}_L],a:\hat{A''}[[A'']^{-1}_L]\vdash P'' :: c\!:\!\hat{C'}[[C']^{-1}_R]$. As $\hat{A'}[[A']^{-1}_L]$ is defined it must be that either
+%     \begin{itemize}
+%         \item $\hat{A'}[A']=\hat{A'}[\Box A'']$ for some session type $A''$ and so $\hat{A'}[A']=\hat{A'}[[A']^{-1}_L]$. 
+        
+%         Then as $P' \Longrightarrow^{-1} P'$ and $P\!\not\!\leadsto$ the subprocess that consumes a session on $A$ in $P'$ must be prefixed with a tick or be $\mathbf{0}$. Thus, $P''$ cannot be prefixed on $a$.
+        
+%         From this we obtain $\Delta_1\vdash P' :: a\!:\!\hat{A'}[[A']^{-1}_L]$. Then by Lemma \ref{lemma:deldiaimp} there exists $\Delta_1=\hat{\Delta_1'}[\Delta_1']$ such that $\Delta_1'\;\texttt{delayed}^\Box$. Then for $b\in\text{dom}(\Delta_1')$ we have $\Delta_1'(b)=\ocircle^m\Box B'$ for some $m\geq 0$ and session type $B'$ and so $\Delta_1'(b)=\ocircle^m[\Box B']=\ocircle^m[[\Box B']^{-1}_L]$. Thus, there exists $\hat{\Delta_1''}[\Delta_1'']=\Delta_1$ such that $\hat{\Delta_1''}[[\Delta_1'']^{-1}_L]\vdash P' :: a\!:\!\hat{A'}[[A']^{-1}_L]$. From $\runa{TS-cut}$ we then obtain $\hat{\Delta_1''}[[\Delta_1'']^{-1}_L],\hat{\Delta_2'}[[\Delta_2']^{-1}_L]\vdash \newvar{a}{(P'\mid Q'') :: c\!:\!\hat{C''}[[\lozenge C'']^{-1}_R]}$.
+        
+%         \item $\hat{A'}[A']=\hat{A'}[\ocircle A'']$ for some session type $A''$ and so $\hat{A'}[[\ocircle A'']^{-1}_L] = \hat{A'}[A'']$. As $\Delta_1\vdash P' :: a:\hat{A'}[\ocircle A'']$ with $P' \Longrightarrow^{-1} P'$, we must use $\runa{TS-$\ocircle$LR}$ to consume the $\ocircle$ modality. This implies $\Delta_1=\hat{\Delta_1'}[\Delta_1']$ such that $\hat{\Delta_1'}[[\Delta_1']^{-1}_L] \vdash P' :: a:\hat{A'}[A'']$, and so it follows from $\runa{TS-cut}$ that $\hat{\Delta_1'}[[\Delta_1']^{-1}_L],\hat{\Delta_2'}[[\Delta_2']^{-1}_L]\vdash \newvar{a}{(P'\mid Q'') :: c\!:\!\hat{C'}[[C']^{-1}_R]}$.
+        
+%     \end{itemize}
+    
+%     \item $\newvar{a}{(P'\mid P'')} \Longrightarrow^{-1} \newvar{a}{(Q' \mid Q'')}$ with $P' \neq Q'$ and $P'' \neq Q''$. For $P$ to not be prefixed on $c$ $P''$ also cannot be prefixed on $c$. Then by induction there exists $\hat{\Delta_2'}[\Delta_2'],a:\hat{A_2}[A_2]=\Delta_2,a:A$ and $\hat{C'}[C']=C$ such that $\hat{\Delta_2'}[[\Delta_2']^{-1}_L],a:\hat{A_2}[[A_2]^{-1}_L]\vdash Q'' :: c\!:\!\hat{C'}[[C']^{-1}_R]$.
+    
+%     As $P\!\not\!\leadsto$ either $P'$ or $P''$ is not prefixed on $a$. We consider the cases
+%     \begin{itemize}
+%         \item $P'$ is not prefixed on $a$. Then by induction we have $\hat{\Delta_1'}[\Delta_1']=\Delta_1$ and $\hat{A_1}[A_1]=A$ such that $\hat{\Delta_1'}[[\Delta_1']^{-1}_L]\vdash Q' :: a\!:\!\hat{A_1}[[A_1]^{-1}_R]$. As $\hat{A_1}[[A_1]^{-1}_R]$ and $\hat{A_2}[[A_2]^{-1}_L]$ are defined it must be that either
+        
+%         \item
+        
+%         \item
+%     \end{itemize}
+    
+%     \begin{itemize}
+%         %\item $\hat{A_1}[A_1]=\hat{A_1}[\lozenge A_1']$ and $\hat{A_2}[A_2]=\hat{A_2}[\Box A_2']$ for some session types $A_1'$ and $A_2'$. We obtain $\hat{\Delta_1'}[[\Delta_1']^{-1}_L]\vdash Q' :: a\!:\!\hat{A_2}[[\Box A_2']^{-1}_L]$ directly from $\hat{A_1}[[\lozenge A_1']^{-1}_R]=\hat{A_1}[A_1]$ and $\hat{A_2}[[\Box A_2']^{-1}_L]=\hat{A_2}[A_2]$ as $\hat{A_1}[A_1]=\hat{A_2}[A_2]$.
+        
+%         \item $\hat{A_1}[A_1]=\hat{A_1}[\lozenge A_1']$ and so $\hat{A_1}[[\lozenge A_1']^{-1}_R]=\hat{A_1}[A_1]$. From this we obtain $\Delta_2,a:\hat{A_1}[[\lozenge A_1']^{-1}_R]\vdash P'' :: c\!:\!C$ and by Theorem \ref{theorem:sr} $\Delta_2,a:\hat{A_1}[[\lozenge A_1']^{-1}_R]\vdash Q'' :: c\!:\!C$. Then by Lemma \ref{lemma:deldiaimp} there exists $\hat{\Delta_2''}[\Delta_2'']=\Delta_2$ and $\hat{C''}[C'']=C$ such that $\Delta_2''\;\texttt{delayed}^\Box$ and $C''\;\texttt{delayed}^\lozenge$. Then $C''=\ocircle^n\lozenge C_3$ for some $n\geq 0$ and session type $C_3$ and so we obtain $C=\hat{C''}[\ocircle^n[\lozenge C_3]]=\hat{C''}[\ocircle^n[[\lozenge C_3]^{-1}_R]]=\hat{C_3}[[\lozenge C_3]^{-1}_R]$ for some $\hat{C_3}[\cdot]$, and for $b\in\text{dom}(\Delta_2'')$ we have $\Delta_2''(b)=\ocircle^m\Box B'$ for some $m\geq 0$ and session type $B'$ and so $\Delta_2''(b)=\ocircle^m[\Box B']=\ocircle^m[[\Box B']^{-1}_L]$. Thus, there exists $\hat{\Delta_3}[\Delta_3]=\Delta_2$ such that $\hat{\Delta_3}[[\Delta_3]^{-1}_L],\hat{A_1}[[A_1]^{-1}_R]\vdash Q'' :: c\!:\!\hat{C_3}[[\lozenge C_3]^{-1}_R]$. From $\runa{TS-cut}$ we then obtain $\hat{\Delta_1'}[[\Delta_1']^{-1}_L],\hat{\Delta_3}[[\Delta_3]^{-1}_L]\vdash \newvar{a}{(Q'\mid Q'') :: c\!:\!\hat{C_3}[[\lozenge C_3]^{-1}_R]}$.
+        
+%         %As $\hat{A_1}[A_1]=\hat{A_2}[A_2]=A$ for $\Delta_1\vdash P' :: a\!:\!A$ to hold, the $\ocircle$ modality removed from $\hat{A_2}[A_2']$ must be typed with $\runa{TS-$\ocircle$LR}$ for $P'$. By premise there must then exist $\hat{\Delta_1''}[\Delta_1'']=\Delta_1$ such that $\hat{\Delta_1''}[[\Delta_1'']^{-1}_L]\vdash P' :: a\!:\!\hat{A_2}[A_2']$, but then we could have used $\runa{TS-$\ocircle$LR'}$ here instead, from which we obtain $\hat{\Delta_1''}[[\Delta_1'']^{-1}_L]\vdash Q' :: a\!:\!\hat{A_2}[A_2']$.
+        
+%         \item $\hat{A_2}[A_2]=\hat{A_2}[\Box A_2']$ and so $\hat{A_2}[[\Box A_2']^{-1}_L]=\hat{A_2}[A_2]$. From this we obtain $\Delta_1\vdash P' :: a\!:\!\hat{A_2}[[\Box A_2']^{-1}_L]$ and by Theorem \ref{theorem:sr} $\Delta_1\vdash Q' :: a\!:\!\hat{A_2}[[\Box A_2']^{-1}_L]$. Then by Lemma \ref{lemma:deldiaimp} there exists $\hat{\Delta_1''}[\Delta_1'']=\Delta_1$ such that $\Delta_1''\;\texttt{delayed}^\Box$. Then for $b\in\text{dom}(\Delta_1'')$ we have $\Delta_1''(b)=\ocircle^m\Box B'$ for some $m\geq 0$ and session type $B'$ and so $\Delta_1''(b)=\ocircle^m[\Box B']=\ocircle^m[[\Box B']^{-1}_L]$. Thus, there exists $\hat{\Delta_3}[\Delta_3]=\Delta_1$ such that $\hat{\Delta_3}[[\Delta_3]^{-1}_L]\vdash Q' :: a\!:\!\hat{A_2}[[A_2]^{-1}_L]$. From $\runa{TS-cut}$ we then obtain $\hat{\Delta_3}[[\Delta_3]^{-1}_L],\hat{\Delta_2'}[[\Delta_2']^{-1}_L]\vdash \newvar{a}{(Q'\mid Q'') :: c\!:\!\hat{C''}[[\lozenge C'']^{-1}_R]}$.
+        
+        
+        
+%         %As $\hat{A_1}[A_1]=\hat{A_2}[A_2]=A$ for $\Delta_2,a:A\vdash P'' :: c\!:\!C$ to hold, the $\ocircle$ modality removed from $\hat{A_1}[A_1']$ must be typed with $\runa{TS-$\ocircle$LR}$ for $P''$. By premise there must then exist $\hat{\Delta_2''}[\Delta_2'']=\Delta_2$ and $\hat{C''}[C'']=C$ such that $\hat{\Delta_2''}[[\Delta_2'']^{-1}_L],a:\hat{A_1}[A_1']\vdash P'' :: a\!:\!\hat{C''}[[C'']^{-1}_R]$, but then we could have used $\runa{TS-$\ocircle$LR'}$ here instead, from which we obtain $\hat{\Delta_2''}[[\Delta_2'']^{-1}_L],a:\hat{A_1}[A_1']\vdash Q'' :: a\!:\!\hat{C''}[[C'']^{-1}_R]$.
+        
+%         \item $\hat{A_1}[A_1]=\hat{A_1}[\ocircle A_1']$ and $\hat{A_2}[A_2]=\hat{A_2}[\ocircle A_2']$ for some session types $A_1'$ and $A_2'$ and so $\hat{A_1}[[\ocircle A_1']^{-1}_R]=\hat{A_1}[A_1']$ and $\hat{A_2}[[\ocircle A_2']^{-1}_L]=\hat{A_2}[A_2']$. Either $\hat{A_1}[A_1']=\hat{A_2}[A_2']$ and we obtain $\hat{\Delta_2'}[[\Delta_2']^{-1}_L],a:\hat{A_1}[A_1']\vdash Q'':: c\!:\!\hat{C'}[[C']^{-1}_R]$ directly, or there is at least one $\Box$ or $\lozenge$ modality between the two $\ocircle$ modalities removed from $A_1$ and $A_2$, respectively. Then the remaining $\ocircle$ modality in $Q'$ and $Q''$ must be typed with either $\runa{TS-$\ocircle$LR'}$ or $\runa{TS-$\ocircle$LR}$. As $\Box$ and $\lozenge$ are not syntax directed, and as $\runa{TS-$\ocircle$LR'}$ and $\runa{TS-$\ocircle$LR}$ do not affect $\texttt{delayed}^\Box$ and $\texttt{delayed}^\lozenge$, by definition of $[\cdot]^{-1}_L$ and $[\cdot]^{-1}_R$, we can rearrange the prefixes of modalities in $\hat{A_1}[[\ocircle A_1']^{-1}_R]$ and $\hat{A_2}[[\ocircle A_2']^{-1}_L]$ without affecting typability such that we have $\hat{A_1'}[[\ocircle A_1'']^{-1}_R]=\hat{A_2'}[[\ocircle A_2'']^{-1}_L]$ with $\hat{\Delta_1'}[[\Delta_1']^{-1}_L]\vdash Q' :: a\!:\hat{A_1}[[\ocircle A_1']^{-1}_R]$, and $\hat{\Delta_2'}[[\Delta_2']^{-1}_L],a:\hat{A_2}[[\ocircle A_2']^{-1}_L]\vdash Q'' :: c\!:\!\hat{C'}[[C']^{-1}_R]$. Thus, by application of $\runa{TS-cut}$ we obtain $\hat{\Delta_1'}[[\Delta_1']^{-1}_L],\hat{\Delta_2'}[[\Delta_2']^{-1}_L]\vdash \newvar{a}{(Q' \mid Q'')} :: c\!:\!\hat{C'}[[C']^{-1}_R]$.
+        
+        
+%         %there are only $\ocircle$ modalities between the two modalities removed, without affecting typability.  move the $\Box$ and $\lozenge$ modalities between the two $\ocircle$ modalities outward,  
+        
+        
+%         %two distinct $\ocircle$ modalities were removed. Then as $\hat{A_1}[A_1]=\hat{A_2}[A_2]$ for $\Delta_2,a:A\vdash P'' :: c\!:\!C$ to hold, the $\ocircle$ modality must be typed with $\runa{TS-$\ocircle$LR}$. By premise there must then exist $\hat{\Delta_2''}[\Delta_2'']=\Delta_2$ and $\hat{C''}[C'']=C$ such that $\hat{\Delta_2''}[[\Delta_2'']^{-1}_L],a:\hat{A_1}[A_1']\vdash P'':: c\!:\!\hat{C''}[[C'']^{-1}_R]$, but then we could have used $\runa{TS-$\ocircle$LR'}$ here instead, from which we obtain $\hat{\Delta_2''}[[\Delta_2'']^{-1}_L],a:\hat{A_1}[A_1']\vdash Q'':: c\!:\!\hat{C''}[[C'']^{-1}_R]$.
+        
+%     \end{itemize}
+    
+% \end{enumerate}
+
+% \end{description}
+% %As $P \Longrightarrow Q$ we know that $P$ cannot be prefixed with anything except for a tick, and so it is sufficient to consider $\runa{TS-$\ocircle$LR'}$, $\runa{TS-cut}$, $\runa{TS-def}$, $\runa{TS-$\ocircle$LR}$, $\runa{TS-$\lozenge$L}$, $\runa{TS-$\lozenge$R}$, $\runa{TS-$\Box$L}$ and $\runa{TS-$\Box$R}$
+% % \begin{description}
+% % \item[$\runa{TS-$\ocircle$LR'}$] We have that $P=\tick P'$, $Q=P'$ and $[\Delta]^{-1}_L\vdash P' :: a\!:\![A]^{-1}_R$. By lemma \ref{lemma:timegeq} $\text{time}(A)-1\geq\text{time}([A]^{-1}_R)$, and by Lemma \ref{TODO}, $\texttt{delayed}^\Box$ and $\texttt{delayed}^\lozenge$ are invariant to $[\cdot]^{-1}_L$ and $[\cdot]^{-1}_R$, respectively.
+
+% % \item[$\runa{TS-cut}$]
+
+% % %
+
+% % \item[$\runa{TS-def}$]
+
+% % %
+
+% % \item[$\runa{TS-$\ocircle$LR}$] If $\Delta \vdash P :: a\!:\!A$ by $\runa{TS-$\ocircle$LR}$ then $[\Delta]^{-1}_L\vdash P :: a\!:\![A]^{-1}_R$. By Lemma \ref{lemma:timegeq} $\text{time}(A)-1\geq\text{time}([A]^{-1}_R)$ and by Lemma \ref{TODO}, $\texttt{delayed}^\Box$ and $\texttt{delayed}^\lozenge$ are invariant to $[\cdot]^{-1}_L$ and $[\cdot]^{-1}_R$, respectively. By induction, $\Delta''\vdash Q :: a\!:\!A''$ such that $\text{time}([A]^{-1}_R)-1\geq\text{time}(A'')$. 
+
+% % %
+
+% % \item[$\runa{TS-$\lozenge$L}$]
+
+% % %
+
+% % \item[$\runa{TS-$\lozenge$R}$]
+
+% % %
+
+% % \item[$\runa{TS-$\Box$L}$]
+
+% % %
+
+% % \item[$\runa{TS-$\Box$R}$]
+
+
+% % \end{description}
+% % \begin{enumerate}
+% %     \item $P = \tick P'$ and $\Delta'\vdash P :: a\!:\!A'$ by $\runa{TS-$\ocircle$LR'}$. Then $P$ is in canonical form and $Q = P'$. By $\runa{TS-$\ocircle$LR'}$ we obtain that $[\Delta']^{-1}_L\vdash P' :: a\!:\![A']^{-1}_R$. We show that this implies $[\Delta]^{-1}_L\vdash P' :: a\!:\![A]^{-1}_R$ by induction on the temporal type rules
+% %     \begin{description}
+% %     \item[hmm]
+    
+    
+% %     \end{description}
+    
+% %     \item $P \equiv \newvar{a}{(Q \mid R)}$ and $\Delta P\vdash P :: a\!:\!A$ by $\runa{TS-cut}$ or $\runa{TS-def}$.
+% % \end{enumerate}
+% \end{proof}
+% \end{lemma}
+
+
+% %
+% % \begin{theorem}[Subject Reduction]
+% % If $\Delta \vdash P :: a\!:\!A$ and $P \longrightarrow Q$ then $\Delta\vdash Q :: a\!:\!A$.
+% % \begin{proof}
+% % Proof by induction on the extended reduction rules. The proof uses the fact that a well-typed process cannot \textit{consume} the session it provides on reduction, by type rules $\runa{TS-cut}$ and $\runa{TS-def}$. The proof is slightly tedious, as the type rules are not syntax directed.
+% % \begin{description}
+% % \item[$\runa{R-tick}$] Assume that $P$ reduces by $\runa{R-tick}$, such that $P$ is of the form $\texttt{tick}.P'$ and $Q = P'$. Then by $\runa{TS-$\ocircle$LR'}$, we have that $[\Delta]^{-1}_L \vdash P' :: [a:A]^{-1}_R$ such that $\Delta \vdash \texttt{tick}.P' :: a\!:\!A$. It follows from type rule $\runa{TS-$\ocircle$LR}$ that also $\Delta \vdash P' :: a\!:\!A$.
+
+% % %
+
+% % \item[$\runa{R-id}$] Assume that $P$ reduces by $\runa{R-id}$ then we have that $P \equiv \newvar{a}{\newvar{b}{(P' \mid a \leftarrow b)}}$ such that $Q \equiv \newvar{h}{(P'[a\mapsto h,b\mapsto h])}$ for some name $h \notin fv(P')$. Then, as restrictions are only typable by $\runa{TS-cut}$ and $\runa{TS-def}$, $P'$ must be of the form $R' \mid R''$ such that $P \equiv \newvar{a}{(R' \mid \newvar{b}{(R'' \mid a \leftarrow b)})}$ or $P \equiv \newvar{b}{(R' \mid \newvar{a}{(R'' \mid a \leftarrow b)})}$. We consider the cases separately
+% % \begin{enumerate}
+% %     \item $\Delta'',a:A \vdash R' :: c\!:\!C$ such that $\Delta'\vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$ and $\Delta',\Delta''\vdash P :: c\!:\!C$ using $\runa{TS-cut}$. Then we can type $\newvar{b}{(R'' \mid a \leftarrow b)}$ with either $\runa{TS-cut}$ or $\runa{TS-def}$
+% %     \begin{enumerate}
+% %         \item $\Delta' \vdash R'' :: b\!:\!A$ such that $b:A\vdash a \leftarrow b :: a\!:\!A$ and $\Delta' \vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$. Then it follows by renaming that $\Delta''\vdash R''[a\mapsto h,b\mapsto h] :: h\!:\!A$ and $\Delta'',h:A \vdash R' :: c\!:\!C$ such that $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid R''[a\mapsto h,b\mapsto h]) :: c\!:\!C}$.
+        
+% %         \item $R'' = b \leftarrow f \leftarrow \widetilde{d}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta' = \widetilde{d}:\widetilde{B}$, $b:A\vdash a \leftarrow b :: a\!:\!A$ and $\Delta' \vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$. Then it follows by renaming that $\Delta'',h:A \vdash R' :: c\!:\!C$ such that $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid h \leftarrow f \leftarrow \widetilde{d}) :: c\!:\!C}$.
+% %     \end{enumerate}
+    
+% %     %
+    
+% %     \item Either $\Delta' \vdash R' :: b\!:\!A$ or $b \leftarrow f \leftarrow \widetilde{d}$, $\Delta' = \widetilde{d}:\widetilde{B}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta'',b:A\vdash \newvar{a}{(R'' \mid a \leftarrow b)} :: c\!:\!C$ and $\Delta',\Delta''\vdash P :: c\!:\!C$ using $\runa{TS-cut}$ or $\runa{TS-def}$, respectively. In either case we must use $\runa{TS-cut}$ to get $\Delta'',b:A\vdash \newvar{a}{(R'' \mid a \leftarrow b)} :: c\!:\!C$, as we have that $b:A\vdash a\leftarrow b :: a\!:\!A$ and $\Delta'',a:A\vdash R'' :: c\!:\!C$. Then we reach $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid R''[a\mapsto h,b\mapsto h])} :: c\!:\!C$ by either $\runa{TS-cut}$ or $\runa{TS-def}$. In either case we have that $\Delta'',h:A\vdash R''[a\mapsto h,b\mapsto h] :: c\!:\!C$. In the first case we have that $\Delta' \vdash R'[a\mapsto h,b\mapsto h] :: h\!:\!A$ and the latter case trivially follows by $R'[a\mapsto h,b\mapsto h] = h \leftarrow f \leftarrow \widetilde{d}$.
+% % \end{enumerate}
+
+% % %
+
+% % \item[$\runa{R-comm}$] Assume we reduce $P$ by $\runa{R-comm}$ then $P \equiv \inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''}$ for some name $b$ and processes $R'$ and $R''$, such that $\inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''} \longrightarrow R'[v\mapsto b] \mid R''$. For $P$ to be well-typed, it must be part of a larger process $\Delta',\Delta''\vdash\newvar{a}{P} :: c\!:\!C$ typed with $\runa{TS-cut}$ for which we have two cases
+% % \begin{enumerate}
+% %     \item $\Delta' \vdash \inputch{a}{v}{}{R'} :: a\!:\!A' \multimap A''$ and $\Delta_3,a : A'\multimap A'', b : A' \vdash \outputch{a}{b}{}{R''} :: c\!:\!C$ by $\runa{TS-$\multimap$R}$ and $\runa{TS-$\multimap$L}$ such that $\Delta'' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta',v : A' \vdash R' :: a\!:\!A''$ and $\Delta_3,a:A''\vdash R'' :: c\!:\!C$. This implies $\Delta',b : A'\vdash R'[v\mapsto b] :: a\!:\!A''$, and so by $\runa{TS-cut}$ it follows that $(\Delta',b : A'),\Delta_3\vdash \newvar{a}{(R'[v\mapsto b] \mid R'') :: c\!:\!C}$ and $\Delta = (\Delta',b : A'),\Delta_3$.
+    
+% %     %
+    
+% %     \item $\Delta_3,b:A' \vdash \outputch{a}{b}{}{R''} :: a\!:\!A'\otimes A''$ and $\Delta'',a : A'\otimes A''\vdash \inputch{a}{v}{}{R'} :: c\!:\!C$ by $\runa{TS-$\otimes$R}$ and $\runa{TS-$\otimes$L}$ such that $\Delta' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta_3\vdash R'' :: a\!:\!A''$ and $\Delta'',a:A'',v:A'\vdash R' :: c\!:\!C$. This implies $\Delta'',a:A'',b:A'\vdash R'[v\mapsto b] :: c\!:\!C$, and so by $\runa{TS-cut}$ it follows that $\Delta_3,(\Delta'',b : A')\vdash \newvar{a}{(R'' \mid R'[v\mapsto b])} :: c\!:\!C$ and $\Delta = \Delta_3,(\Delta'',b : A')$.
+% % \end{enumerate}
+
+% % %
+
+% % \item[$\runa{R-choice}$] Assume we reduce $P$ by $\runa{R-choice}$ then $P \equiv a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R$ for some label $k$ and set of labels $L$, such that $k\in L$ and $a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R \longrightarrow P_k \mid R$. For $P$ to be well-typed, it must be part of a larger process $\Delta',\Delta''\vdash \newvar{a}{P} :: c\!:\!C$ typed with $\runa{TS-cut}$ for which we have two cases
+% % \begin{enumerate}
+% %     \item $\Delta'\vdash a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L} :: a\!:\!\&\{l : A_l\}_{l\in L}$ and $\Delta'', a : \&\{l : A_l\}_{l\in L}\vdash a.k; R :: c\!:\!C$ by $\runa{TS-$\&$R}$ and $\runa{TS-$\&$L}$. By the premises of these rules we have that $\Delta' \vdash P_k :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash R :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(P_k \mid R) :: c\!:\!C}$.
+        
+% %     %
+    
+% %     \item $\Delta'\vdash a.k; R :: a\!:\!\oplus\{l : A_l\}_{l\in L}$ and $\Delta'',a : \oplus\{l : A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L} :: c\!:\!C$ by $\runa{TS-$\oplus$R}$ and $\runa{TS-$\oplus$L}$. By the premises of these rules we have that $\Delta'\vdash R :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash P_k :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(R \mid P_k)} :: c\!:\!C$.
+    
+% % \end{enumerate}
+
+% % %
+
+% % \item[$\runa{R-def}$] Assume $P$ reduces by $\runa{R-def}$ then $P = b \leftarrow f \leftarrow \widetilde{d}$ and $(\widetilde{c}:\widetilde{B}\vdash f = P' :: a\!:\!A) \in \Sigma$, such that $Q = P'[a\mapsto b,\widetilde{c}\mapsto\widetilde{d}]$. For $P$ to be well-typed it must be part of a larger process $\widetilde{d}:\widetilde{B},\Delta'\vdash \newvar{b}{(P \mid R)} :: c\!:\!C$ typed with $\runa{TS-def}$ such that $\Delta',b:A\vdash R :: c\!:\!C$. By renaming we have that $\widetilde{d}:\widetilde{B}\vdash P'[a\mapsto b,\widetilde{c}\mapsto\widetilde{d}] :: b\!:\!B$ and so by $\runa{TS-cut}$ we have that $\widetilde{d}:\widetilde{B},\Delta'\vdash \newvar{b}{(Q \mid R)} :: c\!:\!C$.
+
+% % %
+
+% % \item[$\runa{R-res}$] Assume that $P$ reduces by $\runa{R-res}$ then we have that $P \equiv \newvar{a}{P'}$ for some name $a$ such that $P' \longrightarrow Q'$. Then $P$ must be typed either with $\runa{TS-cut}$ or $\runa{TS-def}$ and so $P' \equiv R' \mid R''$ yielding two cases
+% % \begin{enumerate}
+% %     \item $\Delta'\vdash R' :: a\!:\!A$ such that $\Delta'',a:A\vdash R'' :: c\!:\!C$ and $\Delta',\Delta''\vdash \newvar{a}{P'}::c\!:\!C$. Either $R' \mid R''$ reduces by $\runa{R-par}$, $\runa{R-comm}$, $\runa{R-choice}$ or $\runa{R-struct}$. The first three cases are covered by the clauses for the corresponding rules, and the last case holds by induction as typability is closed under structural congruence.
+    
+% %     \item $R' = a \leftarrow f \leftarrow \widetilde{b}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta' = \widetilde{b}:\widetilde{B}$, $\Delta'',a:A\vdash R'' :: c\!:\!C$ and $\Delta',\Delta''\vdash \newvar{a}{P'}::c\!:\!C$. Then either $R' \mid R''$ reduces by $\runa{R-par}$ or $\runa{R-struct}$. The first case is covered by the clause for $\runa{R-par}$, and the last case holds by induction as typability is closed under structural congruence.
+% % \end{enumerate}
+
+% % %
+
+% % \item[$\runa{R-par}$] Assume that $P$ reduces by $\runa{R-par}$ then we have that $P \equiv P' \mid P''$ such that $P' \longrightarrow Q'$. For $P$ to be well-typed, it must be part of a larger well-typed process $\newvar{a}{(P'\mid P'')}$ typed with either $\runa{TS-cut}$ or $\runa{TS-def}$ such that either
+% % \begin{enumerate}
+% %     \item $\Delta'\vdash P' :: a\!:\!A$ such that $\Delta'',a:A\vdash P'' :: c\!:\!C$ and $\Delta',\Delta''\vdash \newvar{a}{(P'\mid P'')}::c\!:\!C$. Then by induction we have that $\Delta'\vdash Q' :: a\!:\!A$ and so it follows that $\Delta',\Delta''\vdash \newvar{a}{(Q' \mid P'')}::c\!:\!C$
+    
+% %     \item $P' = a \leftarrow f \leftarrow \widetilde{b}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta' = \widetilde{b}:\widetilde{B}$, $\Delta'',a:A\vdash P'' :: c\!:\!C$ and $\widetilde{b}:\widetilde{B},\Delta''\vdash \newvar{a}{P' \mid P''}::c\!:\!C$. Then it must be that $P'$ reduces to $Q'$ by $\runa{TS-def}$ such that $Q' = R[g\mapsto a,\widetilde{e}\mapsto\widetilde{b}]$. By renaming $\widetilde{e} : \widetilde{B}\vdash R :: g\!:\!A$ implies $\widetilde{b} : \widetilde{B}\vdash Q' :: a\!:\!A$ such that $\widetilde{b}:\widetilde{B},\Delta''\vdash \newvar{a}{(Q' \mid P''):: c\!:\!C}$ by $\runa{T-cut}$.
+% % \end{enumerate}
+
+% % %%%
+% % %%
+% % %%
+% % %%%
+
+% % %when they contain no named processes, for $P$ to be well-typed, $P$ must be a subprocess of a larger well-typed process $R \equiv \newvar{a}{\newvar{b}{P}} \equiv \newvar{a}{(\outputch{a}{d}{}{P'} \mid \newvar{b}{(\inputch{b}{v}{}{P''} \mid b \leftarrow a}))}$ such that $\Delta',\Delta''\vdash R :: c\!:\!C$. Then from the premises of $\runa{TS-cut}$, we have that $\Delta'',a:A\vdash \outputch{a}{d}{}{P'} ::c\!:\!C$ and (by $\runa{TS-cut}$ again) $\Delta'\vdash \newvar{b}{(\inputch{b}{v}{}{P''} \mid b \leftarrow a}) :: a\!:\!A$ such that $\Delta' \vdash \inputch{b}{v}{}{P''} :: b\!:\!A$ by $\runa{TS-$\multimap$R}$ and $b : A\vdash b \leftarrow a :: a\!:\!A$ by $\runa{TS-id}$. The full reduced process is then $\newvar{a}{\newvar{b}{(P' \mid P''[v\mapsto d])}}$
+
+% % %
+% % %%%%%%%%%%
+% % %
+
+% % % \item[$\runa{R-res}$] Assume that $P$ reduces by $\runa{R-res}$. Then for $P$ to be well-typed, $P$ must be typed by either $\runa{TS-cut}$ or $\runa{TS-def}$. We consider the cases separately
+% % % \begin{description}
+% % % \item[$\runa{TS-cut}$] We have that $P$ is of the form $\newvar{a}{(P'\mid P'')}$ such that $\Delta' \vdash P' :: a\!:\!A$, $\Delta'', a : A\vdash P'' :: c\!:\!C$ and $\Delta',\Delta'' \vdash \newvar{a}{(P'\mid P'')} :: c\!:\!C$. By $\runa{R-res}$ we have that $P' \mid P''$ must reduce, for which several rules apply
+% % % \begin{description}
+% % % \item[$\runa{R-comm}$] If we reduce the parallel composition by $\runa{R-comm}$ then $P' \mid P'' \equiv \inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''}$ for some name $b$ and processes $R'$ and $R''$, such that $\inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''} \longrightarrow R'[v\mapsto b] \mid R''$. We have two cases
+% % % \begin{enumerate}
+% % %     \item $\Delta' \vdash \inputch{a}{v}{}{R'} :: a\!:\!A' \multimap A''$ and $\Delta_3,a : A'\multimap A'', b : A' \vdash \outputch{a}{b}{}{R''} :: c\!:\!C$ by $\runa{TS-$\multimap$R}$ and $\runa{TS-$\multimap$L}$ such that $\Delta'' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta',v : A' \vdash R' :: a\!:\!A''$ and $\Delta_3,a:A''\vdash R'' :: c\!:\!C$. This implies $\Delta',b : A'\vdash R'[v\mapsto b] :: a\!:\!A''$, and so by $\runa{TS-cut}$ it follows that $(\Delta',b : A'),\Delta_3\vdash \newvar{a}{(R'[v\mapsto b] \mid R'') :: c\!:\!C}$ and $\Delta = (\Delta',b : A'),\Delta_3$.
+    
+% % %     %
+    
+% % %     \item $\Delta_3,b:A' \vdash \outputch{a}{b}{}{R''} :: a\!:\!A'\otimes A''$ and $\Delta'',a : A'\otimes A''\vdash \inputch{a}{v}{}{R'} :: c\!:\!C$ by $\runa{TS-$\otimes$R}$ and $\runa{TS-$\otimes$L}$ such that $\Delta' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta_3\vdash R'' :: a\!:\!A''$ and $\Delta'',a:A'',v:A'\vdash R' :: c\!:\!C$. This implies $\Delta'',a:A'',b:A'\vdash R'[v\mapsto b] :: c\!:\!C$, and so by $\runa{TS-cut}$ it follows that $\Delta_3,(\Delta'',b : A')\vdash \newvar{a}{(R'' \mid R'[v\mapsto b])} :: c\!:\!C$ and $\Delta = \Delta_3,(\Delta'',b : A')$.
+% % % \end{enumerate}
+
+% % % \item[$\runa{R-choice}$] If we reduce the parallel composition by $\runa{R-choice}$ then $P' \mid P'' \equiv a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R$ for some label and set of labels $k$ and $L$, such that $k\in L$ and $a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R \longrightarrow P_k \mid R$. We have two cases
+% % % \begin{enumerate}
+% % %     \item $\Delta'\vdash a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L} :: a\!:\!\&\{l : A_l\}_{l\in L}$ and $\Delta'', a : \&\{l : A_l\}_{l\in L}\vdash a.k; R :: c\!:\!C$ by $\runa{TS-$\&$R}$ and $\runa{TS-$\&$L}$. By the premises of these rules we have that $\Delta' \vdash P_k :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash R :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(P_k \mid R) :: c\!:\!C}$.
+        
+% % %     %
+    
+% % %     \item $\Delta'\vdash a.k; R :: a\!:\!\oplus\{l : A_l\}_{l\in L}$ and $\Delta'',a : \oplus\{l : A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L} :: c\!:\!C$ by $\runa{TS-$\oplus$R}$ and $\runa{TS-$\oplus$L}$. By the premises of these rules we have that $\Delta'\vdash R :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash P_k :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(R \mid P_k)} :: c\!:\!C$.
+    
+% % % \end{enumerate}
+
+% % % \item[$\runa{R-id-1}$]
+% % % \item[$\runa{R-id-2}$]
+% % % \item[$\runa{R-par}$] If we reduce the parallel composition by $\runa{R-par}$ then $P' \longrightarrow Q'$. Here we can apply induction, as $P'$ cannot be typed as $\Delta' \vdash P' :: a\!:\!A$ and reduce unless it is prefixed by a tick or is wrapped with a restriction (or is structurally congruent to such a process by $\runa{R-struct}$). And so, it follows that $\Delta' \vdash Q' :: a\!:\!A$, such that $\Delta',\Delta'' \vdash \newvar{a}{(Q'\mid P'')} :: c\!:\!C$.
+% % % \item[$\runa{R-struct}$] todo: induction (with R-par after).
+% % % \end{description}
+% % % \item[$\runa{TS-def}$] We have that $P$ is of the form $\newvar{a}{(a\leftarrow f \leftarrow \widetilde{b} \mid P')}$ such that $(\widetilde{d} : \widetilde{B}\vdash f = P :: g\!:\!A) \in \Sigma$, $\Delta',a : A \vdash P' :: c\!:\!C$ and $\Delta',\widetilde{b} : \widetilde{B}\vdash \newvar{a}{(a\leftarrow f \leftarrow \widetilde{b} \mid P') :: c\!:\!C}$. By $\runa{R-res}$ we have that $a\leftarrow f \leftarrow \widetilde{b} \mid P'$ must reduce, for which $\runa{R-par}$ and $\runa{R-struct}$ apply. Note that the parallel composition cannot reduce by $\runa{R-par}$, as  does not  several rules apply.
+% % % \begin{description}
+% % % \item[$\runa{R-par}$] todo: R-def --> can type with R-cut after.
+% % % \item[$\runa{R-struct}$] todo: induction (with R-par after). 
+% % % \end{description}
+% % % \end{description}
+
+
+% % \item[$\runa{R-struct}$] Assume that $P$ reduces by $\runa{R-struct}$. Then $P \equiv P'$, $P' \longrightarrow Q'$ and $Q' \equiv Q$. As typability is closed under structural congruence and $\Delta \vdash P :: c\!:\!C$ it follows that $\Delta \vdash P' :: c\!:\!C$. By induction this implies $\Delta \vdash Q' :: c\!:\!C$, and as $Q' \equiv Q$ we have that $\Delta\vdash Q :: c\!:\!C$.
+% % \end{description}
+% % \end{proof}
+% % \end{theorem}
+
+% %
+
+% \begin{theorem}
+% If $\Delta\vdash P :: a\!:\!A$ and $P$ reduces to $Q$ by the tick-last strategy using $n$ productive time reductions then $\text{time}(A) \geq n$.
+% \begin{proof} By induction on the size of n.
+% \begin{description}
+% \item[$n = 0$] For any process $P$, context $\Delta$ and session $a:A$ such that $\Delta\vdash P :: a\!:\!A$, we have that $\text{time}(A)\geq 0$, and so this is obtained trivially.
+
+% \item[$n+1$] Assume that $\Delta\vdash P :: a\!:\!A$ and $P$ reduces to $Q$ by the tick-last strategy with $n+1$ productive time reductions. Then we have that $P \leadsto^* P'$ and $P' \Longrightarrow^{-1} Q'$ with $P' \neq Q'$ and $P'\!\not\!\leadsto$ such that $Q'$ reduces to $Q$ by the tick-last strategy with $n$ productive time reductions. By Theorem \ref{theorem:sr} $\Delta\vdash P' :: a\!:\!A$ follows from $\Delta\vdash P :: a\!:\!A$. By Lemma \ref{lemma:timered} $\Delta\vdash P' :: a\!:\!A$ and $P' \Longrightarrow^{-1} Q'$ with $P' \neq Q'$ implies there exists $\hat{\Delta'}[\Delta']=\Delta$ and $\hat{A'}[A']=A$ such that $\hat{\Delta'}[[\Delta']^{-1}_L]\vdash Q' :: a\!:\!\hat{A'}[[A']^{-1}_R]$ and by Lemma \ref{lemma:timegeq} $\text{time}(\hat{A'}[A']) - 1 \geq \text{time}(\hat{A'}[[A']^{-1}_R])$. Then by the induction hypothesis, $\text{time}(\hat{A'}[[A']^{-1}_R]) \geq n$. It follows from $\hat{A'}[A']=A$ that $\text{time}(A) \geq n + 1$.
+
+% \end{description}
+
+% %We do not consider left rules, i.e. those that consume rather than provide sessions, as they hold trivially by induction and the fact that the span of inputs, outputs, external choices and internal choices is either $0$ or the span of their continuations, depending on the environment.
+% % \begin{description}
+% % %\item[$\runa{TS-$\mathbf{1}$L}$] 
+
+% % \item[$\runa{TS-$\mathbf{1}$R}$] The span of inaction $\mathbf{0}$ is $0$, and by $\runa{TS-$\mathbf{1}R$}$, $\mathbf{0}$ provides a session of type $\mathbf{1}$. We have that $\text{time}(\mathbf{1}) = 0$.
+
+% % %\item[$\runa{TS-$\otimes$L}$]
+
+% % \item[$\runa{TS-$\otimes$R}$] The span of a synchronous output $\outputch{a}{v}{}{P}$ is 0 when it is not in parallel with a corresponding input, and equal to the span of its continuation $P$ when it is. By $\runa{TS-$\otimes$R}$, $\Delta,v : A\vdash\outputch{a}{v}{}{P}:: a\!:\! A\otimes B$ such that $\Delta\vdash P :: a\!:\!B$, and so by induction, $\text{time}(B)$ is an upper bound on the span of $P$. We have that $\text{time}(A \otimes B) = \text{time}(B)$, which is an upper bound in either case.
+
+% % %\item[$\runa{TS-$\multimap$L}$]
+
+% % \item[$\runa{TS-$\multimap$R}$] The span of a synchronous input $\inputch{a}{v}{}{P}$ is 0 when it is not in parallel with a corresponding output, and equal to the span of its continuation $P$ when it is. By $\runa{TS-$\multimap$R}$, $\Delta\vdash\inputch{a}{v}{}{P}:: a\!:\! A\multimap B$ such that $\Delta,v:A\vdash P :: a\!:\!B$, and so by induction, $\text{time}(B)$ is an upper bound on the span of $P$. We have that $\text{time}(A \multimap B) = \text{time}(B)$, which is an upper bound in either case.
+
+% % \item[$\runa{TS-cut}$] The span of a parallel composition depends on the parallelism of reductions of ticks with respect to synchronizations in its two parallel subprocesses, i.e. it depends on the protocols of channels used in the parallel composition. By $\runa{TS-cut}$ we have that $\Delta',\Delta''\vdash \newvar{a}{(P'\mid P'')::c\!:\!C}$ such that $\Delta'\vdash P' :: a\!:\!A$ and $\Delta'',a:A\vdash P'' :: c\!:\!C$. As $P'$ and $P''$ only communicate using one channel (i.e. $a$ when no identity constructs are used, or some fresh name otherwise), the parallelism entirely depends on the session type $A$. By induction $\text{time}(A)$ is an upper bound on the span of $P'$ when session $a:A$ is used. Similarly, $\text{time}(C)$ is a bound on the span of $P''$ including when session $c:C$ is consumed. By Lemma \ref{}, $a:A\vdash P'' :: c\!:\!C$ implies $\text{time}(C) \geq \text{time}(A)$, and so $\text{time}(C)$ is an upper bound on the span of $\newvar{a}{(P'\mid P'')}$.
+
+% % \item[$\runa{TS-id}$] The span of an identity construct $a \leftarrow b$ is 0, as it has no continuation, and so for $b:A\vdash a\leftarrow b :: a\!:\!A$ it trivially holds that $\text{time}(A)$ is an upper bound on the span, as $\text{time}(A) \geq 0$.
+
+% % %\item[$\runa{TS-$\oplus$L}$]
+
+% % \item[$\runa{TS-$\oplus$R}$] The span of an internal choice $a.k; P$ is 0 when it is not in parallel with a corresponding external choice, and equal to the span of its continuation $P$ when it is. By $\runa{TS-$\oplus$R}$, $\Delta\vdash a.k; P ::a\!:\!\oplus\{l:A_l\}_{l\in L}$ such that $k \in L$ and $\Delta\vdash P ::a\!:\!A_k$, and so by induction, $\text{time}(A_k)$ is an upper bound on the span of $P$. We have that $\text{time}(\oplus\{l:A_l\}_{l\in L}) = \text{max}(\text{time}(A_l) \mid l \in L)$. As $k \in L$, $\text{max}(\text{time}(A_l) \mid l \in L)\geq \text{time}(A_k)$, which is an upper bound in either case.
+
+% % %\item[$\runa{TS-$\&$L}$]
+
+% % \item[$\runa{TS-$\&$R}$] The span of an external choice $a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L}$ is 0 when it is not in parallel with a corresponding internal choice, and equal to the maximum span amongst its possible continuations $P_l$ for $l\in L$ when it is. By $\runa{TS-$\&$R}$, $\Delta\vdash a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L} ::a\!:\!\&\{l:A_l\}_{l\in L}$ such that for all $l \in L$ $\Delta\vdash P_l ::a\!:\!A_l$, and so by induction, $\text{time}(A_l)$ is an upper bound on the span of $P_l$. We have that $\text{time}(\&\{l:A_l\}_{l\in L}) = \text{max}(\text{time}(A_l) \mid l \in L)$, which is an upper bound in either case.
+
+% % \item[$\runa{TS-def}$]
+
+% % \item[$\runa{TS-$\ocircle$LR'}$]
+
+% % \item[$\runa{TS-$\ocircle$LR}$]
+
+% % \item[$\runa{TS-$\lozenge$L}$]
+
+% % \item[$\runa{TS-$\lozenge$R}$]
+
+% % \item[$\runa{TS-$\Box$L}$]
+
+% % \item[$\runa{TS-$\Box$R}$]
+
+% % \end{description}
+% \end{proof}
+% \end{theorem}

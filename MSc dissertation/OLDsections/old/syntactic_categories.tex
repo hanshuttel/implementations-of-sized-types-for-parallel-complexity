@@ -1,0 +1,29 @@
+\section{Preliminaries}
+In this section we start by introducing a collection of syntactic categories used throughout the article to define the languagee syntax and formal semantic. First the basic categories are presented, followed by editorial and abstract syntax tree categories.
+\subsection*{Base categories}
+First we introduce base categories in our language. \textbf{Var} is the set of variable names $x$. \textbf{Con} is the set of all predefined constants in the language. The metavariable $c$ is not expanded upon in this document due to its specificity to a single language.
+\begin{align*}
+  x\in\, & \textbf{Var} && \quad \text{Variables}\\
+  c \in\, & \textbf{Con} && \quad \text{Predefined constants\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad}\\
+  %v \in\, & \textbf{Val} && \quad \text{Values resulting from program evaluation}
+\end{align*}
+%
+\subsection*{Editor-calculus categories}
+We introduce four syntactic categories for the editor-calculus. $\mathbf{Aep}$ is the set of editor commands that can be evaluated atomically, $\mathbf{Ecd}$ is the set of possible editor conditions and $\mathbf{Edt}$ is the set of editor command expressions. Finally, $\mathbf{Aam}$ is the set of atomic changes that may be applied to an abstract syntax tree, such as the insertion of a breakpoint. We present the compositional rules of these categories in section \ref{EDITCALCULUS}.
+\begin{align*}
+  \pi \in\, & \textbf{Aep} && \quad \text{Atomic editor prefixes} \\
+  \phi \in\, & \textbf{Ecd} && \quad \text{Editor conditions}\\
+  E \in\, & \textbf{Edt} && \quad \text{Editor expressions} \\
+  D \in\, & \textbf{Aam} && \quad \text{Atomic AST node modifications}
+\end{align*}
+%
+\subsection*{AST-calculus category}
+AST nodes are built from the syntactic category \textbf{Ast}. %All possible circumstances are covered by the single metavariable $a$, including the cursor and breakpoints. We present these constructs in section \ref{astcalculus}.
+
+
+\begin{align*}
+  %p \in\, & \textbf{Prg} && \quad \text{Programs with undo-redo contexts}\\
+  %r \in\, & \textbf{Sch} && \quad \text{expression of changes induced}\\
+  a \in\, & \textbf{Ast} && \quad \text{Abstract syntax tree nodes}\\
+\end{align*}
+%

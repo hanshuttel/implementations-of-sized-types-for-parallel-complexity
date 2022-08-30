@@ -1,0 +1,489 @@
+\section{Session Types for Parallel Complexity}\label{sec:SessionTypesSystem}
+% One of the strengths of usage types is their ability to precisely describe how a channel may behave at run-time, as a usage is itself a process. This translates to precise bounds on the parallel complexity, when usage prefixes are annotated with temporal information as we have seen in Section \ref{sec:lockfreedomts} and \ref{subsec:sizedwithusages}. However, the type systems by Kobayashi \cite{Kobayashi2000} and Baillot et al. \cite{BaillotEtAl2021} cannot analyze the parallel complexity of processes that contain heterogeneous channels, as usage types are essentially annotated simple types. Kobayashi \cite{Kobayashi2000} and Baillot et al. \cite{BaillotEtAl2021} circumvent this by defining type systems for the polyadic $\pi$-calculus, such that multiple values of different types may be transmitted simultaneously. However, these type systems still cannot prescribe protocols with branching, such as those seen in client-server protocols, where a server offers multiple services, and a client accepts one.\\
+
+Das et al. \cite{DasEtAl2018} introduce a type system for parallel complexity of heterogeneous processes, using session types extended with temporal modalities, to analyze such properties as the rate, latency and parallel complexity of communication protocols. We first introduce the types, which are identical to the session types in Definition \ref{def:sessiontypestypes}, but extended with temporal modalities $\ocircle$ (next), $\lozenge$ (eventually), and $\Box$ (always). We write $\ocircle A$ to prescribe that the session incurs a cost of one in time complexity before proceeding according to $A$, and so an arbitrary constant cost $n$ can be expressed as $\ocircle\cdots\ocircle A$, which we abbreviate to $\ocircle^n A$ (and $\ocircle^* A$ to represent an arbitrary constant time complexity). This type constructor is too precise for processes with replicated input, as we cannot statically determine the number of synchronizations of such processes, and so we use the complementary type constructors $\lozenge A$ and $\Box A$ to prescribe the cost in the corresponding session types. Here, $\lozenge A$ prescribes that the session eventually (if the corresponding process terminates) proceeds according to $A$, whereas $\Box A$ implies the session is always ready to proceed as $A$. We say that $\lozenge A$ and $\Box B$ are dual when $A$ and $B$ are dual, as $B$ must always be ready if $A$ is eventually ready, and vice versa. The resulting types are shown in Definition \ref{def:temporalsessiontypestypes}.
+
+\begin{defi}[Temporal session types]
+Types for names are given by
+\begin{align*}
+    A,B ::= \mathbf{1} \mid A \otimes B \mid A \multimap B \mid \oplus\{l : A_l\}_{l\in L} \mid \&\{l : A_l\}_{l\in L} \mid \ocircle A \mid \lozenge A \mid \Box A
+\end{align*}
+\label{def:temporalsessiontypestypes}
+\end{defi}
+
+\begin{examp}
+Consider a client-server architecture, in which a server maintains a stack of numbers that clients can push and pop from, as well as pop the complete stack. Push and pop requests are constant time, whereas the last request depends on the size of the stack, and so we can type such a protocol as
+\begin{align*}
+    \textit{Serv} \defeq&\; \&\{\text{push} : \texttt{Num} \multimap (\ocircle\textit{Serv}), \text{pop} : \ocircle\textit{Serv}, \text{empty} : \lozenge\textit{Serv})\}\\
+    %
+    \textit{Client} \defeq& \oplus\!\{\text{push} : \texttt{Num} \otimes (\ocircle\textit{Client}), \text{pop} : \ocircle\textit{Client}, \text{empty} : \Box\textit{Client})\}
+\end{align*}
+Note that the server is eventually ($\lozenge$) ready to continue according to $\textit{Serv}$, and the client is dually always ($\Box$) ready to proceed according to $\textit{Client}$. %We write $\ocircle\lozenge\textit{Serv}$ and $\ocircle\Box\textit{Client}$, respectively, as the request costs at least one unit of time complexity, due to the labeled choice.
+\end{examp}
+%%
+The type system from Das et al. \cite{DasEtAl2018} is derived from the Curry-Howard interpretation of linear intuitionistic logic by Caires and Pfenning \cite{CairesPfenning2010}. However, their type system is more expressive, as it enables recursion, process chaining and notably mutual recursion, which is not possible in the type system of Caires and Pfenning, as two parallel processes communicate using exactly one name in this system \cite{DardhaGay2018}.\\
+
+To accommodate this, while preserving a global progress property (i.e. deadlock freedom), Das et al. modify the $\pi$-calculus. Namely, by replacing replication with \textit{spawning} of named processes that may recur, and by introducing a message forwarding construct that enables two distinct names to communicate. Such constructs are, to our knowledge, necessary for any meaningful type derivation using modalities $\lozenge$ and $\Box$ in the Das et al. \cite{DasEtAl2018} system. Therefore, we introduce named process declarations of the form $\Delta \vdash f = P :: a\!:\!A$ such that $f$ is a name identifying process $P$ that provides a service along channel $a$ according to session type $A$, using services $\Delta$. We store such declarations in a global set $\Sigma$, such that the process named $f$ may \textit{spawn} copies of itself, thereby enabling a notion of recursion that is sound under the constraints imposed by Caires and Pfenning \cite{CairesPfenning2010}. To use a named process, we introduce the syntax $a \leftarrow f \leftarrow \widetilde{b}$, which means that we introduce a copy of the process named $f$, such that the copy provides a service on name $a$ and uses services on names $\widetilde{b}$. We also introduce a forwarding construct $a \leftarrow b$ that enables an output (or internal choice) on channel $b$ to synchronize with an input (or external choice) on channel $a$. We extend the reduction relation for the $\pi$-calculus accordingly below, and the remaining rules are as before (As defined in Table \ref{tab:redurules}).
+%
+\begin{align*}
+    \kern-3em&\runa{R-def}\; \infrule{(\widetilde{c}:\widetilde{A} \vdash f = P :: a\!:\!A) \in \Sigma}{b \leftarrow f \leftarrow \widetilde{d} \longrightarrow P[a\mapsto b,\widetilde{c}\mapsto\widetilde{d}]}\quad\quad\quad \runa{R-id}\; \infrule{c\; \text{is not free in}\; P}{\newvar{a}{\newvar{b}{(P \mid a \leftarrow b)}}\longrightarrow \newvar{c}{P[a\mapsto c,b\mapsto c]}}
+\end{align*}
+We extend the definition of canonical forms accordingly in Definition \ref{def:canformdas}.
+\begin{defi}[Canonical form for the modified language]
+A process $P$ is in canonical form if it is of the form $\newvar{\widetilde{a}}{(m_1 : G_1 \mid m_2 : G_2 \mid \dots \mid m_n : G_n)}$ where $G_1,G_2,\dots,G_n$ are guarded processes as defined by the syntax
+\begin{align*}
+    G ::=&\; a \leftarrow f \leftarrow \widetilde{v} \mid a \leftarrow b \mid a.k; P \mid a.\texttt{case}\{ l \Rightarrow P_l\}_{l\in L} \mid \inputch{a}{\widetilde{v}}{}{P} \mid \outputch{a}{\widetilde{e}}{}{P} \mid \tick P
+\end{align*}
+When $n = 0$ the canonical form is $\newvar{\widetilde{a}}{\nil}$.
+\label{def:canformdas}
+\end{defi}
+%
+ %This language is out of the scope of this survey, as we are mainly interested in the addition of temporal modalities to session types, and so we consider the less expressive base session type system by Caires and Pfenning. When it is safe to do so, we assume this type system enables recursion through replication.\\
+
+%To make type derivation of temporal modalities entirely syntax directed, Das et al. \cite{DasEtAl2018} introduce constructors $\texttt{when}?\; a; P$ and $\texttt{now}!\; a; P$ for type constructors $\Box A$ and $\lozenge B$, respectively. The idea is that these constructors shall eventually be inserted into programs automatically, based on where the \texttt{tick} constructor is used, but it is not specified how this will be done \cite{DasEtAl2018}. In principle, modalities $\Box$ and $\lozenge$ should be used exactly when the complexity is not constant, which in our case is entirely dependent on recursion or mutual recursion. The semantics is as follows
+%\begin{align*}
+%    \runa{R-$\Box\lozenge$}\;\infrule{}{\texttt{when}?\; a; P \mid \texttt{now}!\; a; Q \longrightarrow P %\mid Q}
+%\end{align*}
+%
+%%
+\subsection{Session type rules}
+The temporal type constructors do not affect the session type constructors, and so we can consider the corresponding type rules separately. We first show the session type rules in Table \ref{tab:sessiontyperules}.  The dual rules $\runa{TS-$\mathbf{1}$L}$ and $\runa{TS-$\mathbf{1}$R}$ dictate how terminated sessions are to be used and provided. The left rule enables us to discard a name bound in type context $\Delta$ whose session is terminated, and the right rule forces inaction to provide a terminated session on some name. Note that inaction must be typed in the empty linearly restricted context, thereby enforcing use of linear names. The next four rules type inputs and outputs, distinguishing between when an input and an output provides a session, respectively. Note that in Das et al. \cite{DasEtAl2018}, only asynchronous outputs are well-typed, however, we type synchronous outputs. The rule $\runa{TS-ID}$ uses a service on some channel $a$ and provides a similar service on another channel $b$, by forwarding a message received on $a$ to $b$. The next four rules are similar to those of inputs and outputs, distinguishing between when internal and external choice provide and use sessions, respectively. The final rule $\runa{TS-def}$ is a variant of cut-elimination using a named process contained in the global set $\Sigma$. The named process provides a service on a new channel and the other subprocess uses this service to provide another session, essentially cutting the new name out of the program.
+
+\begin{table*}[!ht]
+    \centering
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern5em\runa{TS-$\mathbf{1}$L}\; \infrule{\Delta \vdash P :: c\!:\!C}{\Delta,a:\mathbf{1} \vdash P :: c\!:\!C}\quad \runa{TS-$\mathbf{1}$R}\; \infrule{}{\cdot\vdash \nil :: a\!:\!\mathbf{1}}\\[-1em]
+        %
+        &\kern4em\runa{TS-$\otimes$L}\; \infrule{\Delta,v:A,a:B\vdash P :: c\!:\!C}{\Delta,a:A\otimes B \vdash \inputch{a}{v}{}{P} :: c\!:\!C}\quad\quad \runa{TS-$\otimes$R}\; \infrule{\Delta \vdash P :: a\!:\!B}{\Delta,v : A \vdash \outputch{a}{v}{}{}{P} :: a\!:\!A\otimes B}\\[-1em]
+        %
+        &\kern3em\runa{TS-$\multimap$L}\; \infrule{\Delta,a : B \vdash P :: c\!:\!C}{\Delta,a : A \multimap B,v : A \vdash \outputch{a}{v}{}{P} :: c\!:\!C}\quad\quad\quad\kern2em \runa{TS-$\multimap$R}\; \infrule{\Delta,v:A\vdash P :: a\!:\!B}{\Delta\vdash \inputch{a}{v}{}{P} :: a\!:\!A\multimap B}\\[-1em]
+        %
+        &\kern4em\runa{TS-cut}\; \infrule{\Delta \vdash P :: a\!:\!A\quad \Delta',a : A \vdash Q :: c\!:\!C }{\Delta,\Delta'\vdash \newvar{a}{(P \mid Q)} :: c\!:\!C}\quad\quad\quad\kern2em \runa{TS-id}\; \infrule{}{b:A\vdash a \leftarrow b :: a\!:\!A}\\[-1em]
+        %
+        &\kern0em\runa{TS-$\oplus$L}\; \infrule{\forall_{l \in L}\quad \Delta,a : A_l \vdash P_l :: c\!:\!C}{\Delta,a : \oplus\{l : A_l\}_{l\in L} \vdash a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L} :: c\!:\!C}\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\runa{TS-$\oplus$R}\; \infrule{k \in L\quad \Delta\vdash P :: a\!:\!A_k}{\Delta \vdash a.k;P :: a\!:\!\oplus\{l : A_l\}_{l\in L}}\\[-1em]
+        %
+        &\kern0em\runa{TS-$\&$L}\; \infrule{k \in L\quad \Delta,a:A_k\vdash P :: c\!:\!C}{\Delta,a:\&\{l : A_l\}_{l\in L} \vdash a.k;P :: c\!:\!C}\quad\quad\quad\quad\kern-0.5em \runa{TS-$\&$R}\; \infrule{\forall_{l \in L}\quad \Delta \vdash P_l :: a\!:\! A_l}{\Delta \vdash a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L} :: a\!:\!\&\{l : A_l\}_{l\in L}}\kern6em\\[-1em]
+        %
+        &\kern4em\runa{TS-def}\; \infrule{(\widetilde{d}:\widetilde{B}\vdash f = P :: g\!:\!A)\in \Sigma\quad \Delta,a:A\vdash Q :: c\!:\!C}{\Delta,\widetilde{b} : \widetilde{B}\vdash \newvar{a}{(a \leftarrow f \leftarrow \widetilde{b} \mid Q)} :: c\!:\!C}
+        %
+        % &\kern-2em\runa{TS-$\ocircle$LR}\; \infrule{[\Delta]^{-1}_L\vdash P :: [a\!:\!A]^{-1}_R}{\Delta\vdash \tick{P} :: a\!:\!\ A}\kern2em \infrule{}{\ocircle^*\Box A\; \texttt{delayed}^\Box}\kern2em \infrule{}{\ocircle^*\lozenge A\; \texttt{delayed}^\lozenge}\\
+        % %
+        % &\kern-2em \runa{TS-$\lozenge$L}\; \infrule{\Delta\; \texttt{delayed}^\Box\quad \Delta,a:A\vdash P :: b\!:\!B\quad B\; \texttt{delayed}^\lozenge}{\Delta,a:\lozenge A\vdash\;\bang\inputch{a}{}{}{P} :: b\!:\!B} \kern11em\runa{TS-$\lozenge$R}\; \infrule{\Delta\vdash P :: a\!:\!A}{\Delta\vdash \outputch{a}{}{}{P} :: a\!:\!\lozenge A}\\
+        % %
+        % &\kern-2em \runa{TS-$\Box$L}\; \infrule{\Delta,a:A\vdash P :: b\!:\!B}{\Delta,a:\Box A\vdash \outputch{a}{}{}{P} :: b\!:\!B} \kern2em \runa{TS-$\Box$R}\; \infrule{\Delta\; \texttt{delayed}^\Box\quad \Delta\vdash P :: a\!:\!A}{\Delta\vdash\; \bang\inputch{a}{}{}{P} :: a\!:\!\Box A}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Typing rules for processes with Session types.}
+    \label{tab:sessiontyperules}
+\end{table*}
+
+\subsection{Temporal type rules}
+Before we show the type rules for temporal type constructors, we introduce two operations that, given a type context $a:A$, advance the time of $A$ by one unit of time complexity, such that $a: \ocircle A'$ intuitively becomes $a:A'$. A type with the modality $\lozenge$ can only have its time advanced when it is \textit{provided}, whereas $\Box$ only can when it is \textit{consumed}, and so we distinguish between associations on the left-hand and right-hand side of sequents, writing $[a:A]^{-1}_L$ and $[a:A]^{-1}_R$, respectively. Intuitively, $[a:\Box A]^{-1}_L = a:\Box A$ as $\Box A$ is always ready to proceed as $A$, and $[a:\lozenge A]^{-1}_R = a : \lozenge A$ as we cannot statically determine when $A$ is eventually provided. The rules defining $[a:A]^{-1}_L$ and $[a:A]^{-1}_R$ are shown in Definition \ref{def:timestepping}.
+
+\begin{defi}[Time stepping]
+Let $A$ be a temporal session type. We define $A$ after stepping time forward by one unit of time complexity to be $[A]^{-1}_L$ when $A$ is on the left-hand side of a sequent, and $[A]^{-1}_R$ when it is on the right-hand side. We extend time stepping to type contexts, writing $[\Delta]^{-1}_L$ for the type context where for all $b\in\text{dom}(\Delta)$ $[\Delta]^{-1}_L(b)=[\Delta(b)]^{-1}_L$. $[A]^{-1}_L$ and $[A]^{-1}_R$ are given by the rules below, and are otherwise undefined.
+\begin{align*}
+    %[\cdot]^{-1}_L &=\; \cdot   &[a : A]^{-1}_R &=\; a : [A]^{-1}_R\\
+    \kern4em[\ocircle A]^{-1}_L &=\; A   &[\ocircle A]^{-1}_R &=\; A\\
+    \kern4em[\Box A]^{-1}_L &=\; \Box A    &[\lozenge A]^{-1}_R &=\; \lozenge A\\
+       %\\
+    %[A]^{-1}_L &=\; \textit{undefined}   &[A]^{-1}_R &=\; \textit{undefined}
+\end{align*}
+\label{def:timestepping}
+\end{defi}
+%
+
+When defining the typing rules, we will often be interested in whether session types are safe to delay, and whether we can be sure they eventually proceed according to some type. Therefore, we define $\texttt{delayed}^\Box$ and $\texttt{delayed}^\lozenge$ in Definition \ref{def:delayingsessiontypes}.
+\begin{defi}
+We say that a session type $A$ is $\texttt{delayed}^\Box$ when it is of the form $\ocircle^*\Box A'$, meaning it is safe to delay it indefinitely, and dually $\texttt{delayed}^\lozenge$ when it has the form $\ocircle^*\lozenge A'$, such that it eventually proceeds according to $A'$. 
+\label{def:delayingsessiontypes}
+\end{defi}
+
+We now present the temporal session type rules. The cost model used in Das et al. \cite{DasEtAl2018} employs a \texttt{tick} constructor identical to that of Baillot and Ghyselen \cite{BaillotGhyselen2021} and Baillot et al. \cite{BaillotEtAl2021} called \texttt{delay}, and so we can simply use the cost model from Section \ref{sec:costmodel}. The rules are shown in Table \ref{tab:temporalsessiontyperules}. The rule $\runa{TS-$\ocircle$LR'}$ types a process $P$ prefixed with a \texttt{tick} by enforcing all session types in the type context $\Delta$ to be of the form $\ocircle B$ or $\Box B$ for some $B$, such that $\Delta$ after one unit of time complexity $[\Delta]^{-1}_L$ is defined, within which we type $P$. Dually, the prefixed process must provide a session according to a session type of the form $\ocircle C$ or $\lozenge C$ for some $C$. The rule $\runa{TS-$\ocircle$LR}$ provides flexibility with respect to the use of modality $\ocircle$, for instance enabling us to type a process of the form $\newvar{a}{(\tick P \mid Q)}$ where $Q$ is not prefixed with a tick. The final four rules type processes that use or provide sessions with modalities $\lozenge$ and $\Box$. If a process $P$ is to use a session $a : \lozenge A$ then rule $\runa{TS-$\lozenge$L}$ enforces that all session types in $\Delta$ must be able to wait indefinitely, by premise $\Delta \texttt{delayed}^\Box$. Similarly, for the session $b : B$ provided by the process it must be that $B\;\texttt{delayed}^\lozenge$, as we cannot statically determine when $b$ will communicate, granted the process is waiting for an eventual input on $a$. Rule $\runa{TS-$\lozenge$R}$ types the dual case, where a process $P$ provides a session of type $\lozenge A$ when $P$ provides a session of type $A$. Note that the modalities $\lozenge$ and $\Box$ are not syntax directed.
+
+
+\begin{table*}[!ht]
+    \centering
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern2em\runa{TS-$\ocircle$LR'}\; \infrule{[\Delta]^{-1}_L \vdash P :: a\!:\![A]^{-1}_R}{\Delta\vdash \tick{P} :: a\!:\!A}\kern2em \kern-1em\runa{TS-$\ocircle$LR}\; \infrule{[\Delta]^{-1}_L \vdash P :: a\!:\![A]^{-1}_R}{\Delta\vdash P :: a\!:\!A}\\[-1em] 
+        %&\infrule{}{\ocircle^*\Box A\; \texttt{delayed}^\Box}\kern2em \infrule{}{\ocircle^*\lozenge A\; \texttt{delayed}^\lozenge}\\
+        %
+        &\kern0em\runa{TS-$\lozenge$L}\; \infrule{\Delta\; \texttt{delayed}^\Box\quad \Delta,a:A\vdash P :: b\!:\!B\quad B\; \texttt{delayed}^\lozenge}{\Delta,a:\lozenge A\vdash P :: b\!:\!B} \kern11em\runa{TS-$\lozenge$R}\; \infrule{\Delta \vdash P :: a\!:\!A}{\Delta \vdash P :: a\!:\!\lozenge A}\\[-1em]
+        %
+        &\kern1em\runa{TS-$\Box$L}\; \infrule{\Delta,a:A\vdash P :: b\!:\!B}{\Delta,a:\Box A\vdash P :: b\!:\!B} \kern4em\runa{TS-$\Box$R}\; \infrule{\Delta\; \texttt{delayed}^\Box\quad \Delta\vdash P :: a\!:\!A}{\Delta\vdash P :: a\!:\!\Box A}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Typing rules for processes with Temporal Session types.}
+    \label{tab:temporalsessiontyperules}
+\end{table*}
+
+\subsection{Soundness}\label{sec:dassoundness}
+Das et al. \cite{DasEtAl2018} introduce a type preservation result and a global progress result for the type system, implying together that deadlocks cannot occur in well-typed processes. However, they do not prove any properties related to the parallel complexity. Therefore, we discuss how such a result can be proved here, specifically a conjecture that connects temporal session types and the span, such that if $\Delta\vdash P :: a\:\!A$ then $A$ provides an upper bound on the span, which we shall later formalize. As the semantics of our language differs significantly from that of Das et al., we also prove the usual subject reduction property (Theorem \ref{theorem:sr}) as well as a substitution lemma (Lemma \ref{lemma:substlem}). Note that the semantics in Das et al. \cite{DasEtAl2018} does not include a structural congruence definition, and so to establish a faithful type preservation result in our calculus, we must consider $\pi$-calculus terms up to structural congruence in this section (as in Caires and Pfenning \cite{CairesPfenning2010}). Then by definition, $\Delta \vdash P :: c\!:\!C$ and $P \equiv Q$ implies $\Delta \vdash Q :: c\!:\!C$, i.e. typability is closed under $\equiv$.
+
+\begin{lemma}\label{lemma:substlem}
+Let $P$ be an arbitrary process such that $b$ is not free in $P$. 
+\begin{enumerate}
+\item If $\Delta,a:A\vdash P :: c\!:\!C$ then $\Delta,b:A\vdash P[a\mapsto b] :: c\!:\!C$.
+
+\item If $\Delta\vdash P :: a\!:\!A$ then $\Delta\vdash P[a\mapsto b] :: b\!:\!A$.
+\end{enumerate}
+\begin{proof}
+By induction on the type rules. The proof is shown in Appendix \ref{app:dasetallsoundness}.
+\end{proof}
+\end{lemma}
+
+\begin{theorem}[Subject reduction]
+If $\Delta \vdash P :: a\!:\!A$ and $P \longrightarrow Q$ then $\Delta\vdash Q :: a\!:\!A$.
+\begin{proof}
+By induction on the reduction rules. For a process to be well-typed and reduce, it must be typed with either $\runa{TS-$\ocircle$LR'}$, $\runa{TS-cut}$ or $\runa{TS-def}$, and so it suffices to consider $\runa{R-tick}$, $\runa{R-res}$, $\runa{R-id}$ and $\runa{R-struct}$. We omit $\runa{R-struct}$ as typability is closed under structural congruence. The proof is shown in Appendix \ref{app:dasetallsoundness}.
+\end{proof}\label{theorem:sr}
+\end{theorem}
+
+To conjecture that the type system by Das et al. \cite{DasEtAl2018} bounds the span of well-typed processes, we introduce a \textit{reduction strategy} that maximizes parallelism, such that we can more easily reason about the span. To do this we distinguish between reductions by $\longrightarrow$ that only reduce ticks and those that do not reduce ticks. We formalize such reductions in Definition \ref{def:timereduction} and Definition \ref{def:nontempreduction}, respectively. Specifically, we define $P\Longrightarrow^{-1} Q$ such that $Q$ is $P$ with all non-guarded ticks removed, referring to such reductions as \textit{time reductions}, and $P\leadsto Q$ when $P$ reduces to $Q$ with $\longrightarrow$ without reducing a tick. The intuition of the reduction strategy (which we refer to as the tick-last strategy as inspired by Baillot and Ghyselen \cite{BaillotGhyselen2021}) is that we reduce a process $P$ with relation $\leadsto$ until no such reduction is defined, i.e $P\leadsto P'$ and $P'\!\not\!\leadsto$. Then we reduce all the ticks that are now in parallel with a single time reduction $P'\Longrightarrow^{-1} Q$, corresponding to a cost of 1 in time complexity. We then proceed to the next iteration starting from $Q$, and terminating when the time reduction is not productive, i.e $Q' \Longrightarrow^{-1} Q'$. This way, we only reduce ticks when no other reductions are possible, thereby maximizing the parallelism, and so the span is equal to the number of productive time reductions used when reducing a process by this strategy. We formalize the strategy in Definition \ref{def:ticklaststrat}.
+
+%We next define the \textit{time} of a temporal session type in Definition \ref{def:sessioncomp}, converting temporal modalities to non-negative integers. This is inspired by the comparison between temporal modalities and usages in Baillot et al. \cite{BaillotEtAl2021}, i.e. $\ocircle$ corresponds to a delay $\withdelay{[1,1]}{}$, and $\Box$ and $\lozenge$ roughly map to usages $\texttt{In}^{[0,\infty]}_{[0,\infty]}$ and $\texttt{Out}^{[0,\infty]}_{[0,\infty]}$, respectively. Judging by the complexity of a process that uses a channel with such usage, it is only sound to bound the complexity of $\Box$ and $\lozenge$ by infinity. More on this in Section \ref{sec:comparison}.
+%
+\begin{defi}[Time reduction]\label{def:timereduction}
+Let $P$ be a process in canonical form $P \equiv \newvar{\widetilde{a}}{(G_1\mid\dots\mid G_n \mid \tick R_1 \mid\dots\mid\tick R_m)}$ such that $G_1\dots G_n$ are not prefixed by ticks. Then we call the reduction sequence from $P$ to $Q\equiv \newvar{\widetilde{a}}{(G_1\mid\dots\mid G_n \mid R_1 \mid\dots\mid R_m)}$ $P\longrightarrow^* Q$ a \textit{time reduction}, denoted $P \Longrightarrow^{-1} Q$. We say a time reduction $P\Longrightarrow^{-1} Q$ is \textit{productive} when $P\neq Q$, i.e. $P$ is not invariant to $\Longrightarrow^{-1}$.
+\end{defi}
+
+\begin{defi}[Non-temporal reduction]\label{def:nontempreduction}
+We define a relation $\leadsto$ such that $P\leadsto Q$ when $P \longrightarrow Q$ without using $\runa{R-tick}$. We write $P\!\!\leadsto$ when there exists $Q$ such that $P\leadsto Q$ and, conversely, $P\!\not\!\leadsto$ when no such $Q$ exists. We write $P \leadsto^* Q$ when $P\leadsto Q$ is in the transitive closure of $\leadsto$.
+\end{defi}
+
+\begin{defi}[Tick-last strategy]\label{def:ticklaststrat}
+We define the tick-last reduction strategy for process $P$ in two steps
+\begin{enumerate}
+    \item We reduce $P$ using reduction relation $\leadsto$ such that $P\leadsto^* Q$  and $Q\!\not\!\leadsto$.
+    
+    \item We perform a time reduction on $Q$ such that if
+    \begin{itemize}
+        \item $Q \Longrightarrow^{-1} Q$ we stop, as $Q$ cannot reduce any further.
+        \item $Q \Longrightarrow^{-1} R$ such that $Q \neq R$ we proceed to step one starting from $R$.  
+    \end{itemize}
+\end{enumerate}
+\end{defi}
+
+We next define the \textit{time} of a temporal session type in Definition \ref{def:sessioncomp}, converting temporal modalities to non-negative integers. This is inspired by the comparison between temporal modalities and usages in Baillot et al. \cite{BaillotEtAl2021}, i.e. $\ocircle$ corresponds to a delay $\withdelay{[1,1]}{}$, and $\Box$ and $\lozenge$ roughly map to usages $\texttt{In}^{[0,\infty]}_{[0,\infty]}$ and $\texttt{Out}^{[0,\infty]}_{[0,\infty]}$. Judging by the complexity of a process that uses a channel with such usage, it is only sound to bound the complexity of $\Box$ and $\lozenge$ by infinity. More on this in Section \ref{sec:comparison}. Recall that a recursive session type $A$ is equi-recursive, and so if a recursive reference in $A$ is prefixed with a modality, $\text{time}(A)$ propagates to infinity.
+
+\begin{defi}[Session complexity]
+We define the complexity or time of a session type $\text{time}(A)$ inductively by
+\begin{align*}
+    \text{time}(A\otimes B) =&\; \text{time}(B)\quad &\text{time}(\ocircle A) =&\; 1 + \text{time}(A)\\
+    \text{time}(A\multimap B) =&\; \text{time}(B)\quad &\text{time}(\lozenge A) =&\; \infty\\
+     \text{time}(\oplus\{l : A_l\}_{l\in L}) =&\; \text{max}(\text{time}(A_l) \mid l \in L )\quad &\text{time}(\Box A) =&\; \infty\\
+    \text{time}(\&\{l : A_l\}_{l\in L}) =&\; \text{max}(\text{time}(A_l) \mid l \in L )\quad&\text{time}(\mathbf{1}) =&\; 0 %\\
+    %\text{time}(\ocircle A) =&\; 1 + \text{time}(A)\\
+    %\text{time}(\lozenge A) =&\; \infty\\
+    %\text{time}(\Box A) =&\; \infty
+\end{align*}\label{def:sessioncomp}
+where $1 + \infty = \infty$ and $\infty - 1 = \infty$.
+\end{defi}
+As the temporal modalities are not syntax directed, we introduce a normal form for session types in Definition \ref{def:sessprefix} that enables us to split a session type $\hat{A}[A]$ into a prefix of temporal modalities $\hat{A}[\cdot]$ and another session type $A$.  We refer to this normal form as a session context, inspired by evaluation contexts \cite{FelleisenHieb1992}. We extend session contexts to type contexts $\hat{\Delta}[\Delta]$ intuitively, such that $\hat{\Delta}$ is a function from names to session contexts and $\Delta$ is a type context, such that for $a\in\text{dom}(\hat{\Delta}[\Delta])$ $\hat{\Delta}[\Delta](a)=\hat{\Delta}(a)[\Delta(a)]$. %Then we can for instance derive from a typing $\Delta\vdash P :: a\!:\!A$ such that $P\!\not\!\leadsto$ and a productive time reduction $P\Longrightarrow^{-1} Q$ that there exists $\hat{\Delta'}[\Delta']=\Delta$ and $\hat{A'}[A']=A$ such that $\hat{\Delta'}[[\Delta']^{-1}_L]\vdash Q :: a\!:\!\hat{A'}[[A']^{-1}_R]$ by $\runa{TS-$\ocircle$LR'}$, as the reduction removes at least one tick prefix that was previously typed with this rule. We formalize this result in Lemma \ref{lemma:timered}.
+%
+\begin{defi}[Session context]\label{def:sessprefix}
+We define session contexts $\hat{A}[\cdot]$ by the syntax
+\begin{align*}
+    \hat{A},\hat{B} ::= [\cdot] \mid \ocircle \hat{A} \mid \lozenge \hat{A} \mid \Box \hat{A}
+\end{align*}
+where $[\cdot]$ is a hole that can be replaced by any session type $A$ denoted $\hat{A}[A]$. Thus, $\hat{A}[\cdot]$ defines a prefix of modalities $\ocircle$, $\lozenge$ and $\Box$. We extend session contexts to type contexts writing $\hat{\Delta}[\Delta]$ for the type context $a_1 : \hat{\Delta}(a_1)[\Delta(a_1)],\dots,a_n : \hat{\Delta}(a_n)[\Delta(a_n)]$ such that $\hat{\Delta}$ is a function from names to session type contexts and $\Delta$ is a type context with $\text{dom}(\hat{\Delta})=\text{dom}(\Delta)=\{a_1,\dots,a_n\}$. 
+\end{defi}
+
+One way to prove that the type system provides an upper bound on the number of productive time reductions in the tick-last reduction of a well-typed process is by induction on this number. In the inductive step we use the inductive hypothesis for $n$ time reductions, and then we prove that it also holds for $n+1$ reductions. This requires an auxiliary result stating that if $\Delta\vdash P :: a\!:\!A$ and $P \Longrightarrow^{-1} Q$ is productive, then there exists $\Delta'$ and $A'$ such that $\Delta'\vdash Q :: a\!:\!A'$ with $\text{time}(A)-1\geq\text{time}(A')$. However, we can easily disprove this statement by $\cdot,b:B\vdash \newvar{a}{(\tick \asyncinputch{a}{v}{}{})} \mid \inputch{c}{w}{}{\tick \asyncoutputch{a}{b}{}}) :: c\!:\!C'\multimap \ocircle \mathbf{1}$ with $\newvar{a}{(\tick \asyncinputch{a}{v}{}{})} \mid \inputch{c}{w}{}{\tick \asyncoutputch{a}{b}{}}) \Longrightarrow^{-1} \newvar{a}{(\asyncinputch{a}{v}{}{})} \mid \inputch{c}{w}{}{\tick \asyncoutputch{a}{b}{}})$. So, while $\text{time}(C'\multimap \ocircle \mathbf{1})=1$ is still an upper bound on the span, we cannot remove the $\ocircle$ modality from type $C'\multimap \ocircle \mathbf{1}$. This is very much the nature of cut-elimination, in that we cut out $a:A$ but retain $\Delta$ and $c:C'\multimap \ocircle \mathbf{1}$. One way to circumvent this is to enforce that a process is never \textit{poised} (i.e. ready to communicate) on the name it provides a session on. We formalize this in Definition \ref{def:silentproc}.
+%
+\begin{defi}[Silent and poised processes]\label{def:silentproc}
+Let $P$ be an arbitrary process, such that $\Delta\vdash P :: c\!:\!C$. We say that $P$ is \textit{silent} if $P$ contains no prefixes on $c$. Contrarily, when $P$ is prefixed on $c$ we say that $P$ is \textit{poised}.
+\end{defi}
+%
+  
+We now prove some lemmas that we use to conjecture a result as discussed above. Specifically, we prove that for a session type $\hat{A}[A]$ written with a session context such that $\hat{A}[[A]^{-1}_R]$ is defined then $\text{time}(\hat{A}[A])-1 \geq\text{time}(\hat{A}[[A]^{-1}_R])$, formalized in Lemma \ref{lemma:redprog}. We also prove that $[\cdot]^{-1}_L$ and $[\cdot]^{-1}_R$ are $\texttt{delayed}^\Box$ and $\texttt{delayed}^\lozenge$ preserving, respectively, in Lemma \ref{lemma:progdel}. 
+
+% \begin{lemma}
+% For any session type $A$ for which $[A]^{-1}_R$ is defined, $\text{time}(A) - 1 \geq \text{time}([A]^{-1}_R)$.
+% \begin{proof}
+% By case analysis on $[A]^{-1}_R$. The proof is shown in Appendix \ref{app:dasetallsoundness}.
+% \end{proof}\label{lemma:timegeq}
+% \end{lemma}
+
+\begin{lemma}
+Let $\hat{A}[A]$ and $\hat{A}[[A]^{-1}_R]$ be session types then $\text{time}(\hat{A}[A])-1\geq\text{time}(\hat{A[[A]^{-1}_R]})$.
+\begin{proof}
+On the shape of $\hat{A}[\cdot]$. The proof is shown in Appendix \ref{app:dasetallsoundness}.
+\end{proof}\label{lemma:redprog}
+\end{lemma}
+
+\begin{lemma}
+If $\hat{B}[B]\;\texttt{delayed}^\Box$ then also $\hat{B}[[B]^{-1}_L]\;\texttt{delayed}^\Box$ and if $\hat{A}[A]\;\texttt{delayed}^\lozenge$ then also $\hat{A}[[A]^{-1}_R]\;\texttt{delayed}^\lozenge$.
+\begin{proof}
+On the shapes of $\hat{B}[B]$, $\hat{B}[[B]^{-1}_L]$, $\hat{A}[A]$ and $\hat{A}[[A]^{-1}_R]$. The proof is shown in Appendix \ref{app:dasetallsoundness}.
+\end{proof}\label{lemma:progdel}
+\end{lemma}
+
+% \begin{lemma}\label{lemma:deldiaimp}
+% Let $P$ be an arbitrary process.
+% \begin{enumerate}
+%     \item If $\Delta,a:\hat{A}[\lozenge A']\vdash P :: c\!:\!C$ then there exists $\hat{\Delta'}[\Delta']=\Delta$ and $\hat{C'}[C']$ such that $\Delta'\;\texttt{delayed}^\Box$ and $C'\;\texttt{delayed}^\lozenge$.
+    %
+%     \item If $\Delta\vdash P :: a\!:\!\hat{A}[\Box A']$ then there exists $\hat{\Delta'}[\Delta']=\Delta$ such that $\Delta'\;\texttt{delayed}^\Box$.
+% \end{enumerate}
+% \begin{proof}
+% By induction on the type rules. The proof is shown in Appendix \ref{app:dasetallsoundness}.
+% \end{proof}
+% \end{lemma}
+%
+We now conjecture a result as described above in Conjecture \ref{lemma:timered}. As we are only interested in a single time reduction here, we believe that for $\Delta\vdash P :: a\!:\!A$ it is sufficient to enforce that $P$ is not poised and the time reduction follows the tick-last strategy, as $P\!\not\!\leadsto$. Our reasoning is that as at least one of the tick prefixes in $P$ was removed by the reduction and $P$ is not poised, then $A$ must have a prefix of temporal modalities such that $\hat{A'}[A']=A$ and $\Delta'\vdash Q :: a\!:\!\hat{A}'[[A']^{-1}_R]$. Note that this is easily obtained when $A=\hat{A'}[\lozenge A'']$ as $[\lozenge A'']^{-1}_R=\lozenge A''$ and by Theorem \ref{theorem:sr} we have $\Delta\vdash Q :: a\!:\!A$. However, it is difficult to prove such a result in the general case due to $\runa{TS-cut}$, as induction on the type rules does not always enable us to use the induction hypothesis on both subprocesses of a parallel composition. That is, given $\Delta_1,\Delta_2\vdash \newvar{a}{(P \mid Q) :: c\!:\!C}$ such that $\Delta_1\vdash P :: a\!:\!A$ and $\Delta_2,a:A\vdash Q :: c\!:\!C$ then we cannot guarantee in all cases that $P$ is not poised. Furthermore, as $a:A$ appears on the left-side of the turnstile in the typing of $Q$ we must be specific about how $\Longrightarrow^{-1}$ affects the type context, which is difficult because of the left-rules. 
+
+\begin{conj}
+If $\Delta\vdash P :: a\!:\!A$ such that $P$ is not poised on $a$ with $P \Longrightarrow^{-1} Q$ such that $P \neq Q$ and $P\!\not\!\leadsto$ then there exists $\Delta'$ and $\hat{A'}[A']=A$ such that $\Delta'\vdash Q :: a\!:\!\hat{A'}[[A']^{-1}_R]$.
+\label{lemma:timered}
+\end{conj}
+
+% \begin{theorem}[Global Progress]
+% If $\cdot \vdash P :: c\!:\!C$ then either
+% \begin{enumerate}[i]
+%     \item $P \longrightarrow Q$ or
+%     \item $P$ is \textit{poised}.
+% \end{enumerate}
+% \begin{proof}
+% By induction on the typing of $P$ so that either $P \equiv \nil$ (and therefore poised) or $P \equiv \newvar{a}{(G \mid R)}$ such that $G$ is a guarded process, and $R$ can reduce (and then so can $P$), or $R$ is poised. In the latter case, we analyze $G$.
+% \end{proof}
+% \end{theorem}
+
+%
+% \begin{theorem}[Subject Reduction]
+% If $\Delta \vdash P :: a\!:\!A$ and $P \longrightarrow Q$ then $\Delta\vdash Q :: a\!:\!A$.
+% \begin{proof}
+% Proof by induction on the extended reduction rules. The proof uses the fact that a well-typed process cannot \textit{consume} the session it provides on reduction, by type rules $\runa{TS-cut}$ and $\runa{TS-def}$. The proof is slightly tedious, as the type rules are not syntax directed. The proof is shown in Appendix \ref{app:dasetallsoundness}.
+% % \begin{description}
+% % \item[$\runa{R-tick}$] Assume that $P$ reduces by $\runa{R-tick}$, such that $P$ is of the form $\texttt{tick}.P'$ and $Q = P'$. Then by $\runa{TS-$\ocircle$LR'}$, we have that $[\Delta]^{-1}_L \vdash P' :: [a:A]^{-1}_R$ such that $\Delta \vdash \texttt{tick}.P' :: a\!:\!A$. It follows from type rule $\runa{TS-$\ocircle$LR}$ that also $\Delta \vdash P' :: a\!:\!A$.
+
+% % %
+
+% % \item[$\runa{R-id}$] Assume that $P$ reduces by $\runa{R-id}$ then we have that $P \equiv \newvar{a}{\newvar{b}{(P' \mid a \leftarrow b)}}$ or such that $Q \equiv \newvar{h}{(P'[a\mapsto h,b\mapsto h])}$ for some name $h \notin fv(P')$. Then, as restrictions are only typable by $\runa{TS-cut}$ and $\runa{TS-def}$, $P'$ must be of the form $R' \mid R''$ such that $P \equiv \newvar{a}{(R' \mid \newvar{b}{(R'' \mid a \leftarrow b)})}$ or $P \equiv \newvar{b}{(R' \mid \newvar{a}{(R'' \mid a \leftarrow b)})}$. We consider the cases separately
+% % \begin{enumerate}
+% %     \item $\Delta'',a:A \vdash R' :: c\!:\!C$ such that $\Delta'\vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$ and $\Delta',\Delta''\vdash P :: c\!:\!C$ using $\runa{TS-cut}$. Then we can type $\newvar{b}{(R'' \mid a \leftarrow b)}$ with either $\runa{TS-cut}$ or $\runa{TS-def}$
+% %     \begin{enumerate}
+% %         \item $\Delta' \vdash R'' :: b\!:\!A$ such that $b:A\vdash a \leftarrow b :: a\!:\!A$ and $\Delta' \vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$. Then it follows by renaming that $\Delta''\vdash R''[a\mapsto h,b\mapsto h] :: h\!:\!A$ and $\Delta'',h:A \vdash R' :: c\!:\!C$ such that $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid R''[a\mapsto h,b\mapsto h]) :: c\!:\!C}$.
+        
+% %         \item $R'' = b \leftarrow f \leftarrow \widetilde{d}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta' = \widetilde{d}:\widetilde{B}$, $b:A\vdash a \leftarrow b :: a\!:\!A$ and $\Delta' \vdash \newvar{b}{(R'' \mid a \leftarrow b)} :: a\!:\!A$. Then it follows by renaming that $\Delta'',h:A \vdash R' :: c\!:\!C$ such that $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid h \leftarrow f \leftarrow \widetilde{d}) :: c\!:\!C}$.
+% %     \end{enumerate}
+    
+% %     %
+    
+% %     \item Either $\Delta' \vdash R' :: b\!:\!A$ or $b \leftarrow f \leftarrow \widetilde{d}$, $\Delta' = \widetilde{d}:\widetilde{B}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta'',b:A\vdash \newvar{a}{(R'' \mid a \leftarrow b)} :: c\!:\!C$ and $\Delta',\Delta''\vdash P :: c\!:\!C$ using $\runa{TS-cut}$ or $\runa{TS-def}$, respectively. In either case we must use $\runa{TS-cut}$ to get $\Delta'',b:A\vdash \newvar{a}{(R'' \mid a \leftarrow b)} :: c\!:\!C$, as we have that $b:A\vdash a\leftarrow b :: a\!:\!A$ and $\Delta'',a:A\vdash R'' :: c\!:\!C$. Then we reach $\Delta',\Delta''\vdash\newvar{h}{(R'[a\mapsto h,b\mapsto h] \mid R''[a\mapsto h,b\mapsto h])} :: c\!:\!C$ by either $\runa{TS-cut}$ or $\runa{TS-def}$. In either case we have that $\Delta'',h:A\vdash R''[a\mapsto h,b\mapsto h] :: c\!:\!C$. In the first case we have that $\Delta' \vdash R'[a\mapsto h,b\mapsto h] :: h\!:\!A$ and the latter case trivially follows by $R'[a\mapsto h,b\mapsto h] = h \leftarrow f \leftarrow \widetilde{d}$.
+% % \end{enumerate}
+
+% % %
+
+% % \item[$\runa{R-comm}$] Assume we reduce $P$ by $\runa{R-comm}$ then $P \equiv \inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''}$ for some name $b$ and processes $R'$ and $R''$, such that $\inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''} \longrightarrow R'[v\mapsto b] \mid R''$. For $P$ to be well-typed, it must be part of a larger process $\Delta',\Delta''\vdash\newvar{a}{P} :: c\!:\!C$ typed with $\runa{TS-cut}$ for which we have two cases
+% % \begin{enumerate}
+% %     \item $\Delta' \vdash \inputch{a}{v}{}{R'} :: a\!:\!A' \multimap A''$ and $\Delta_3,a : A'\multimap A'', b : A' \vdash \outputch{a}{b}{}{R''} :: c\!:\!C$ by $\runa{TS-$\multimap$R}$ and $\runa{TS-$\multimap$L}$ such that $\Delta'' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta',v : A' \vdash R' :: a\!:\!A''$ and $\Delta_3,a:A''\vdash R'' :: c\!:\!C$. This implies $\Delta',b : A'\vdash R'[v\mapsto b] :: a\!:\!A''$, and so by $\runa{TS-cut}$ it follows that $(\Delta',b : A'),\Delta_3\vdash \newvar{a}{(R'[v\mapsto b] \mid R'') :: c\!:\!C}$ and $\Delta = (\Delta',b : A'),\Delta_3$.
+    
+% %     %
+    
+% %     \item $\Delta_3,b:A' \vdash \outputch{a}{b}{}{R''} :: a\!:\!A'\otimes A''$ and $\Delta'',a : A'\otimes A''\vdash \inputch{a}{v}{}{R'} :: c\!:\!C$ by $\runa{TS-$\otimes$R}$ and $\runa{TS-$\otimes$L}$ such that $\Delta' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta_3\vdash R'' :: a\!:\!A''$ and $\Delta'',a:A'',v:A'\vdash R' :: c\!:\!C$. This implies $\Delta'',a:A'',b:A'\vdash R'[v\mapsto b] :: c\!:\!C$, and so by $\runa{TS-cut}$ it follows that $\Delta_3,(\Delta'',b : A')\vdash \newvar{a}{(R'' \mid R'[v\mapsto b])} :: c\!:\!C$ and $\Delta = \Delta_3,(\Delta'',b : A')$.
+% % \end{enumerate}
+
+% % %
+
+% % \item[$\runa{R-choice}$] Assume we reduce $P$ by $\runa{R-choice}$ then $P \equiv a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R$ for some label $k$ and set of labels $L$, such that $k\in L$ and $a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R \longrightarrow P_k \mid R$. For $P$ to be well-typed, it must be part of a larger process $\Delta',\Delta''\vdash \newvar{a}{P} :: c\!:\!C$ typed with $\runa{TS-cut}$ for which we have two cases
+% % \begin{enumerate}
+% %     \item $\Delta'\vdash a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L} :: a\!:\!\&\{l : A_l\}_{l\in L}$ and $\Delta'', a : \&\{l : A_l\}_{l\in L}\vdash a.k; R :: c\!:\!C$ by $\runa{TS-$\&$R}$ and $\runa{TS-$\&$L}$. By the premises of these rules we have that $\Delta' \vdash P_k :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash R :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(P_k \mid R) :: c\!:\!C}$.
+        
+% %     %
+    
+% %     \item $\Delta'\vdash a.k; R :: a\!:\!\oplus\{l : A_l\}_{l\in L}$ and $\Delta'',a : \oplus\{l : A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L} :: c\!:\!C$ by $\runa{TS-$\oplus$R}$ and $\runa{TS-$\oplus$L}$. By the premises of these rules we have that $\Delta'\vdash R :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash P_k :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(R \mid P_k)} :: c\!:\!C$.
+    
+% % \end{enumerate}
+
+% % %
+
+% % \item[$\runa{R-def}$] Assume $P$ reduces by $\runa{R-def}$ then $P = b \leftarrow f \leftarrow \widetilde{d}$ and $(\widetilde{c}:\widetilde{B}\vdash f = P' :: a\!:\!A) \in \Sigma$, such that $Q = P'[a\mapsto b,\widetilde{c}\mapsto\widetilde{d}]$. For $P$ to be well-typed it must be part of a larger process $\widetilde{d}:\widetilde{B},\Delta'\vdash \newvar{b}{(P \mid R)} :: c\!:\!C$ typed with $\runa{TS-def}$ such that $\Delta',b:A\vdash R :: c\!:\!C$. By renaming we have that $\widetilde{d}:\widetilde{B}\vdash P'[a\mapsto b,\widetilde{c}\mapsto\widetilde{d}] :: b\!:\!B$ and so by $\runa{TS-cut}$ we have that $\widetilde{d}:\widetilde{B},\Delta'\vdash \newvar{b}{(Q \mid R)} :: c\!:\!C$.
+
+% % %
+
+% % \item[$\runa{R-res}$] Assume that $P$ reduces by $\runa{R-res}$ then we have that $P \equiv \newvar{a}{P'}$ for some name $a$ such that $P' \longrightarrow Q'$. Then $P$ must be typed either with $\runa{TS-cut}$ or $\runa{TS-def}$ and so $P' \equiv R' \mid R''$ yielding two cases
+% % \begin{enumerate}
+% %     \item $\Delta'\vdash R' :: a\!:\!A$ such that $\Delta'',a:A\vdash R'' :: c\!:\!C$ and $\Delta',\Delta''\vdash \newvar{a}{P'}::c\!:\!C$. Either $R' \mid R''$ reduces by $\runa{R-par}$, $\runa{R-comm}$, $\runa{R-choice}$ or $\runa{R-struct}$. The first three cases are covered by the clauses for the corresponding rules, and the last case holds by induction as typability is closed under structural congruence.
+    
+% %     \item $R' = a \leftarrow f \leftarrow \widetilde{b}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta' = \widetilde{b}:\widetilde{B}$, $\Delta'',a:A\vdash R'' :: c\!:\!C$ and $\Delta',\Delta''\vdash \newvar{a}{P'}::c\!:\!C$. Then either $R' \mid R''$ reduces by $\runa{R-par}$ or $\runa{R-struct}$. The first case is covered by the clause for $\runa{R-par}$, and the last case holds by induction as typability is closed under structural congruence.
+% % \end{enumerate}
+
+% % %
+
+% % \item[$\runa{R-par}$] Assume that $P$ reduces by $\runa{R-par}$ then we have that $P \equiv P' \mid P''$ such that $P' \longrightarrow Q'$. For $P$ to be well-typed, it must be part of a larger well-typed process $\newvar{a}{(P'\mid P'')}$ typed with either $\runa{TS-cut}$ or $\runa{TS-def}$ such that either
+% % \begin{enumerate}
+% %     \item $\Delta'\vdash P' :: a\!:\!A$ such that $\Delta'',a:A\vdash P'' :: c\!:\!C$ and $\Delta',\Delta''\vdash \newvar{a}{(P'\mid P'')}::c\!:\!C$. Then by induction we have that $\Delta'\vdash Q' :: a\!:\!A$ and so it follows that $\Delta',\Delta''\vdash \newvar{a}{(Q' \mid P'')}::c\!:\!C$
+    
+% %     \item $P' = a \leftarrow f \leftarrow \widetilde{b}$ and $(\widetilde{e} : \widetilde{B}\vdash f = R :: g\!:\!A) \in \Sigma$ such that $\Delta' = \widetilde{b}:\widetilde{B}$, $\Delta'',a:A\vdash P'' :: c\!:\!C$ and $\widetilde{b}:\widetilde{B},\Delta''\vdash \newvar{a}{P' \mid P''}::c\!:\!C$. Then it must be that $P'$ reduces to $Q'$ by $\runa{TS-def}$ such that $Q' = R[g\mapsto a,\widetilde{e}\mapsto\widetilde{b}]$. By renaming $\widetilde{e} : \widetilde{B}\vdash R :: g\!:\!A$ implies $\widetilde{b} : \widetilde{B}\vdash Q' :: a\!:\!A$ such that $\widetilde{b}:\widetilde{B},\Delta''\vdash \newvar{a}{(Q' \mid P''):: c\!:\!C}$ by $\runa{T-cut}$.
+% % \end{enumerate}
+
+% % %%%
+% % %%
+% % %%
+% % %%%
+
+% % %when they contain no named processes, for $P$ to be well-typed, $P$ must be a subprocess of a larger well-typed process $R \equiv \newvar{a}{\newvar{b}{P}} \equiv \newvar{a}{(\outputch{a}{d}{}{P'} \mid \newvar{b}{(\inputch{b}{v}{}{P''} \mid b \leftarrow a}))}$ such that $\Delta',\Delta''\vdash R :: c\!:\!C$. Then from the premises of $\runa{TS-cut}$, we have that $\Delta'',a:A\vdash \outputch{a}{d}{}{P'} ::c\!:\!C$ and (by $\runa{TS-cut}$ again) $\Delta'\vdash \newvar{b}{(\inputch{b}{v}{}{P''} \mid b \leftarrow a}) :: a\!:\!A$ such that $\Delta' \vdash \inputch{b}{v}{}{P''} :: b\!:\!A$ by $\runa{TS-$\multimap$R}$ and $b : A\vdash b \leftarrow a :: a\!:\!A$ by $\runa{TS-id}$. The full reduced process is then $\newvar{a}{\newvar{b}{(P' \mid P''[v\mapsto d])}}$
+
+% % %
+% % %%%%%%%%%%
+% % %
+
+% % % \item[$\runa{R-res}$] Assume that $P$ reduces by $\runa{R-res}$. Then for $P$ to be well-typed, $P$ must be typed by either $\runa{TS-cut}$ or $\runa{TS-def}$. We consider the cases separately
+% % % \begin{description}
+% % % \item[$\runa{TS-cut}$] We have that $P$ is of the form $\newvar{a}{(P'\mid P'')}$ such that $\Delta' \vdash P' :: a\!:\!A$, $\Delta'', a : A\vdash P'' :: c\!:\!C$ and $\Delta',\Delta'' \vdash \newvar{a}{(P'\mid P'')} :: c\!:\!C$. By $\runa{R-res}$ we have that $P' \mid P''$ must reduce, for which several rules apply
+% % % \begin{description}
+% % % \item[$\runa{R-comm}$] If we reduce the parallel composition by $\runa{R-comm}$ then $P' \mid P'' \equiv \inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''}$ for some name $b$ and processes $R'$ and $R''$, such that $\inputch{a}{v}{}{R'} \mid \outputch{a}{b}{}{R''} \longrightarrow R'[v\mapsto b] \mid R''$. We have two cases
+% % % \begin{enumerate}
+% % %     \item $\Delta' \vdash \inputch{a}{v}{}{R'} :: a\!:\!A' \multimap A''$ and $\Delta_3,a : A'\multimap A'', b : A' \vdash \outputch{a}{b}{}{R''} :: c\!:\!C$ by $\runa{TS-$\multimap$R}$ and $\runa{TS-$\multimap$L}$ such that $\Delta'' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta',v : A' \vdash R' :: a\!:\!A''$ and $\Delta_3,a:A''\vdash R'' :: c\!:\!C$. This implies $\Delta',b : A'\vdash R'[v\mapsto b] :: a\!:\!A''$, and so by $\runa{TS-cut}$ it follows that $(\Delta',b : A'),\Delta_3\vdash \newvar{a}{(R'[v\mapsto b] \mid R'') :: c\!:\!C}$ and $\Delta = (\Delta',b : A'),\Delta_3$.
+    
+% % %     %
+    
+% % %     \item $\Delta_3,b:A' \vdash \outputch{a}{b}{}{R''} :: a\!:\!A'\otimes A''$ and $\Delta'',a : A'\otimes A''\vdash \inputch{a}{v}{}{R'} :: c\!:\!C$ by $\runa{TS-$\otimes$R}$ and $\runa{TS-$\otimes$L}$ such that $\Delta' = \Delta_3,b:A'$. By the premises to these rules we have that $\Delta_3\vdash R'' :: a\!:\!A''$ and $\Delta'',a:A'',v:A'\vdash R' :: c\!:\!C$. This implies $\Delta'',a:A'',b:A'\vdash R'[v\mapsto b] :: c\!:\!C$, and so by $\runa{TS-cut}$ it follows that $\Delta_3,(\Delta'',b : A')\vdash \newvar{a}{(R'' \mid R'[v\mapsto b])} :: c\!:\!C$ and $\Delta = \Delta_3,(\Delta'',b : A')$.
+% % % \end{enumerate}
+
+% % % \item[$\runa{R-choice}$] If we reduce the parallel composition by $\runa{R-choice}$ then $P' \mid P'' \equiv a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R$ for some label and set of labels $k$ and $L$, such that $k\in L$ and $a.\texttt{case}\{ l \Rightarrow P_l \}_{l\in L} \mid a.k; R \longrightarrow P_k \mid R$. We have two cases
+% % % \begin{enumerate}
+% % %     \item $\Delta'\vdash a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L} :: a\!:\!\&\{l : A_l\}_{l\in L}$ and $\Delta'', a : \&\{l : A_l\}_{l\in L}\vdash a.k; R :: c\!:\!C$ by $\runa{TS-$\&$R}$ and $\runa{TS-$\&$L}$. By the premises of these rules we have that $\Delta' \vdash P_k :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash R :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(P_k \mid R) :: c\!:\!C}$.
+        
+% % %     %
+    
+% % %     \item $\Delta'\vdash a.k; R :: a\!:\!\oplus\{l : A_l\}_{l\in L}$ and $\Delta'',a : \oplus\{l : A_l\}_{l\in L}\vdash a.\texttt{case}\{l\Rightarrow P_l\}_{l\in L} :: c\!:\!C$ by $\runa{TS-$\oplus$R}$ and $\runa{TS-$\oplus$L}$. By the premises of these rules we have that $\Delta'\vdash R :: a\!:\!A_k$ and $\Delta'',a : A_k\vdash P_k :: c\!:\!C$, and so it follows by $\runa{TS-cut}$ that $\Delta',\Delta''\vdash \newvar{a}{(R \mid P_k)} :: c\!:\!C$.
+    
+% % % \end{enumerate}
+
+% % % \item[$\runa{R-id-1}$]
+% % % \item[$\runa{R-id-2}$]
+% % % \item[$\runa{R-par}$] If we reduce the parallel composition by $\runa{R-par}$ then $P' \longrightarrow Q'$. Here we can apply induction, as $P'$ cannot be typed as $\Delta' \vdash P' :: a\!:\!A$ and reduce unless it is prefixed by a tick or is wrapped with a restriction (or is structurally congruent to such a process by $\runa{R-struct}$). And so, it follows that $\Delta' \vdash Q' :: a\!:\!A$, such that $\Delta',\Delta'' \vdash \newvar{a}{(Q'\mid P'')} :: c\!:\!C$.
+% % % \item[$\runa{R-struct}$] todo: induction (with R-par after).
+% % % \end{description}
+% % % \item[$\runa{TS-def}$] We have that $P$ is of the form $\newvar{a}{(a\leftarrow f \leftarrow \widetilde{b} \mid P')}$ such that $(\widetilde{d} : \widetilde{B}\vdash f = P :: g\!:\!A) \in \Sigma$, $\Delta',a : A \vdash P' :: c\!:\!C$ and $\Delta',\widetilde{b} : \widetilde{B}\vdash \newvar{a}{(a\leftarrow f \leftarrow \widetilde{b} \mid P') :: c\!:\!C}$. By $\runa{R-res}$ we have that $a\leftarrow f \leftarrow \widetilde{b} \mid P'$ must reduce, for which $\runa{R-par}$ and $\runa{R-struct}$ apply. Note that the parallel composition cannot reduce by $\runa{R-par}$, as  does not  several rules apply.
+% % % \begin{description}
+% % % \item[$\runa{R-par}$] todo: R-def --> can type with R-cut after.
+% % % \item[$\runa{R-struct}$] todo: induction (with R-par after). 
+% % % \end{description}
+% % % \end{description}
+
+
+% % \item[$\runa{R-struct}$] Assume that $P$ reduces by $\runa{R-struct}$. Then $P \equiv P'$, $P' \longrightarrow Q'$ and $Q' \equiv Q$. As typability is closed under structural congruence and $\Delta \vdash P :: c\!:\!C$ it follows that $\Delta \vdash P' :: c\!:\!C$. By induction this implies $\Delta \vdash Q' :: c\!:\!C$, and as $Q' \equiv Q$ we have that $\Delta\vdash Q :: c\!:\!C$.
+% % \end{description}
+% \end{proof}\label{theorem:sr}
+% \end{theorem}
+
+Finally, we conjecture that the type of a silent process provides an upper bound on the span in Conjecture \ref{theorem:spanb}. More specifically, for $\Delta\vdash P :: a\!:\!A$, we conjecture that $\text{time}(A)$ is an upper bound on the number of productive time reductions in the tick-last reduction of $P$. If we can prove Conjecture \ref{lemma:timered} then we can also prove this conjecture by induction on the number of productive time reductions. In the inductive step we would consider tick-last reduction with $n+1$ productive time reductions. We would separate the first iteration of tick-last reduction and the $n$ remaining, such that $P\leadsto^* P'$ and $P'\!\not\!\leadsto$. We could then use Theorem \ref{theorem:sr} to establish $\Delta\vdash P' :: a\!:\!A$ from $\Delta\vdash P :: a\!:\!A$. Then as $P'\Longrightarrow^{-1} Q'$ such that $P'\neq Q'$ and as a silent process is never poised, we could use Conjecture \ref{lemma:timered} to establish that there exists $\Delta'$ and $\hat{A'}[A']=A$ such that $\Delta'\vdash Q' :: a\!:\!\hat{A'}[[A']^{-1}_R]$. Then, as $Q'$ reduces to $Q$ by tick-last reduction in $n$ productive time reductions, we could then use induction to obtain $\text{time}(\hat{A'}[[A']^{-1}_R])\geq n$. By Lemma \ref{lemma:redprog} we would then have that $\text{time}(\hat{A'}[A'])-1\geq \text{time}(\hat{A'}[[A']^{-1}_R])$, and would thereby obtain $\text{time}(A)\geq n + 1$, which would conclude the proof.
+
+\begin{conj}\label{theorem:spanb}
+If $\Delta\vdash P :: a\!:\!A$ such that $A$ is silent and $P$ reduces to $Q$ by the tick-last strategy using $n$ productive time reductions then $\text{time}(A) \geq n$.
+% \begin{proof}
+% by induction on the size of $n$. The proof is shown in Appendix \ref{app:dasetallsoundness}.
+% \end{proof}
+\end{conj}
+
+\subsection{An example: Dynamic queue}
+As an example of the type system by Das et al. \cite{DasEtAl2018}, we show how a timed protocol can be enforced for a channel. We consider a chain of parallel processes that implement a dynamically sized queue of cells that hold no values for simplicity. Such a queue can be described by the following temporal session type
+\begin{align*}
+    \textit{Queue} \defeq \oplus\{\texttt{elem} : \ocircle\textit{Queue},\; \$ : \ocircle\mathbf{1}\}
+\end{align*}
+The end-point providing the queue performs an internal choice, determining whether the queue has a head $\texttt{elem}$ or is empty $\$$. As a cost-model we consider the number of external choices, and so each branch is prefixed by $\ocircle$ prescribing a cost of one in time complexity. A name with which a queue is constructed can be described by a temporal session type offering to enqueue at the tail (\texttt{enqueue}), dequeue the head (\texttt{dequeue}) or finalize the queue (\texttt{make}) as follows
+\begin{align*}
+    \textit{Handle} \defeq&\; \Box\&\{\texttt{enqueue} : \ocircle\textit{Handle},\; \texttt{dequeue} : \ocircle\textit{Handle},\; \texttt{make} : \ocircle\textit{Queue} \}\\
+    %
+    \textit{Handle}' \defeq&\; \&\{\texttt{enqueue} : \ocircle\textit{Handle},\; \texttt{dequeue} : \ocircle\textit{Handle},\; \texttt{make} : \ocircle\textit{Queue} \}
+\end{align*}
+Such a protocol can be implemented as a chain of parallel processes, such that the \textit{head} provides a service of type \textit{Handle} on some name, and uses a service of type \textit{Handle} representing the tail. As such, an \texttt{enqueue} message is forwarded to the tail, until we reach the \textit{end}, at which a new process is spawned, representing the new cell. Thus, the time some name of type \textit{Handle} must wait for an internal choice is linear, and so we prefix the labeled choice with $\Box$, and so the latency of the protocol is not constant. Upon a \texttt{dequeue} message, the head is removed, yet we must preserve the chain of processes, and so the discarded head must proceed as a process that simply forwards any message to the new head. Therefore, we need three named processes of signatures
+\begin{align*}
+    b : \ocircle\textit{Handle} \vdash \text{cell} &= P_{\text{cell}} :: a\!:\!\textit{Handle}\\
+    \cdot \vdash \text{end} &= P_{\text{end}} :: a\!:\!\ocircle\textit{Handle}\\
+    b : \textit{Handle} \vdash \text{empty} &= P_{\text{empty}} :: a\!:\!\textit{Handle}
+\end{align*}
+Notice that these processes have the same rate, as they all provide a session of type $\textit{Handle}$. However, $P_{\text{end}}$ has a latency of at least one, whereas it could be zero for the others. The process $P_{\text{cell}}$ is defined as below. Note that named processes are chained according to the $\runa{TS-def}$ rule, such that the copy provides a service on a new name that a forwarder uses to provide an identical service on the already existing name. This shows why named processes and forwarding are useful under the constraints imposed by Caires and Pfenning \cite{CairesPfenning2010}.
+\begin{align*}
+    P_{\text{cell}} \defeq \texttt{case}\; a\; \{\\
+    \texttt{enqueue} \Rightarrow&\; \tick (b.\texttt{enqueue} ; \newvar{c}{(c \leftarrow \text{cell} \leftarrow b \mid a \leftarrow c)}) \\
+    \texttt{dequeue} \Rightarrow&\; \tick (\newvar{c}{(c \leftarrow \text{empty} \leftarrow b \mid a \leftarrow c)})\\
+    \texttt{make} \Rightarrow&\;  \tick (a.\texttt{elem}; b.\texttt{make}; a \leftarrow b)\\
+    \}
+\end{align*}
+In the branch for label \texttt{make}, we perform internal choice with label \texttt{elem}, to signify that this process represents an element, after which we forward the choice of label \texttt{make} to the tail. In the definition of process $P_{\text{end}}$ below, we apply the process chaining pattern twice in the branch for label \texttt{enqueue}, to extend the queue. We omit the definition of $P_\text{empty}$, as it is trivial.
+\begin{align*}
+    P_{\text{end}} \defeq \tick\texttt{case}\; a\; \{\\
+    \texttt{enqueue} \Rightarrow&\; \tick (\newvar{b}{(b \leftarrow \text{end} \leftarrow \cdot \mid \newvar{c}{(c \leftarrow \text{cell} \leftarrow b \mid a \leftarrow c)})})\\
+    \texttt{dequeue} \Rightarrow&\; \newvar{b}{(b \leftarrow \text{end} \leftarrow \cdot \mid a \leftarrow b)}\\
+    \texttt{make} \Rightarrow&\; \tick (a.\$ ; \nil)\\
+    \}
+\end{align*}
+%
+% \begin{align*}
+%     P_{\text{empty}} \defeq \texttt{case}\; a\; \{\\
+%     \texttt{enqueue} \Rightarrow&\; \tick (b.\texttt{enqueue} ; \newvar{c}{(c \leftarrow \text{empty} \leftarrow b \mid a \leftarrow c)})\\
+%     \texttt{dequeue} \Rightarrow&\; \tick (b.\texttt{dequeue} ; a \leftarrow b)\\
+%     \texttt{make} \Rightarrow&\; \tick (b.\texttt{make}; a \leftarrow b)\\
+%     \}
+% \end{align*}
+%
+Now, we show how we can use the type rules to verify that these processes adhere to the protocols defined as temporal session types. We only show the type derivation for process $P_{\text{cell}}$. We consider the external choice and its branches separately, and the derivation of the dequeue branch is omitted. The external choice provides a session of type $\textit{Handle}'$ on channel $a$. We use rule $\runa{TS-$\Box$R}$ to introduce the modality $\Box$, which is well-typed as channel $b$ is bound to type $\textit{Handle}$, such that it is always ready.
+%
+\begin{align*}
+    &\kern-0em\begin{prooftree}
+    \Infer0{\ocircle\textit{Handle}\; \texttt{delayed}^\Box}
+    %
+    \Infer0{\begin{matrix} b : \ocircle\textit{Handle}\vdash \tick (b.\texttt{enqueue} ; \newvar{c}{(c \leftarrow \text{cell} \leftarrow b \mid a \leftarrow c)}) :: a\!:\!\ocircle\textit{Handle}\\ b : \ocircle\textit{Handle}\vdash \tick (\newvar{c}{(c \leftarrow \text{empty} \leftarrow b \mid a \leftarrow c)}) :: a\!:\!\ocircle\textit{Handle}\\ b : \ocircle\textit{Handle}\vdash \tick (a.\texttt{elem}; b.\texttt{make}; a \leftarrow b) :: a\!:\!\ocircle\textit{Queue}\end{matrix}}
+    %
+    \Infer1{b : \ocircle\textit{Handle}\vdash P_{\texttt{cell}} :: a\!:\!\textit{Handle}'}
+    %
+    \Infer2{b : \ocircle\textit{Handle}\vdash P_{\texttt{cell}} :: a\!:\!\textit{Handle}}
+    \end{prooftree}
+\end{align*}
+%
+Next, we consider the branch with label \texttt{enqueue}. We use rules $\runa{TS-$\ocircle$LR'}$ and $\runa{TS-$\Box$L}$ such that the internal choice on $b$ can be typed. The session on $b$ then proceeds as $\ocircle\textit{Handle}$ according to session type \textit{Handle}, such that rule $\runa{TS-def}$ can be used to finish the derivation.
+%
+\begin{align*}
+    \begin{prooftree}
+    \Infer0{(d : \ocircle\textit{Handle} \vdash \text{cell} = P_{\text{cell}} :: g\!:\!\textit{Handle}) \in \Sigma}
+    %
+    \Infer0{c : \textit{Handle} \vdash a \leftarrow c :: a\!:\!\textit{Handle}}
+    %
+    \Infer2{b : \ocircle\textit{Handle}\vdash \newvar{c}{(c \leftarrow \text{cell} \leftarrow b \mid a \leftarrow c)} :: a\!:\!\textit{Handle}}
+    %
+    \Infer1{b : \textit{Handle}'\vdash b.\texttt{enqueue} ; \newvar{c}{(c \leftarrow \text{cell} \leftarrow b \mid a \leftarrow c)} :: a\!:\!\textit{Handle}}
+    %
+    \Infer1{b : \textit{Handle}\vdash b.\texttt{enqueue} ; \newvar{c}{(c \leftarrow \text{cell} \leftarrow b \mid a \leftarrow c)} :: a\!:\!\textit{Handle}}
+    %
+    \Infer1{b : \ocircle\textit{Handle}\vdash \tick (b.\texttt{enqueue} ; \newvar{c}{(c \leftarrow \text{cell} \leftarrow b \mid a \leftarrow c)}) :: a\!:\!\ocircle\textit{Handle}}
+    \end{prooftree}
+\end{align*}
+%
+%For the \texttt{dequeue} branch, we simply use rules $\runa{TS-$\ocircle$LR'}$ and $\runa{TS-def}$
+%
+% \begin{align*}
+%     \begin{prooftree}
+%     \Infer0{(d : \textit{Handle} \vdash \text{empty} = P_{\text{empty}} :: g\!:\!\textit{Handle}) \in \Sigma}
+%     %
+%     \Infer0{c:\textit{Handle}\vdash a \leftarrow c :: a\!:\!\textit{Handle}}
+%     %
+%     \Infer2{b : \textit{Handle}\vdash \newvar{c}{(c \leftarrow \text{empty} \leftarrow b \mid a \leftarrow c)} :: a\!:\!\textit{Handle}}
+%     %
+%     \Infer1{b : \ocircle\textit{Handle}\vdash \tick (\newvar{c}{(c \leftarrow \text{empty} \leftarrow b \mid a \leftarrow c)}) :: a\!:\!\ocircle\textit{Handle}}
+%     \end{prooftree}
+% \end{align*}
+%
+Finally, we show the type derivation for the branch with label \texttt{make}. As before, we use $\runa{TS-$\ocircle$LR'}$ to type the \texttt{tick} prefix. We then use rule $\runa{TS-$\oplus$R}$ to verify that the internal choice provides a session of type $\textit{Queue}$. This requires the continuation to provide a session of type $\ocircle\textit{Queue}$, according to session type $\textit{Queue}$. We use rule $\runa{TS-$\Box$L}$ such that the internal choice on $b$ can be typed. The type derivation of process $P_\text{cell}$ is completed using rule $\runa{TS-id}$, and so the process adheres to the protocol prescribed by session type $\textit{Handle}$.
+% 
+\begin{align*}
+    \begin{prooftree}
+    \Infer0{b : \ocircle\textit{Queue} \vdash a \leftarrow b :: a\!:\!\ocircle\textit{Queue}}
+    %
+    \Infer1{b : \textit{Handle}' \vdash b.\texttt{make}; a \leftarrow b :: a\!:\!\ocircle\textit{Queue}}
+    %
+    \Infer1{b : \textit{Handle} \vdash b.\texttt{make}; a \leftarrow b :: a\!:\!\ocircle\textit{Queue}}
+    %
+    \Infer1{b : \textit{Handle} \vdash a.\texttt{elem}; b.\texttt{make}; a \leftarrow b :: a\!:\!\textit{Queue}}
+    %
+    \Infer1{ b : \ocircle\textit{Handle} \vdash \tick (a.\texttt{elem}; b.\texttt{make}; a \leftarrow b) :: a\!:\! \ocircle\textit{Queue}}
+    \end{prooftree}
+    %
+\end{align*}
+
+
+
+%\subsection{A constraint on TODO}

@@ -1,0 +1,450 @@
+\section{Types for Lock-freedom}\label{sec:lockfreedomts}
+
+% \textit{\begin{itemize}
+%     \item Introduction / motivation
+%     \item Fair scheduling + changes to structural congruence (--> structural pre-order)
+%     \item Lock-freedom (Deadlock + livelock; Attributes) 
+%     \item Types
+%     \item Subtyping
+%     \item Type operations
+%     \item Type rules
+%     \item Time-bounded processes (First example of time complexity for PI calculus)
+% \end{itemize}}
+
+Before focusing our attention on parallel complexity, we first take a look at a type system by Kobayashi \cite{Kobayashi2000}, that determines whether a process is actually guaranteed to terminate at all. This is done by ensuring that certain processes neither deadlock nor livelock. This type system is eventually modified such that it ensures not just lock-freedom, but also that communications happen within a specified amount of time. To determine lock-freedom, we must always keep track of how channels communicate i.e. if they send, receive or both in parallel in any subprocess. We must also keep track of the time they may at most use before they execute and communicate. For this purpose, channels are annotated with usages. We use the version of usages without sized types.\\
+
+%The expressiveness and the concurrent nature of the $\pi$-calculus can lead to complex programs with unique challenges making it hard to maintain such programs. One such challenge unique to concurrent programs is that of deadlocks, where two processes are waiting for each other, both unable to advance without the other process advancing. Similarly, processes may continuously invoke other processes infinitely many times, causing a livelock. To combat these problems, Kobayashi proposes a type system in which only lock-free programs can be well-typed, using usages to annotate how and when each process may be used \cite{Kobayashi2000}.\\
+%
+A deadlock occurs when two processes are waiting for each other, both unable to advance without the other process advancing. Similarly, processes may continuously invoke other processes infinitely many times, causing a livelock. To combat these problems, Kobayashi proposes a type system in which only lock-free programs can be well-typed, using usages to annotate how and when each process may be used \cite{Kobayashi2000}. When writing a program, a programmer may wish to specify which processes they want to guarantee the lock-freedom of and which they do not. Therefore, we introduce the category of attributes, $A$, of the abstract syntax
+\begin{align*}
+    A \text{ (attributes) } ::=&\; \emptyset \mid \mathbf{c}
+\end{align*}
+
+We also modify the send, receive, and replicated input formation rules to each include an attribute like so: %$\inputch{a}{\widetilde{v}}{A}{P}$ and $\outputch{x}{\widetilde{e}}{A}{P}$. 
+$\inputch{a}{\widetilde{v}}{A}{P}$, $\outputch{x}{\widetilde{e}}{A}{P}$, and$\; \bang{\inputch{a}{\widetilde{v}}{A}{P}}$. Kobayashi introduces a more general notion of replication that also allows replicated output, in contrast to us only allowing replicated input. Whereas we semantically define replication using a reduction rule, Kobayashi instead defines it using an extra rule in his structural congruence, $\bang{P} \equiv \parcomp{\;\bang{P}}{P}$ (for technical reasons, Kobayashi actually uses a preorder relation). Note that several definitions in this subsection originally relied on this structural congruence, and so we had to include additional cases to take our replication into account.\\
+
+Before we present the type system proposed by Kobayashi, we first show that the semantics of our version of the $\pi$-calculus is equivalent to that of his language, given the constraints on replication imposed by our syntax. Table \ref{tab:redurulesKoba} shows the reduction relation $\xrightarrow{\;l\;}_K$ given by Kobayashi, modified to fit our syntax. The reduction relation by Kobayashi defines a labelled transition system, where labels $l$ denote a free channel $x$ being communicated on, or $\epsilon$ denoting internal communication or reduction of a match expression. We may omit labels if they are not relevant. Definition \ref{def:structcongKoba} shows the structural preorder introduced in Kobayashi \cite{Kobayashi2000}.
+%
+%
+\begin{table*}[ht]
+    \centering
+    \begin{framed}\begin{tabular}{l}
+        \vspace{-1.5em}
+        %\kern-2em\runa{K-rep}\;\;\infrule{}{\parcomp{\;\bang{\inputch{a}{\widetilde{v}}{}{P}}}{\outputch{a}{\widetilde{e}}{}{Q}} \longrightarrow \parcomp{\;\bang{\inputch{a}{\widetilde{v}}{}{P}}}{\parcomp{\subst{P}{\widetilde{v}\mapsto \widetilde{e}}}{Q}}}
+        \kern6em \runa{K-comm}\;\;\infrule{}{\parcomp{\inputch{a}{\widetilde{v}}{A}{P}}{\outputch{a}{\widetilde{e}}{A'}{Q}} \xrightarrow{\;a\;}_K \parcomp{\subst{P}{\widetilde{v}\mapsto \widetilde{e}}}{Q}}\\
+        %
+        \vspace{-1.5em}
+        \kern6em\runa{K-zero}\;\;\infrule{}{\match{0}{P}{x}{Q} \xrightarrow{\;\epsilon\;}_K P}\\
+        %
+        \vspace{-1.5em}
+        \kern4em\runa{K-succ}\;\;\infrule{}{\match{\succc{e}}{P}{x}{Q} \xrightarrow{\;\epsilon\;}_K \subst{Q}{x \mapsto e}}\\
+        %
+        \\
+        \kern0em\runa{K-par}\;\;\infrule{P \xrightarrow{\;l\;}_K Q}{\parcomp{P}{R} \xrightarrow{\;l\;}_K \parcomp{Q}{R}} \kern2em \runa{K-res-1}\;\;\infrule{P \xrightarrow{\;a\;}_K Q}{\newvar{a}{P} \xrightarrow{\;\epsilon\;}_K \newvar{a}{Q}}\\
+        %
+        \kern-1em \runa{K-res-2}\;\;\infrule{P \xrightarrow{\;l\;}_K Q\;\; l \neq a}{\newvar{a}{P} \xrightarrow{l}_K \newvar{a}{Q}}
+        \kern-1em\runa{K-struct}\;\;\infrule{P \succeq_K P'\quad P' \xrightarrow{\;l\;}_K Q'\quad Q' \succeq_K Q}{P \xrightarrow{\;l\;}_K Q}
+    \end{tabular}\end{framed}
+    \smallskip
+    \caption{The reduction relation $\xrightarrow{\;l\;}_K$ from Kobayashi \cite{Kobayashi2000}, modified to fit our syntax.}
+    \label{tab:redurulesKoba}
+\end{table*}
+%
+\begin{defi}[Structural Preorder]
+The structural preorder relation $\succeq_K$ from Kobayashi \cite{Kobayashi2000} is given by the following rules. We use $P \equiv_K Q$ when $P \succeq_K Q \land Q \succeq_K P$ applies.\\
+%
+% \begin{tabular}{cc}
+%     $\parcomp{P}{\nil} \equiv_K$ & $\parcomp{P}{Q} \equiv_K \parcomp{Q}{P}$ \\
+%     $\parcomp{P}{(\parcomp{Q}{R})} \equiv_K \parcomp{(\parcomp{P}{Q})}{R}$ & $\newvar{x}{(\parcomp{P}{Q})} \equiv_K \parcomp{\newvar{x}{P}}{Q} (x \text{ not free in } Q)$
+% \end{tabular}
+\begin{align*}
+    &\kern3em\parcomp{P}{\nil} \equiv_K P \kern4em \parcomp{P}{Q} \equiv_K \parcomp{Q}{P} \kern4em \parcomp{P}{(\parcomp{Q}{R})} \equiv_K \parcomp{(\parcomp{P}{Q})}{R}\\
+    &\\
+    &\kern4em\newvar{x}{(\parcomp{P}{Q})} \equiv_K \parcomp{\newvar{x}{P}}{Q}\quad (x \text{ not free in } Q) \kern3em \bang{P} \succeq_K \parcomp{\;\bang{P}}{P}\\
+    &\infrule{P \succeq_K P' \quad Q \succeq_K Q'}{\parcomp{P}{Q} \succeq_K \parcomp{P'}{Q'}} \kern2em \infrule{P \succeq_K Q}{\newvar{x}{P} \succeq_K \newvar{x}{Q}} \kern2em \infrule{P \succeq_K Q}{\bang{P} \succeq_K\; \bang{Q}}
+\end{align*}
+\label{def:structcongKoba}
+\end{defi}
+%
+We first show that our structural congruence relation is contained in the structural preorder from Kobayashi \cite{Kobayashi2000} in Lemma \ref{lemma:SCImpliesSP}. We use this result to prove Lemma \ref{lemma:langequiv}, which states that any reduction by either $\longrightarrow$ or $\longrightarrow_K$ can be \textit{matched} by the other, proving the equivalence of the semantics. Note that as attributes on inputs and outputs have no semantic relevance, we omit them in the lemmas.
+\begin{lemma}
+Let $P$ and $Q$ be processes such that $P \equiv Q$, then also $P \succeq_K Q$ and $Q \succeq_K P$.\\
+
+where $\succeq_{K}$ is the structural preorder from Kobayashi \cite{Kobayashi2000}.
+\begin{proof} By induction on the rules defining $\equiv$. The proof is shown in Appendix \ref{app:languageequiv}.
+\end{proof}\label{lemma:SCImpliesSP}
+\end{lemma}
+
+\begin{lemma}[Semantic equivalence]
+Let $P$ and $P'$ be processes. We have that if
+\begin{enumerate}
+    \item $P \longrightarrow Q$ then $P \longrightarrow_{K} Q$
+    \item $P \longrightarrow_{K} Q$ and $P' \succeq_K P$ then $P' \longrightarrow R$ and $R \succeq_{K} Q$
+\end{enumerate}
+where $\longrightarrow_{K}$ and $\succeq_{K}$ are the reduction relation and structural preorder from Kobayashi \cite{Kobayashi2000}, respectively.
+\begin{proof} By induction on the rules defining $\longrightarrow$ and $\longrightarrow_{K}$. The proof is shown in Appendix \ref{app:languageequiv}.% We consider the two cases separately, and we only show the clauses for non-trivial rules.
+\end{proof}\label{lemma:langequiv}
+\end{lemma}
+%
+\subsection{Dead- and livelocks}
+
+Before going any further, we first describe the definition of deadlock that we use in this section. Intuitively, a deadlocked process is a process with no further reductions that is still waiting to either send or receive on a channel annotated with $c$. A deadlock-free process is one that cannot reduce to a deadlocked state. The formal definition is given in Definition \ref{def:lockfreedomdeadlock}.
+
+%Fair scheduling
+%
+
+\begin{defi}[Deadlock]
+    A process $P$ is in deadlock if $(i)$ $P \equiv \newvar{\widetilde{y}}{(\parcomp{\asyncinputch{x}{\widetilde{z}}{\mathbf{c}}.Q}{R})}$ or $P \equiv \newvar{\widetilde{y}}{(\parcomp{\asyncoutputch{x}{\widetilde{z}}{\mathbf{c}}.Q}{R})}$ or $P \equiv \newvar{\widetilde{y}}{(\parcomp{\asyncrepinputch{x}{\widetilde{z}}{\mathbf{c}}.Q}{R})}$ and $(ii)$ there is no $P'$ such that $P \longrightarrow P'$. A process $P$ is deadlock-free if there exists no $Q$ such that $P \longrightarrow^* Q$ and $Q$ is in deadlock.
+    \label{def:lockfreedomdeadlock}
+\end{defi}
+
+One problem with the deadlock-freedom property is that a process such as $\parcomp{\asyncinputch{a}{}{\mathbf{c}}}{\parcomp{\asyncoutputch{b}{}{\emptyset}}{\;\bang{\inputch{b}{}{\emptyset}{\asyncoutputch{b}{}{\emptyset}}}}}$ will never reduce $\asyncinputch{a}{}{\mathbf{c}}$, but is still considered deadlock-free as it allows for an infinite reduction sequence. Therefore, we need a stronger property that also prohibits these \textit{livelocks}, which we call \textit{lock-freedom}. However, before considering the definition of livelock, we must first assume reductions are \textit{fair} in the sense that any communication possible in a reduction must eventually take place and conditionals must eventually reduce. Fair reduction sequences are defined in Definition \ref{def:lockfreedomfair}. The definition presented here is slightly modified from that of Kobayashi, as we do not handle replicated input using structural congruence. Case 1 says that if we have an output that is enabled infinitely often, either with an input or a replicated input, it must eventually succeed. Cases 2 and 3 say that if we have an input or replicated input that tries to communicate infinitely often, it must eventually succeed. We must include 2 cases for input, as we care about the specific input, whereas in case 1 we do not care about which kind of input the output communicates with. Case 4 ensures match expressions eventually reduce.
+
+\begin{defi}[Fair reduction sequence]
+    An infinite reduction sequence $P_1 \longrightarrow P_2 \longrightarrow P_3 \longrightarrow ...$ is fair if the following conditions hold.
+    \begin{enumerate}%[i]
+        \item If there exists an infinite increasing sequence $n_1 < n_2 < ...$ of natural numbers such that either $P_{n_i} \equiv \newvar{\widetilde{w}_i}{(\parcomp{\parcomp{\asyncoutputch{x}{\widetilde{v}}{A}.Q}{\asyncinputch{x}{\widetilde{y}}{A_i}.Q_i}}{R_i})}$ or $P_{n_i} \equiv \newvar{\widetilde{w}_i}{(\parcomp{\parcomp{\asyncoutputch{x}{\widetilde{v}}{A}.Q}{\;\asyncrepinputch{x}{\widetilde{y}}{A_i}.Q_i}}{R_i})}$, then there exists $n \geq n_1$ such that either $P_n \equiv \newvar{\widetilde{w}_i}{(\parcomp{\parcomp{\asyncoutputch{x}{\widetilde{v}}{A}.Q}{\asyncinputch{x}{\widetilde{v}}{A'}.Q'}}{R'})}$ and $\newvar{\widetilde{w}}{(\parcomp{Q}{\parcomp{\subst{Q'}{\widetilde{y} \mapsto \widetilde{v}}}{R'}})} \equiv P_{n+1}$ or $P_n \equiv \newvar{\widetilde{w}_i}{(\parcomp{\parcomp{\asyncoutputch{x}{\widetilde{v}}{A}.Q}{\;\asyncrepinputch{x}{\widetilde{v}}{A'}.Q'}}{R'})}$ and $\newvar{\widetilde{w}}{(\parcomp{Q}{\parcomp{\subst{Q'}{\widetilde{y} \mapsto \widetilde{v}}}{\parcomp{\;\asyncrepinputch{x}{\widetilde{y}}{A_i}.Q_i}{R'}}})} \equiv P_{n+1}$.
+        
+        \item If there exists an infinite increasing sequence $n_1 < n_2 < ...$ of natural numbers such that $P_{n_i} \equiv \newvar{\widetilde{w}_i}{(\parcomp{\parcomp{\asyncinputch{x}{\widetilde{v}}{A}.Q}{\asyncoutputch{x}{\widetilde{y}}{A_i}.Q_i}}{R_i})}$, then there exists $n \geq n_1$ such that $P_n \equiv \newvar{\widetilde{w}_i}{(\parcomp{\parcomp{\asyncinputch{x}{\widetilde{v}}{A}.Q}{\asyncoutputch{x}{\widetilde{v}}{A'}.Q'}}{R'})}$ and $\newvar{\widetilde{w}}{(\parcomp{\subst{Q}{\widetilde{y} \mapsto \widetilde{v}}}{\parcomp{Q'}{R'}})} \equiv P_{n+1}$.
+        
+        % \item If there exists an infinite increasing sequence $n_1 < n_2 < ...$ of natural numbers such that $P_{n_i} \equiv \newvar{\widetilde{w}_i}{(\parcomp{\parcomp{\asyncoutputch{x}{\widetilde{v}}{A}.Q}{\;\asyncrepinputch{x}{\widetilde{y}}{A_i}.Q_i}}{R_i})}$, then there exists $n \geq n_1$ such that $P_n \equiv \newvar{\widetilde{w}_i}{(\parcomp{\parcomp{\asyncoutputch{x}{\widetilde{v}}{A}.Q}{\;\asyncrepinputch{x}{\widetilde{v}}{A'}.Q'}}{R'})}$ and $\newvar{\widetilde{w}}{(\parcomp{Q}{\parcomp{\subst{Q'}{\widetilde{y} \mapsto \widetilde{v}}}{\parcomp{\;\asyncrepinputch{x}{\widetilde{y}}{A_i}.Q_i}{R'}}})} \equiv P_{n+1}$
+        
+        \item If there exists an infinite increasing sequence $n_1 < n_2 < ...$ of natural numbers such that $P_{n_i} \equiv \newvar{\widetilde{w}_i}{(\parcomp{\parcomp{\asyncrepinputch{x}{\widetilde{v}}{A}.Q}{\asyncoutputch{x}{\widetilde{y}}{A_i}.Q_i}}{R_i})}$, then there exists $n \geq n_1$ such that $P_n \equiv \newvar{\widetilde{w}_i}{(\parcomp{\parcomp{\asyncrepinputch{x}{\widetilde{v}}{A}.Q}{\asyncoutputch{x}{\widetilde{v}}{A'}.Q'}}{R'})}$ and $\newvar{\widetilde{w}}{(\parcomp{\subst{Q}{\widetilde{y} \mapsto \widetilde{v}}}{\parcomp{Q'}{\parcomp{\;\asyncrepinputch{x}{\widetilde{y}}{A_i}.Q_i}{R'}}})} \equiv P_{n+1}$.
+        
+        \item If $P_i \equiv \newvar{\widetilde{w}}{(\parcomp{\match{e}{Q_1}{x}{Q_2}}{R})}$ and $e = 0$ or $e = \succc{e'}$ for some $i$, then either the reduction sequence is finite or there exists $n \geq i$ such that $P_n \equiv \newvar{\widetilde{w}}{(\parcomp{\match{e}{Q_1}{x}{Q_2}}{R'})}$, $\newvar{\widetilde{w}}{(\parcomp{Q'}{R'}) \equiv P_{n+1}}$ and $Q' = Q_1$ if $e = \succc{e'}$ and $Q' = Q_2$ otherwise.
+    \end{enumerate}
+    \label{def:lockfreedomfair}
+\end{defi}
+
+With fair reduction sequences defined, we can formally define lock-freedom.
+
+\begin{defi}[Lock-freedom]
+    A process $P_0$ is livelock-free if the following conditions hold for any full fair reduction sequence $P_0 \longrightarrow P_1 \longrightarrow P_2 \longrightarrow ...$:
+    
+    \begin{enumerate}%[i]
+        \item If $P_i \equiv \newvar{\tilde{w}}{(\parcomp{\asyncoutputch{x}{\tilde{v}}{\mathbf{c}}.Q}{R})}$ for some $i \geq 0$, there exists $n \geq i$ such that $P_n \equiv \newvar{w'}{(\parcomp{\parcomp{\asyncoutputch{x}{\tilde{v}}{\mathbf{c}}.Q}{\asyncinputch{x}{\tilde{y}}{A}.R_1}}{R_2})}$ and $\newvar{w'}{\parcomp{Q}{\parcomp{\subst{R_1}{\tilde{y} \mapsto \tilde{v}}}{R_2}}} \equiv P_{n+1}$.
+        
+        \item If $P_i \equiv \newvar{\tilde{w}}{(\parcomp{\asyncinputch{x}{\tilde{v}}{\mathbf{c}}.Q}{R})}$ for some $i \geq 0$, there exists $n \geq i$ such that $P_n \equiv \newvar{w'}{(\parcomp{\parcomp{\asyncinputch{x}{\tilde{v}}{\mathbf{c}}.Q}{\asyncoutputch{x}{\tilde{y}}{A}.R_1}}{R_2})}$ and $\newvar{w'}{\parcomp{\subst{Q}{\tilde{y} \mapsto \tilde{v}}}{\parcomp{R_1}{R_2}}} \equiv P_{n+1}$.
+        
+        \item If $P_i \equiv \newvar{\tilde{w}}{(\parcomp{\asyncrepinputch{x}{\tilde{v}}{\mathbf{c}}.Q}{R})}$ for some $i \geq 0$, there exists $n \geq i$ such that $P_n \equiv \newvar{w'}{(\parcomp{\parcomp{\asyncrepinputch{x}{\tilde{v}}{\mathbf{c}}.Q}{\asyncoutputch{x}{\tilde{y}}{A}.R_1}}{R_2})}$ and $\newvar{w'}{\parcomp{\parcomp{\subst{Q}{\tilde{y} \mapsto \tilde{v}}}{\;\asyncrepinputch{x}{\tilde{v}}{\mathbf{c}}.Q}}{\parcomp{R_1}{R_2}}} \equiv P_{n+1}$.
+    \end{enumerate}
+    \label{def:lockfreedomlockfreedom}
+\end{defi}
+
+\subsection{Types and type rules}
+
+We define types with metavariables $T$ and $S$ for the lock-free type system in Definition \ref{def:lockfreedomtypes}. There are two kind of types: $\typenat$, which is used to type expressions resulting in a natural number, and $\typechanusage{\widetilde{T}}{U}$, which is used to type channels with $\widetilde{T}$ denoting the types that can be sent on the channel and $U$ denoting the usage of a channel.\\
+
+\begin{defi}[Types for lock-freedom]
+Types $T$ are defined by the following syntax.
+\begin{align*}
+    T,S ::= \typenat \mid \typechanusage{\widetilde{T}}{U}
+\end{align*}
+\label{def:lockfreedomtypes}
+\end{defi}
+
+We extend subusages to subtypes according to Definition \ref{def:lockfreedomsubtyping}. The type for naturals is a subtype of itself, and channel types are subtypes if their respective usages are subusages.\\
+
+\begin{defi}[Subtyping]
+The subtyping relation $\sqsubseteq$ is defined as the least transitive relation satisfying the rules\\\\
+\begin{tabular}{ll}
+     $\typenat \sqsubseteq \typenat$ & $\typechanusage{\widetilde{T}}{U} \sqsubseteq \typechanusage{\widetilde{T}}{U'}$ if $U \sqsubseteq U'$\\
+\end{tabular}
+\label{def:lockfreedomsubtyping}
+\end{defi}
+
+We also extend the notion of reliability and the operations on usages to types. A type $T$ is reliable if it is of the form $\channeltype{\withusage{T}{U}}$ and $U$ is reliable. The operations on usages $\uparcomp{}{}$, $\bang{}$, and $\withdelay{t}{}$ are defined, such that they apply the respective operation on the usage(s) of the type(s). Notice that the binary operator $\uparcomp{}{}$ is only valid if the two operands are of the same type.
+
+\begin{defi}[Operations on types]
+The operations $\uparcomp{}{}$, $\bang{}$, and $\withdelay{t}{}\;$ for types are defined by\\
+
+\begin{tabular}{ll}
+    $\uparcomp{bool}{bool} = bool$ & $\uparcomp{(\withusage{T}{U_1})}{(\withusage{T}{U_2})} = \withusage{T}{(\uparcomp{U_1}{U_2})}$ \\
+    \vspace{-0.8em}\\
+    $\bang{bool} = bool$ & $\bang{(\withusage{T}{U_1})} = \withusage{T}{\bang{U_1}}$\\
+    \vspace{-0.8em}\\
+    $\withdelay{t}{bool} = bool$ & $\withdelay{t}{\withusage{T}{U_1}} = \withusage{T}{\withdelay{t}{U_1}}$
+\end{tabular}
+\label{def:lockfreeops}
+\end{defi}
+
+We further extend the same operations $\uparcomp{}{}$, $\bang{}$, and $\withdelay{t}{}\;$ to type environments, such that for replication and delaying we apply the operation to each stored type, and for parallel composition we point-wise combine by parallel composition any types mapped by the intersection of the two type environments. In the type rules we will often use these rules inversely, to for example, assume that we have a type environment that can be split, such that the premises of a rule are satisfied.
+
+\begin{defi}[Operations on type environments]
+The operations $\uparcomp{}{}$, $\bang{}$, and $\withdelay{t}{}\;$ for type environments are defined by\\
+\begin{align*}
+        &dom(\uparcomp{\Gamma_1}{\Gamma_2}) = dom(\Gamma_1) \cup dom(\Gamma_2)\\
+        &(\uparcomp{\Gamma_1}{\Gamma_2})(x) = 
+        \begin{cases}
+            \uparcomp{\Gamma_1(x)}{\Gamma_2(x)} \quad \textit{if}\;  x \in dom(\Gamma_1) \cap dom(\Gamma_2)\\
+            \Gamma_1(x) \quad \quad \quad \quad\; \textit{if}\; x \in dom(\Gamma_1) \setminus dom(\Gamma_2)\\
+            \Gamma_2(x) \quad \quad \quad \quad\; \textit{if}\; x \in dom(\Gamma_2) \setminus dom(\Gamma_1)
+        \end{cases}\\
+        %
+        &dom(\bang{\Gamma} = dom(\Gamma)) \quad\;\; (\bang{\Gamma})(x)=\;\bang{(\Gamma(x))} \\
+        &dom(\withdelay{t}{\Gamma} = dom(\Gamma)) \quad (\withdelay{t}{\Gamma})(x) = \withdelay{t}(\Gamma(x))
+    \end{align*}
+    \begin{tabular}{ll}
+        
+    \end{tabular}
+\label{def:lockfreeenvops}
+\end{defi}
+
+We present typing rules for both expressions and for processes. Typing rules for expressions can be seen in Table \ref{tab:lockfreedomexpressiontypingrules} and are defined as one would expect, and typing rules for processes can be seen in Table \ref{tab:lockfreedomprocesstypingrules}.
+
+\begin{table*}[ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\runa{U-var}\kern-1em\infrule{}{\Gamma, \withtype{v}{T} \vdash \withtype{v}{T}}\kern-2em
+        %
+        \runa{U-zero}\kern-2em\infrule{}{\Gamma\vdash\withtype{0}{\typenat}}\kern-2em
+        %
+        \runa{U-succ}\kern-0.5em\infrule{\Gamma \vdash \withtype{e}{\typenat}}{\Gamma \vdash \withtype{\succc{e}}{\typenat}}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Expression typing rules for lock-freedom.}
+    \label{tab:lockfreedomexpressiontypingrules}
+\end{table*}
+
+\begin{table*}[ht]
+    \begin{framed}\begin{tabular}{l}
+        \vspace{-1em}
+        \runa{U-zero}\;\kern0em\infrule{}{\emptyset \vdash \withtype{\nil}{ok}}\;\kern1em
+        
+        \runa{U-nu}\;\infrule{\Gamma,\withusage{\withtype{a}{\channeltype{\widetilde{T}}}}{U} \vdash \withtype{P}{ok} \quad \reliableU{U}}{\Gamma \vdash \withtype{\newvar{a}{P}}{ok}}\\
+        
+        \vspace{-1em}
+        \kern2em\runa{U-weak}\;\infrule{\Gamma' \vdash \withtype{P}{ok} \quad \Gamma \sqsubseteq \Gamma'}{\withtype{\Gamma \vdash P}{ok}}\;
+        
+        \kern0.1em\runa{U-par}\;\infrule{\Gamma_1 \vdash \withtype{P_1}{ok} \quad \Gamma_2 \vdash \withtype{P_2}{ok}}{\tparcomp{\Gamma_1}{\Gamma_2} \vdash \withtype{\parcomp{P_1}{P_2}}{ok}}\\
+        
+        \kern-1em\runa{U-serv}\;\kern-1em\infrule{\Gamma \vdash \withtype{{\inputch{a}{\widetilde{v}}{A}{P}}}{ok}}{\bang{\Gamma} \vdash\; \withtype{\bang{\inputch{a}{\widetilde{v}}{A}{P}}}{ok}}
+        \kern-2em\runa{U-match}\;\infrule{\withdelay{1}{\Gamma} \vdash \withtype{e}{\typenat} \quad \Gamma \vdash \withtype{P}{ok} \quad \Gamma, \withtype{x}{\typenat} \vdash \withtype{Q}{ok}}{\withdelay{1}{\Gamma} \vdash \withtype{\match{e}{P}{x}{Q}}{ok}}\\
+        
+        %\vspace{-1em}
+        %\kern5em
+        %\infrule{\Gamma,\withusage{\withtype{x}{\channeltype{\widetilde{\tau}}}}{U} \vdash \withtype{P}{ok} %\quad a=\mathbf{c} \Rightarrow t_c < \mathbf{t_\infty}}{\tparcomp{\withdelay{t_c + %\mathbf{t_{min}}}{(\tparcomp{\withtype{v_1}{\tau_1}}{\tparcomp{\cdots}{\tparcomp{\withtype{v_n}{\ta%u_n}}{\Gamma}}})}}{\withusage{\withtype{x}{\channeltype{\widetilde{\tau}}}}{\usagepref{Out}{t_o}{t_%c}.U}} \vdash \withtype{\outputch{x}{v_1,\dots,v_n}{a}{P}}{ok}}
+        %\kern-5em\\
+        
+        \vspace{-1em}
+        \kern1em\runa{U-out}\;\infrule{\Gamma',\withusage{\withtype{a}{\channeltype{\widetilde{T}}}}{V} \vdash \withtype{\widetilde{e}}{\widetilde{T}} \quad \Gamma,\withusage{\withtype{a}{\channeltype{\widetilde{T}}}}{U} \vdash \withtype{P}{ok} \quad A=\mathbf{c} \implies t_c < \infty}{\withdelay{t_c + 1}{\left(\parcomp{\Gamma}{\Gamma'}\right)},\withusage{\withtype{a}{\channeltype{\widetilde{T}}}}{\outusagepref{0}{t_c}.\!\left(\parcomp{V}{U}\right)} \vdash \withtype{\outputch{a}{\widetilde{e}}{A}{P}}{ok}}\\
+        
+        \vspace{-1em}
+        \kern6em\runa{U-in}\;\infrule{\Gamma, \withusage{\withtype{a}{\channeltype{\widetilde{T}}}}{U}, \withtype{\widetilde{v}}{\widetilde{T}} \vdash \withtype{P}{ok} \quad A=\mathbf{c} \implies t_c < \infty}{\withdelay{t_c + 1}{\Gamma,\withusage{\withtype{a}{\channeltype{\widetilde{T}}}}{\inusagepref{0}{t_c}.U}} \vdash \withtype{\inputch{a}{\widetilde{v}}{A}{P}}{ok}}
+        \\
+    \end{tabular}\end{framed}
+    \smallskip
+    \caption{Typing rules for lock-freedom.}
+    \label{tab:lockfreedomprocesstypingrules}
+\end{table*}
+
+Rule $\runa{U-Nu}$ ensures that $P$ is well typed under the original environment with a new binding for added for $a$. This rule also ensures that any variable introduced has a reliable usage. Rule $\runa{U-Serv}$ ensures that the underlying channel input is well typed. In addition, this rule also shows that only input channels can be replicated as no other rule can type replication. To ensure types can be weakened rule $\runa{U-Weak}$ is included, which says that any process that can be typed under an environment $\Gamma'$ can also be typed under a less restricted environment $\Gamma$. Rule $\runa{U-Match}$ says that a match process must type $P$ and $Q$ under $\Gamma$. However when typing $Q$ an extra variable $x$ is introduced, and so we must introduce that in the type environment as well. We assume it takes time 1 to check if $e$ is zero, so the total time is delayed by 1.\\
+
+Finally we have rules $\runa{U-Out}$ and $\runa{U-In}$. $\runa{U-Out}$ first of all ensures that the usage of the sending channel $a$ starts with an $\outusagepref{}{}$ usage prefix. The usage of channel $a$ may be different when typing $\widetilde{e}$ and $P$, represented by $V$ and $U$, and so the combined usage for $a$ after sending is $\uparcomp{U}{V}$. In addition, the rule ensures that if the communication has a $c$ attribute, its capacity must be finite. Rule $\runa{U-In}$ works similarly, but here we do not need to split the type environment, as we do not need to type an additional expression. In both rules, we assume it takes time $1$ to perform the communication, and thus we must delay the type environment by 1.
+
+\subsection{Time-Bounded Processes}
+
+At this point, Kobayashi's type system guarantees that processes neither deadlock nor livelock by ensuring that communications tagged with $\mathbf{c}$ eventually succeed. Kobayashi extends this type system to guarantee that communications succeed within a specified number of parallel reduction steps, such that an upper bound on parallel execution time may be established. We first modify the abstract syntax for processes such that input, output, and replicated input are instead tagged with a natural number representing an upper bound on the number of parallel reductions before communication is performed.
+%
+\begin{align*}
+    P ::= \cdots \mid \asyncinputch{a}{\widetilde{v}}{n} \mid \;\asyncrepinputch{a}{\widetilde{v}}{n} \mid \asyncoutputch{a}{\widetilde{y}}{n}
+\end{align*}
+
+In Kobayashi's original work, a labeled transition system is used for the target language, where the label denotes which free name communication is performed on. In Table \ref{tab:redurulesKoba} this is seen as the $l$ label. To simulate the presence of this label, we introduce a predicate $syncs$ between a process $P$ and a name $a$, that is satisfied if $P$ can be reduced by synchronizing on a free name $a$. We write $P \xrightarrow{\;a\;} Q$ if $P \longrightarrow Q$ and $syncs(P, a)$ holds for some process $P$ and $Q$.
+
+\begin{defi}[Synchronizes]
+    The synchronization predicate $syncs$ between a process $P$ and a name $a$ is defined by:
+    $syncs(P, a)$ if either
+    \begin{enumerate}
+        \item $P \equiv \newvar{\widetilde{u}}{(\parcomp{\parcomp{\asyncinputch{a}{\widetilde{v}}{A}.Q_1}{\asyncoutputch{a}{\widetilde{x}}{A'}.Q_2}}{R})}$ with $a \not\in {\widetilde{u}}$ for some $\widetilde{u}$, $a$, $\widetilde{v}$, $A$, $A'$ or
+        \item $P \equiv \newvar{\widetilde{u}}{(\parcomp{\parcomp{\asyncrepinputch{a}{\widetilde{v}}{A}.Q_1}{\asyncoutputch{a}{\widetilde{x}}{A'}.Q_2}}{R})}$ with $a \not\in {\widetilde{u}}$ for some $\widetilde{u}$, $a$, $\widetilde{v}$, $A$, $A'$
+    \end{enumerate}
+\label{def:timeboundsync}
+\end{defi}
+
+To formally define what it means for a process to be time-bounded, we first introduce a reduction semantics for parallel process reductions in the form of a relation $P \xRightarrow{S} Q$ in Table \ref{tab:timeboundparallel}. The label $S$ is a set of channels denoting which free channels communication is performed on. We write $P \Rightarrow_K Q$ when we are not interested in limiting communication to any specific free channels. The key insight in these rules is that for every reduction step, each parallel subprocess is either reduced or has its time bound reduced by 1.\\
+
+\begin{table*}[h!]
+    \begin{framed}\vspace{-1em}
+    \begin{align*}
+        %
+        \vspace{-1.0em}
+        &\kern2em\runa{RP-comm}\;\infrule{}{\parcomp{\asyncinputch{a}{\widetilde{v}}{A}.P}{\asyncoutputch{a}{\widetilde{z}}{A'}.Q} \xRightarrow{\{x\}} \parcomp{P}{\subst{Q}{\widetilde{z} \mapsto \widetilde{v}}}} \kern7em\runa{RP-waitI}\!
+        \infrule{}{\asyncinputch{a}{\widetilde{v}}{A} \xRightarrow{\emptyset} \asyncinputch{a}{\widetilde{v}}{A-1}}\vspace{-1em}\\[-1.5em]
+        %
+        &\kern1em\runa{RP-rep}\;\infrule{}{\parcomp{\asyncrepinputch{a}{\widetilde{v}}{A}.P}{\asyncoutputch{a}{\widetilde{z}}{A'}.Q} \xRightarrow{\{x\}} \parcomp{\parcomp{P}{\subst{Q}{\widetilde{z} \mapsto \widetilde{v}}}}{\;\asyncrepinputch{a}{\widetilde{v}}{A}.P}} \kern12em\runa{RP-waitO}\!
+        \infrule{}{\asyncoutputch{a}{\widetilde{v}}{A} \xRightarrow{\emptyset} \asyncoutputch{a}{\widetilde{v}}{A-1}}\vspace{-1em}\\[-1.5em]
+        %
+        %& \\
+        %
+        %&\\
+        %
+        &\kern5em\runa{RP-zero}\;\infrule{\vspace{-1em}}{\match{0}{P}{v}{Q} \xRightarrow{\emptyset} P} \kern8em\runa{RP-inac}\kern-2em\infrule{}{\nil \xRightarrow{\emptyset} \nil}\vspace{-1em}\\[-1.5em]
+        %
+        &\kern1em\runa{RP-succ}\;\infrule{}{\match{\succc{e}}{P}{v}{Q} \xRightarrow{\emptyset} Q[v\mapsto e]}
+        %
+        \kern13em
+        \runa{RP-wait!}\;\infrule{}{\asyncrepinputch{a}{\widetilde{v}}{A} \xRightarrow{\emptyset} \;\asyncrepinputch{a}{\widetilde{v}}{A-1}}\vspace{-1em}\\[-1.5em]
+        %
+        &\kern4em\runa{RP-par}\;\infrule{P \xRightarrow{S_1} P' \quad Q \xRightarrow{S_2} Q' \quad S_1 \cap S_2 = \emptyset}{\parcomp{P}{Q} \xRightarrow{S_1 \cup S_2} \parcomp{P'}{Q'}} \kern5em
+        %\infrule{P \xRightarrow{\emptyset} Q}{\bang{P} \xRightarrow{\emptyset} \bang{Q}} \kern-1em
+        \runa{RP-res}\;\infrule{P \xRightarrow{S} Q \quad a \in S \text{ if } syncs(P, a)}{\newvar{a}{P} \xRightarrow{S \setminus \{a\}} \newvar{a}{Q}}\vspace{-1em}\\[-1.5em]
+        %
+        &\kern2em\runa{RP-struct}\;\infrule{P \equiv P' \quad P' \xRightarrow{S} Q' \quad Q' \equiv Q}{P \xRightarrow{S} Q} \kern2.5em
+        \runa{RP-close}\;\infrule{P \xRightarrow{S} Q \quad \forall a.(a \in S \text{ if } syncs(P, a))}{P \Rightarrow_K Q}
+    \end{align*}\vspace{-1em}
+    \end{framed}
+    \smallskip
+    \caption{Parallel process reduction rules}
+    \label{tab:timeboundparallel}
+\end{table*}
+
+We can now define what it means for a process to be time-bounded in Definition \ref{def:timeboundedness}. Time-boundedness is a progress property that says that time tags of processes can never become less than 0. That is, if a time tag becomes 0, the corresponding operation must succeed in the next reduction. The three cases in the definition all follow the same format, ensuring that two processes $Q$ and $R$ are unable to reduce on their own, but are able to reduce given their parallel composition.
+
+\begin{defi}[Time-boundedness]
+    A process $P$ is time-bounded if the following condition hold whenever $P \Rightarrow^*_K P'$.
+    \begin{enumerate}
+        \item If $P' \equiv \newvar{\widetilde{w}}{(\parcomp{\asyncoutputch{x}{\widetilde{v}}{0}.Q}{R})}$ then $\neg syncs(R, x)$ and $R \equiv \newvar{\widetilde{u}}{(\parcomp{\asyncinputch{x}{y}{t'}.R_1}{R_2})}$ or $R \equiv \newvar{\widetilde{u}}{(\parcomp{\asyncrepinputch{x}{y}{t'}.R_1}{R_2})}$ with $x \not\in \{\widetilde{u}\}$ for some $t'$, $\widetilde{{u}}$, $R_1$, $R_2$.  
+        \item If $P' \equiv \newvar{\widetilde{w}}{(\parcomp{\asyncinputch{x}{\widetilde{v}}{0}.Q}{R})}$ then $\neg syncs(R, x)$ and $R \equiv \newvar{\widetilde{u}}{(\parcomp{\asyncoutputch{x}{y}{t'}.R_1}{R_2})}$ with $x \not\in \{\widetilde{u}\}$ for some $t'$, $\widetilde{{u}}$, $R_1$, $R_2$.  
+        \item If $P' \equiv \newvar{\widetilde{w}}{(\parcomp{\asyncrepinputch{x}{\widetilde{v}}{0}.Q}{R})}$ then $\neg syncs(R, x)$ and $R \equiv \newvar{\widetilde{u}}{(\parcomp{\asyncoutputch{x}{y}{t'}.R_1}{R_2})}$ with $x \not\in \{\widetilde{u}\}$ for some $t'$, $\widetilde{{u}}$, $R_1$, $R_2$.      \end{enumerate}
+\label{def:timeboundedness}
+\end{defi}
+
+%The original definition of usage reliability seen in Definition \ref{def:lockfreedomreliability} together with the original definition of usage reductions seen in Definition \ref{def:lockfreedomsubusagereduction} actually do not take race conditions into account. As such, an usage $\uparcomp{\uparcomp{\outusagepref{0}{\infty}.\nil}{\inusagepref{\infty}{0}.\outusagepref{0}{\infty}.\nil}}{\inusagepref{\infty}{0}.\outusagepref{0}{\infty}.\nil}$ is seen as reliable, despite only guaranteeing one input to succeed immediately. The new definition of usage reductions defined by the relation $\xRightarrow{S}$, shown in Table \ref{TODO}, solves this problem. The label $S \subseteq \{\comlabel, \usageinlabel, O\}$ contains information of whether an input or output is ready to reduce, with $\comlabel$ .
+
+% \begin{table*}[ht]
+%     \begin{framed}
+%     \begin{align*}
+%         &\uparcomp{\inusagepref{t_o}{t_c}.U_1}{\outusagepref{t_o'}{t_c'}.U_2} \xRightarrow{\{\comlabel\}} \uparcomp{U_1}{U_2} \kern2em
+%         0 \xRightarrow{\emptyset} 0 \kern2em
+%         \infrule{0 < t_c}{\usagepref{\alpha}{t_o}{t_c}.U \xRightarrow{\alpha} \usagepref{\alpha}{0}{t_c^-}.U} \kern2em
+%         \infrule{0 < t_o}{\usagepref{\alpha}{t_o}{t_c}.U \xRightarrow{\emptyset} \usagepref{\alpha}{t_o^-}{t_c}.U}\\
+%         %
+%         &\kern7em\infrule{U_1 \xRightarrow{S_1} U_1' \quad U_2 \xRightarrow{S_2} U_2' \quad \comlabel \not\in S_1 \cap S_2}{\uparcomp{U_1}{U_2} \xRightarrow{S_1 \cup S_2} \uparcomp{U_1'}{U_2'}} \kern7em
+%         \infrule{U \xRightarrow{S} U' \quad \comlabel \not\in S}{\bang{U} \xRightarrow{S} \;\bang{U'}}\\
+%         %
+%         &\kern8em\infrule{U \equiv U' \quad U' \xRightarrow{S} V' \quad V' \equiv V}{U \xRightarrow{S} V} \kern2em
+%         \infrule{U \xRightarrow{S} V \quad \comlabel \in S if \{I, O\} \subseteq S}{S \Rightarrow V}
+%     \end{align*}
+%     \end{framed}
+%     \smallskip
+%     \caption{Timed usage reduction rules}
+%     \label{tab:timeboundusagereduction}
+% \end{table*}
+
+% New reliability definition
+% \begin{defi}[Reliability (refined)]
+%     A usage $U$ is reliable if:
+%     \begin{enumerate}
+%         \item If $U \Rightarrow^*\equiv \uparcomp{\usagepref{\alpha}{t_o}{0}.U_1}{U_2}$, then $U \not\rightarrow$ and there exist $t_c$, $U_3$, $U4$ such that $U_2 \equiv \uparcomp{\usagepref{\overline{\alpha}}{0}{t_c}.U_3}{U_4}$; and
+%         %
+%         \item $U \rightarrow^* \uparcomp{\usagepref{\alpha}{t_o}{t_c}.U_1}{U_2}$ implies $\infty \leq t_c'$ or $\exists t_o', t_c', U_1, U_2.((U \equiv \uparcomp{\usagepref{\alpha}{t_o'}{t_c'}.U_1}{U_2} \land (t_o' \leq t_c))$
+%     \end{enumerate}
+% \label{def:reliabilityrefined}
+% \end{defi}
+
+Finally, we introduce in Table \ref{tab:lockfreedommodprocesstypingrules} the typing rules $\runa{U-Bout}$ and $\runa{U-Bin}$ to replace rules $\runa{U-Out}$ and $\runa{U-In}$ from Table \ref{tab:lockfreedomprocesstypingrules}. These rules make no requirements based on a $\mathbf{c}$ tag. Instead, we must ensure that the obligation of a usage is less than or shorter than the corresponding time tag of a process.
+
+\begin{table}[]
+    \begin{framed}\vspace{-1em}
+    \begin{align*}
+        &\kern-10em\runa{U-Bout}\;\infrule{\Gamma',\withusage{\withtype{a}{\channeltype{\widetilde{T}}}}{V} \vdash \withtype{\widetilde{e}}{\widetilde{T}} \quad \Gamma,\withusage{\withtype{a}{\channeltype{\widetilde{T}}}}{U} \vdash \withtype{P}{ok} \quad t_c \leq t}{\withdelay{t_c + 1}{\left(\parcomp{\Gamma}{\Gamma'}\right)},\withusage{\withtype{a}{\channeltype{\widetilde{T}}}}{\outusagepref{t_o}{t_c}.\!\left(\parcomp{V}{U}\right)} \vdash \withtype{\outputch{a}{\widetilde{e}}{t}{P}}{ok}}\\[-1em]
+        %
+        &\kern-6em\runa{U-Bin}\;\infrule{\Gamma, \withusage{\withtype{a}{\channeltype{\widetilde{T}}}}{U}, \withtype{\widetilde{v}}{\widetilde{T}} \vdash \withtype{P}{ok} \quad t_c \leq t}{\withdelay{t_c + 1}{\Gamma,\withusage{\withtype{a}{\channeltype{\widetilde{T}}}}{\inusagepref{t_o}{t_c}.U}} \vdash \withtype{\inputch{a}{\widetilde{v}}{t}{P}}{ok}}
+    \end{align*}\vspace{-1em}
+    \end{framed}
+    \caption{Modified typing rules for time-bounded processes}
+    \label{tab:lockfreedommodprocesstypingrules}
+\end{table}
+
+
+\subsection{Soundness}
+Kobayashi's lock-free type system is sound in that any closed well-typed process is lock-free. The proof of type soundness is given by a subject reduction theorem that, as usual, states that any well-typed process stays well-typed during reduction, as well as a property stating that progress is made during reduction. As with most other behavioral type systems, type environments can change during reduction. Here, this change is made apparent in usages of types in the type environment. For this reason, we first introduce a relation $\Gamma \xrightarrow{\;l\;} \Delta$ denoting changes to the type environment during reduction. Subject reduction is proved by induction on the reduction $P \xrightarrow{\;l\;} Q$.
+
+\begin{defi}
+    A 3-place relation $\Gamma \xrightarrow{\;l\;} \Delta$ is defined to hold if one of the following conditions holds:
+    \begin{enumerate}
+        \item $l = \epsilon$ and $\Gamma = \Delta$
+        \item $l = x$, $\Gamma = (\Gamma', x : \typechanusage{\widetilde{T}}{U})$, $\Delta = (\Gamma', x : \typechanusage{\widetilde{T}}{U'})$, and $U \longrightarrow U'$ for some $\Gamma'$, $\widetilde{T}$, $U$, and $U'$.
+    \end{enumerate}
+\end{defi}
+
+\begin{theorem}[Subject reduction]
+If $\Gamma \vdash P$ and $P \xrightarrow{\;l\;} Q$, then there exists $\Delta$ such that $\Delta \vdash Q$ and $\Gamma \xrightarrow{\;l\;} \Delta$.
+\label{theorem:kobasubjectreduction}
+\end{theorem}
+\begin{proof}
+By induction on the rules defining $\xrightarrow{\;l\;}$ \cite{Kobayashi2000}.
+\end{proof}
+
+Lemma \ref{lemma:kobaprogress} states that progress is always made by reduction. Here, progress refers to the fact that if a process with a certain obligation is dependent on some other communication, the process fulfills that obligation after the communication.
+
+\begin{lemma}
+If $\Gamma, x:\channeltypeusage{\widetilde{T}}{U} \vdash \outputch{x}{\widetilde{v}}{a}{P} \mid \inputch{x}{\widetilde{y}}{a'}{Q}$, then there exist $\Delta$ and $U'$ such that $\Delta, x:\channeltypeusage{\widetilde{T}}{U} \vdash P \mid \subst{Q}{\widetilde{y} \mapsto \widetilde{v}}$ and $\Gamma \sqsubseteq \;\withdelay{1}{\Delta}$ with $U \longrightarrow U'$.
+\label{lemma:kobaprogress}
+\end{lemma}
+\begin{proof}
+Derived from typing rules $\runa{U-Par}$, $\runa{U-Out}$ and $\runa{U-In}$ as well as the subusage rules \cite{Kobayashi2000}.
+\end{proof}
+
+The proof for the theorem for livelock freedom relies on the subject reduction theorem as well as the lemma for progress. Kobayashi states several other auxiliary lemmas based on the subject reduction theorem and lemma for progress (Lemma \ref{lemma:kobaprogress}), that we omit here, stating that obligations and capacities of usages are respected in any full fair reduction sequence, to prove the theorem for livelock freedom.
+
+\begin{theorem}[Livelock freedom]
+If $\emptyset \vdash P$, then $P$ is livelock-free.
+\end{theorem}
+\begin{proof}
+Derived from Theorem \ref{theorem:kobasubjectreduction} and Lemma \ref{lemma:kobaprogress} \cite{Kobayashi2000}. 
+\end{proof}
+
+Kobayashi also presents a theorem stating that the extension of the type system to time-boundedness is also sound, in that any closed well-typed process is also time-bounded.
+
+\begin{theorem}[Time-boundedness]
+If $\Gamma \vdash P$ and $\reliableU{\Gamma}\!$, then $P$ is time-bounded.
+\end{theorem}
+\begin{proof}
+Time-boundedness follows from the combination of subject reduction, saying that well-typed processes remain well-typed, and the property of well-typed expressions not immediately breaking the promise of an obligation/capacity of a usage.
+\end{proof}
+
+\subsection{An example: Two dining philosophers}
+We now present an example of how a time-bounded process can be typed and checked for reliability. Inspired by Kobayashi's work, we present a process representing the behavior of dining philosophers \cite{Dijkstra1971}. In contrast to the work of Kobayashi, we make some simplifications and add time tags such that we can analyze the time-boundedness of the process. The simplifications we make are: $(1)$ we assume that philosophers only eat once, and $(2)$ we limit ourselves to two philosophers.\\
+
+We can express the behavior of a single philosopher by the process $P$:\\
+
+$P \triangleq \inputch{\textit{phil}}{\textit{left},\textit{right}}{}{\inputch{\textit{left}}{}{}{\inputch{\textit{right}}{}{}{(\parcompthree{\asyncoutputch{\textit{left}}{}{}}{\asyncoutputch{\textit{right}}{}{}}{\asyncoutputch{\textit{fin}}{}{}})}}}$\\
+
+Assuming two philosophers, we can now express their combined behavior by the process $Q$:\\
+
+$Q \triangleq \newvarU{f_1}\newvarU{f_2}\newvarU{\textit{phil}}\newvarU{\textit{fin}}\\
+(\parcompseven{P}{P}{\asyncoutputch{\textit{phil}}{f_1, f_2}{}}{{\asyncoutputch{\textit{phil}}{f_1, f_2}{}}}{\asyncoutputch{f_1}{}{}}{\asyncoutputch{f_2}{}{}}{\inputch{\textit{fin}}{}{}{\inputch{\textit{fin}}{}{}{(\parcomp{\asyncinputch{f_1}{}{}}{\asyncinputch{f_2}{}{}})}}})$\\
+
+Here, we assume that the two philosophers both try to grab fork $f_1$ first and then fork $f_2$ after they have gotten hold of $f_1$. Notice that if they both tried to grab different forks, the process would deadlock. We also include a channel $\textit{fin}$ to signify that a philosopher has finished eating.\\
+
+We now add time tags to the two philosophers and the process expressing their combined behavior. Notice that we cannot distinguish between the two philosophers, as it is non-deterministic who eats first, and the bounds therefore represent the maximum time for any philosopher.
+%
+%$P \triangleq \inputch{phil}{left,right}{0}{\inputch{left}{}{2}{\inputch{right}{}{0}{(\parcompthree{\asyncoutputch{left}{}{1}}{\asyncoutputch{right}{}{1}}{\asyncoutputch{fin}{}{0}})}}}$\\
+\begin{align*}
+    &P \triangleq \inputch{\textit{phil}}{\textit{left},\textit{right}}{0}{\inputch{\textit{left}}{}{2}{\inputch{\textit{right}}{}{4}{(\parcompthree{\asyncoutputch{\textit{left}}{}{5}}{\asyncoutputch{\textit{right}}{}{5}}{\asyncoutputch{\textit{fin}}{}{5}})}}}\\
+    %
+    &Q \triangleq \newvarU{f_1}\newvarU{f_2}\newvarU{\textit{phil}}\newvarU{\textit{fin}}\\
+    &\quad(\parcompseven{P}{P}{\asyncoutputch{\textit{phil}}{f_1, f_2}{0}}{{\asyncoutputch{\textit{phil}}{f_1, f_2}{0}}}{\asyncoutputch{f_1}{}{5}}{\asyncoutputch{f_2}{}{5}}{\inputch{\textit{fin}}{}{5}{\inputch{fin}{}{5}{(\parcomp{\asyncinputch{f_1}{}{3}}{\asyncinputch{f_2}{}{4}})}}})\\
+\end{align*}\\
+
+We can now type process $Q$ by assigning the following types to $\textit{phil}$, $\textit{fin}$, $f_1$, and $f_2$:\\
+
+%$\withtype{phil1}{\channeltypeusage{\channeltypeusage{}{(\inusagepref{0}{2}.\outusagepref{1}{0}.\nil)}, \channeltypeusage{}{(\inusagepref{2}{1}.\outusagepref{0}{0}.\nil)}}{(\uparcompfour{\inusagepref{0}{0}.\nil}{\outusagepref{0}{0}.\nil}{\inusagepref{0}{0}.\nil}{\outusagepref{0}{0}.\nil})}}$\\
+%$\withtype{phil1}{\channeltypeusage{\channeltypeusage{}{(\inusagepref{0}{0}.\outusagepref{1}{0}.\nil)}, \channeltypeusage{}{(\inusagepref{1}{0}.\outusagepref{0}{1}.\nil)}}{(\uparcomp{\inusagepref{0}{0}.\nil}{\outusagepref{0}{0}.\nil})}}$\\
+%
+$\withtype{\textit{phil}}{\channeltypeusage{\channeltypeusage{}{(\inusagepref{0}{2}.\outusagepref{1}{1}.\nil)}, \channeltypeusage{}{(\inusagepref{2}{0}.\outusagepref{0}{1}.\nil)}}{(\uparcomp{\inusagepref{0}{0}.\nil}{\outusagepref{0}{0}.\nil})}}$\\
+%
+% $\withtype{fin}{\channeltypeusage{}{(\uparcompthree{\inusagepref{0}{4}.\inusagepref{0}{2}.\nil}{\outusagepref{4}{0}.\nil}{\outusagepref{5}{0}.\nil})}}$\\
+% %
+% $\withtype{f_1}{\channeltypeusage{}{(\uparcompfour{\outusagepref{0}{1}.\nil}{\inusagepref{1}{0}.\outusagepref{1}{0}.\nil}{\inusagepref{1}{1}.\outusagepref{1}{0}.\nil}{\inusagepref{5}{0}.\nil})}}$\\
+% %
+% $\withtype{f_2}{\channeltypeusage{}{(\uparcompfour{\outusagepref{0}{2}.\nil}{\inusagepref{2}{0}.\outusagepref{1}{1}.\nil}{\inusagepref{3}{1}.\outusagepref{1}{0}.\nil}{\inusagepref{5}{0}.\nil})}}$
+%
+$\withtype{\textit{fin}}{\channeltypeusage{}{(\uparcompthree{\inusagepref{0}{5}.\inusagepref{0}{5}.\nil}{\outusagepref{5}{5}.\nil}{\outusagepref{5}{5}.\nil})}}$\\
+%
+$\withtype{f_1}{\channeltypeusage{}{(\uparcompfour{\outusagepref{0}{5}.\nil}{\inusagepref{1}{2}.\outusagepref{1}{5}.\nil}{\inusagepref{1}{2}.\outusagepref{1}{5}.\nil}{\inusagepref{5}{3}.\nil})}}$\\
+%
+$\withtype{f_2}{\channeltypeusage{}{(\uparcompfour{\outusagepref{0}{5}.\nil}{\inusagepref{2}{4}.\outusagepref{1}{5}.\nil}{\inusagepref{3}{3}.\outusagepref{1}{5}.\nil}{\inusagepref{5}{4}.\nil})}}$\\
+
+It can be seen that these types are all reliable as their usages can never be reduced to $\errres$. That is, for every possible reduction sequence of any usage, it is never the case that a communication can happen where the obligation of one end is greater than the capacity of the other. Furthermore, every time tag of $P_1$, $P_2$, and $Q$ is equal to or greater than the capacity of the corresponding usage, and is thus well-typed according to the new typing rules $\runa{U-Bout}$ and $\runa{U-Bin}$. Therefore, we can conclude that the process $Q$ is time-bounded. One philosopher will be done eating after at most 5 time steps and the other after at most 5 more. Finally the whole process will be fully reduced after at most 4 further time steps, giving the time before the philosophers are done eating a bound of 10 and the whole process a bound of 14. 

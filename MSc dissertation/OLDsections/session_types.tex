@@ -1,0 +1,91 @@
+\chapter{Session types}\label{sec:sessiontypes}
+One of the strengths of usage types is their ability to precisely describe how a channel may behave at run-time, as a usage is itself a process. This translates to precise bounds on the parallel complexity, when usage prefixes are annotated with temporal information as we have seen in Section \ref{sec:lockfreedomts} and \ref{subsec:sizedwithusages}. However, the type systems by Kobayashi \cite{Kobayashi2000} and Baillot et al. \cite{BaillotEtAl2021} cannot analyze the parallel complexity of processes that contain heterogeneous channels, as usage types are essentially annotated simple types. Kobayashi \cite{Kobayashi2000} and Baillot et al. \cite{BaillotEtAl2021} circumvent this by defining type systems for the polyadic $\pi$-calculus, such that multiple values of different types may be transmitted simultaneously. However, these type systems still cannot prescribe protocols with branching, such as those seen in client-server protocols, where a server offers multiple services, and a client accepts one.\\
+
+An alternative is to use session types. In a two-party channel-based communication, every channel has two endpoints. That is, one endpoint that sends some information and another that receives this information, after which roles may be swapped to transmit a reply. Binary session types are a behavioral type discipline that utilizes this fact to prescribe communication protocols of single channels, by typing each of their two \textit{endpoints} with its own session type that enforces an order on the receiving and sending of information of specified types. These session types must be complementary. That is, when one endpoint is prescribed to send a value of some type, the other must be prescribed to receive a value of this type, and vice versa. We say that two session types that adhere to this principle are \textit{dual}. Session types were first introduced by Honda in 1993 \cite{Honda1993} and were later refined by Honda et al. in 1998 \cite{HondaEtAl1998}. Since then, Session types have been studied extensively for such properties as deadlock freedom \cite{CairesPfenning2010} and safe session passing in the $\pi$-calculus \cite{GiuntiVasconcelos2010,GayHole2005,Vasconcelos2009}, and so a variety of subdisciplines exist. We consider the work on binary session types by Caires and Pfenning \cite{CairesPfenning2010}, as the type system for static complexity analysis by Das et al. \cite{DasEtAl2018} is derived from this.\\ 
+
+These session types are defined for labeled choice, for which one endpoint \textit{offers} multiple branches each identified by a label, and the other endpoint \textit{accepts} one of these by sending a label. With such a construct, we can prescribe protocols with multiple possible branches, such as a server that provides some services that a client can choose amongst. Therefore, for session-based type systems we replace the \texttt{match} construct with external choice $a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L}$, offering branches $P_l$ identified by labels $l \in L$ on channel $a$, and internal choice $a.k ; P$, choosing a branch identified by $k \in L$ on channel $a$. The semantics is as follows
+\begin{align*}
+    \runa{R-choice}\; \infrule{}{a.\texttt{case}\{l \Rightarrow P_l\}_{l\in L} \mid a.k ; Q\longrightarrow P_k \mid Q}\kern6em \text{if}\; k\in L
+\end{align*}
+where $a$ is a channel, $L$ is a set of labels, and $P_l$ for $l\in L$ is a process. We next introduce types in Definition \ref{def:sessiontypestypes}.
+
+\begin{defi}[Session types]
+Types for names are given by
+\begin{align*}
+    A,B ::= \mathbf{1} \mid A \otimes B \mid A \multimap B \mid \oplus\{l : A_l\}_{l\in L} \mid \&\{l : A_l\}_{l\in L}
+\end{align*}
+\label{def:sessiontypestypes}
+\end{defi}
+
+We assign types to names, such that $a:A$ means channel $a$ shall be used according to session $A$. The type constructor $\mathbf{1}$ represents a terminated session, i.e. no further synchronizations may occur on the corresponding channel. However, it may still be passed around by other sessions, essentially behaving as a value of some base type. This makes it straightforward to introduce new base types, as such types can simply be treated as the terminated session type. Type constructor $A \otimes B$ represents the endpoint that first outputs a name of session type $A$ and then proceeds according to session type $B$. The complementary constructor $A \multimap B$ types the endpoint that inputs a name of session type $A$ and then proceeds according to session type $B$. Finally, internal choice $\oplus\{l : A_l\}_{l\in L}$ and external choice $\&\{l : A_l\}_{l\in L}$ represent dual session types for labeled choice, where $L$ is a set of labels, such that $l\in L$ identifies a session type $A_l$. Here, the endpoint that offers its partner a choice between $|L|$ sessions of type $A_l$ for $l \in L$ is typed as $\&\{l : A_l\}_{l\in L}$, and the endpoint that accepts one of the sessions prescribed by types $A_l$ for $l\in L$ is typed as $\&\{l : A_l\}_{l\in L}$. We allow recursive session type definitions such as \textit{Serv} and \textit{Client} in Example \ref{ex:servclient}. We take an equi-recursive view on such definitions, and so $\textit{Serv}=\&\{\text{get} : \texttt{Num} \multimap (\texttt{String} \otimes \textit{Serv}), \text{upd} : \texttt{Num} \multimap (\texttt{String} \multimap \textit{Serv}), \text{del} : \texttt{Num} \multimap \textit{Serv})\}[\textit{Serv}\mapsto \&\{\text{get} : \texttt{Num} \multimap (\texttt{String} \otimes \textit{Serv}), \text{upd} : \texttt{Num} \multimap (\texttt{String} \multimap \textit{Serv}), \text{del} : \texttt{Num} \multimap \textit{Serv})\}]$.
+
+\begin{examp}\label{ex:servclient}
+We can prescribe the protocols for a server and clients, where the server stores strings identified by numbers, such that clients can perform \textit{get} requests by sending a number and then receiving a string, \textit{update} requests by sending a number and then a string, and \textit{delete} requests by sending a number.
+\begin{align*}
+    \kern0em\textit{Serv} \defeq&\; \&\{\text{get} : \texttt{Num} \multimap (\texttt{String} \otimes \textit{Serv}), \text{upd} : \texttt{Num} \multimap (\texttt{String} \multimap \textit{Serv}), \text{del} : \texttt{Num} \multimap \textit{Serv})\} \\
+    %
+    \kern0em\textit{Client} \defeq&\; \oplus\!\{\text{get} : \texttt{Num} \otimes (\texttt{String} \multimap \textit{Client}), \text{upd} : \texttt{Num} \otimes (\texttt{String} \otimes \textit{Client}), \text{del} : \texttt{Num} \otimes \textit{Client}\}
+\end{align*}
+Note that the session types are recursive, such that the server continues providing services after handling a request.
+\end{examp}
+
+A central notion to Session types is that of linearity. For instance, the type constructor $A \otimes B$ prescribes exactly one output of a name with type $A$, before proceeding according to type $B$. Thus, a type derivation for a process corresponds to \textit{consuming} the session types of a type context. To enforce linearity, session type systems employ the notion of context splitting upon typing parallel compositions. That is, given a type context $\Delta = \Delta_1,\Delta_2$ such that $\text{dom}(\Delta_1)\cap\text{dom}(\Delta_2) = \emptyset$ and a process $P \mid Q$, we type $P$ in $\Delta_1$ and $Q$ in $\Delta_2$, ensuring any session type is not used more than once. To enforce consumption, we typically require inaction $\nil$ to be typed in the empty context. 
+
+\begin{examp}
+Consider the processes
+\begin{align*}
+    P \defeq \inputch{a}{v}{}{P} \mid \newvar{b}{\asyncoutputch{a}{b}{}} \quad\quad Q \defeq \inputch{a}{v}{}{P} \mid \newvar{b}{\asyncoutputch{a}{b}{}} \mid \newvar{c}{\asyncoutputch{a}{c}{}}
+\end{align*}
+Process $P$ uses name $a$ linearly, and so we can describe the protocol of $a$ with two dual session types $A \multimap \mathbf{1}$ and $A \otimes \mathbf{1}$. However, $Q$ uses name $a$ non-linearly, as multiple outputs on $a$ are in parallel.
+\end{examp}
+
+This variant of Session types is a Curry-Howard interpretation of intuitionistic linear logic \cite{GirardLafont1987, CairesPfenning2010,CairesEtAl2016}. That is, session types correspond to logical propositions, type derivations of programs to proofs, and reductions (i.e synchronizations) to cut-elimination \cite{DardhaGay2018}. The key idea is that an intuitionistic linear sequent of the form $A_1,A_2,\dots,A_n \vdash B$ can be interpreted as an interface to a type judgement $a_1 : A_1,a_2 : A_2,\dots,a_n : A_n \vdash P :: b\!:\!B$ that reads as: process $P$ provides a service of session type $B$ on channel $b$ using services of types $A_1,\dots,A_n$ on channels $a_1,\dots,a_n$. Caires and Pfenning \cite{CairesPfenning2010} distinguish between the linear and non-linear segments of such judgements using the format $\Gamma,\Delta\vdash P :: b\!:\!B$, such that $\Gamma$ is a type context of non-linear names and $\Delta$ is a context of linear names. To show that reductions correspond to cut-elimination, we first consider the cut type rule from Caires and Pfenning \cite{CairesPfenning2010} 
+\begin{equation*}
+    \kern-10em\infrule{\Gamma;\Delta \vdash P :: a\!:\!A\quad \Gamma;\Delta',a:A\vdash Q :: b\!:\!B}{\Gamma;\Delta,\Delta' \vdash \newvar{a}{(P \mid Q)} :: b\!:B\!}
+\end{equation*}
+This rule combines the usual rules for restriction and parallel composition, such that exactly one new name is restricted to the scope of each parallel composition, meaning the name can only be used from within the parallel composition. The first premise prescribes that one of the two parallel subprocesses must provide a session on the new name, and the other must use this session. Caires and Pfenning type such subprocesses with so-called right and left rules, respectively, distinguishing between rules that \textit{provide} and \textit{consume} sessions on names, to enforce duality on sessions prescribing two endpoints of the same name. For instance, if $\Gamma;\cdot \vdash \newvar{b}{\outputch{a}{b}{}{P}} :: a\!:\!\mathbf{1}\otimes B$ then $\Gamma;\cdot,a : \mathbf{1}\otimes B\vdash \inputch{a}{v}{}{Q} :: c\!:\!C$ where $\Gamma;\cdot \vdash P :: a\!:\!B$ and $\Gamma;\cdot,a : B,v : \mathbf{1} \vdash Q :: c\!:\!C$. Thus, the cut type rule restricts two parallel processes to communicate using exactly one name, such that reduction amounts to \textit{eliminating} this name from the program, and as programs correspond to proofs and types for names correspond to propositions or formulas, elimination of a name corresponds to \textit{cutting} or eliminating a formula from a proof, i.e. cut-elimination.\\ 
+
+This has the benefit of ensuring global progress, making circular waiting impossible, thereby guaranteeing deadlock freedom, which is useful for static complexity analysis for a multitude of reasons. Particularly, it is not obvious how the complexity of a deadlocked process should be defined. Due to non-determinism, an expected reduction state may or may not be prevented by a deadlock, and so depending on the definition of complexity, we may either see a deadlocked process as having infinite or finite complexity. Additionally, the analysis required to ensure that only deadlock-free processes are well-typed is very much related to analyzing complexity, as we have seen in Section \ref{sec:lockfreedomts}.
+% \begin{defi}[Session Types]
+% Types are given by
+% \begin{align*}
+%     A,B ::= \texttt{Nat} \mid \mathbf{1} \mid\; \bang A \mid A \otimes B \mid A \multimap B %\mid A \oplus B \mid A\; \&\; B
+% \end{align*}
+% \end{defi}\label{def:sessiontypestypes}
+
+%%
+
+% The type rules are shown in Table \ref{tab:sessiontypesrules}. We do not show rules for replication. The dual rules $\runa{ST-$\mathbf{1}$L}$ and $\runa{ST-$\mathbf{1}$R}$ dictate how terminated sessions are to be used and provided. The left rule enables us to discard a bound name whose session is terminated, and the right rule forces inaction to provide a terminated session on some name. Note that inaction must be typed in the empty linearly restricted context, thereby enforcing use of linear names. The next four rules type inputs and outputs, distinguishing between when an input and an output provide a session, respectively. The rule $\runa{ST-copy}$ enables a new name to be sent along a channel identified by a non-linear, when the new name is used according to the same session type. The final four rules are similar to those of inputs and outputs, distinguishing between when internal and external choice provide and use sessions, respectively.
+
+% \begin{table*}[!ht]
+%     \begin{framed}\begin{align*}
+%         %
+%         &\kern2em\runa{ST-1L}\; \infrule{\Gamma;\Delta \vdash P :: c\!:\!C}{\Gamma;\Delta,a : \mathbf{1} \vdash P :: c\!:\!C}\quad\quad \runa{ST-1R}\; \infrule{}{\Gamma;\cdot\vdash \nil :: a\!:\!\mathbf{1}}\\
+%         %
+%         &\kern-2em\runa{ST-$\otimes$L}\; \infrule{\Gamma;\Delta,v:A,a:B\vdash P :: c\!:\!C}{\Gamma;\Delta,a:A\otimes B \vdash \inputch{a}{v}{}{P} :: c\!:\!C}\quad\quad\quad\quad \runa{ST-$\otimes$R}\; \infrule{\Gamma;\Delta \vdash P :: b\!:\!A\quad \Gamma;\Delta'\vdash Q :: a\!:\!B}{\Gamma;\Delta,\Delta'\vdash \newvar{b}{\outputch{a}{b}{}{(P \mid Q)}} :: a\!:\!A \otimes B}\\
+%         %
+%     &\kern-2em\runa{ST-$\multimap$L}\; \infrule{\Gamma;\Delta \vdash P :: b\!:\!A\quad \Gamma;\Delta',a : B \vdash Q :: c\!:\!C}{\Gamma;\Delta,\Delta',a : A \multimap B \vdash \newvar{b}{\outputch{a}{b}{}{(P \mid Q)}} :: c\!:\!C} \kern9em \runa{ST-$\multimap$R}\; \infrule{\Gamma;\Delta,v : A \vdash P :: a\!:\!B}{\Gamma;\Delta\vdash \inputch{a}{v}{}{P} :: a\!:\!A\multimap B} \\
+%         %
+%         &\kern-2em\runa{ST-cut}\; \infrule{\Gamma;\Delta\vdash P :: a\!:\!A\quad \Gamma;\Delta',a : A \vdash Q :: c\!:\!C}{\Gamma;\Delta,\Delta' \vdash \newvar{a}{(P \mid Q)} :: c\!:\!C} \kern6em  \runa{ST-copy} \infrule{\Gamma,a : A; \Delta,b : A \vdash P :: c\!:\!C}{\Gamma,a : A; \Delta \vdash \newvar{b}{\outputch{a}{b}{}{P}} :: c\!:\!C}\\ 
+%         %
+%         &\kern-2em\runa{TS-$\oplus$L}\; \infrule{\forall_{l \in L}\quad \Delta,a : A_l \vdash P_l :: T}{\Delta,a : \oplus\{l : A_l\}_{l\in L} \vdash \texttt{case} (l \Rightarrow P_l)_{l\in L} :: T}\quad\quad\quad\quad\quad\quad\quad \runa{TS-$\oplus$R}\; \infrule{k \in L\quad \Delta\vdash P :: a\!:\!A_k}{\Delta \vdash a.k;P :: a\!:\!\oplus\{l : A_l\}_{l\in L}}\\
+% %         %
+%          &\kern-2em\runa{TS-$\&$L}\; \infrule{k \in L\quad \Delta,a:A_k\vdash P :: T}{\Delta,a:\&\{l : A_l\}_{l\in L} \vdash a.k;P :: T}\quad\quad\quad\kern-0.5em \runa{TS-$\&$R}\; \infrule{\forall_{l \in L}\quad \Delta \vdash P_l :: a\!:\! A_l}{\Delta \vdash \texttt{case} (l \Rightarrow P_l)_{l\in L} :: a\!:\!\oplus\{l : A_l\}_{l\in L}}
+%         %
+%         %\runa{ST-match}\infrule{\Gamma;\Delta\vdash e : \texttt{Nat}\quad \Gamma;\Delta\vdash P :: T\quad \Gamma,x : \texttt{Nat};\Delta \vdash Q : T}{\Gamma;\Delta\vdash\match{e}{P}{x}{Q} :: T}\\
+%         %
+%         %
+%         %
+%         %
+%         %
+%         %\runa{ST-$\oplus$L}\; \infrule{}{} \quad\quad \runa{ST-$\&$R}\; \\
+%         %%\runa{ST-$\oplus R_1$}\; \quad\quad \runa{ST-$\oplus R_2$}\; \\
+%         %
+%         %\runa{ST-$\&L_1$}\; \quad\quad \runa{ST-$\&L_2$}\;
+%         %
+%         %
+%     \end{align*}\end{framed}
+%     \smallskip
+%     \caption{Typing rules for Session types.}
+%     \label{tab:sessiontypesrules}
+% \end{table*}

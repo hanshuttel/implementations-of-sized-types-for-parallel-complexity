@@ -1,0 +1,57 @@
+\subsection*{AST-calculus} \label{astcalculus}
+We now define the calculus for abstract syntax trees (AST). The first four terms form an applied $\lambda$-calculus with a single constant $c$. The term $\cursor{a}$ consists of a cursor, which \textit{focuses} its subtree $a$, and $\breakpoint{a}$ is an AST encapsulated by a breakpoint to allow partial program evaluation. Finally, the term $\hole$ is a hole which is used to present incomplete subtrees of the AST. Holes are inserted upon substitution for function applications and functions, as such terms have subtrees. Both cursors and holes are inspired by the similar syntactical constructs presented in the structue editor calculus Hazelnut by Omar et al \cite{}.
+%
+\begin{align*}
+  a ::= \; &x \mid c \mid a_{1}\;a_{2} \mid \lambda x.a \mid \cursor{a} \mid \breakpoint{a} \mid \hole%\\
+\end{align*}
+%
+
+\begin{exmp}
+We can expand upon example \ref{ex:rembreakpoint}, such that it removes all breakpoints in the abstract syntax tree within the cursor. To do this, we expand the expression to account for each additional recursive term in the AST-calculus, namely abstraction and function application. We use conditions and sequential composition to execute separate subexpressions based on conditions as in $(\phi_1 \Rightarrow E_1) \ggg (\phi_2 \Rightarrow E_2) \ggg ... \ggg (\phi_n \Rightarrow E_n)$. Note that we must be careful to ensure only a single subexpression $E_i$ is executed, as a preceding subexpression may modify the AST, thus changing succeeding conditions. The resulting editor expression is:\\
+
+$\recursion{((@\texttt{break} \Rightarrow ((\texttt{child}\; 1).\mathbf{0} \ggg x \ggg \texttt{parent}.\replace{\texttt{break}}.\mathbf{0})) \ggg (@(\texttt{lambda}\; y) \Rightarrow ((\texttt{child}\; 1).\mathbf{0} \ggg x \ggg \texttt{parent}.\mathbf{0})) \ggg (@\texttt{app} \Rightarrow ((\texttt{child}\; 1).\mathbf{0} \ggg x \ggg \texttt{parent}.\mathbf{0} \ggg (\texttt{child}\; 2).\mathbf{0} \ggg x \ggg \texttt{parent}.\mathbf{0})))}{x}$\label{ex:remallbreakpoint}
+\end{exmp}
+
+%
+\theoremstyle{definition}
+\begin{definition}{(Completedness)}
+An abstract syntax tree $a$ is \textit{completed}, denoted $\complete{a}$, if it contains no holes, as defined by the following predicates.
+\vspace*{-0.8cm}
+\begin{adjmulticols}{2}{-25pt}{0.7in}
+    \begin{equation*}
+       \runa{c-var}\; \complete{x} \label{completenessVar}
+    \end{equation*}\break
+    \begin{equation*}
+        \runa{c-const}\; \complete{c} \label{completenessCons}
+    \end{equation*}
+\end{adjmulticols}
+\vspace*{-1.2cm}
+\begin{adjmulticols}{2}{17pt}{0.25in}
+    \begin{equation*}
+        \runa{c-app}\;\hspace{-1.1cm} \infrule{\complete{a_1}\; \complete{a_2}}{\complete{a_1\; a_2}} \label{completenessApp}
+    \end{equation*}\break
+    \begin{equation*}
+        \runa{c-cursor}\;\hspace{-1.4cm}  \infrule{\complete{a}}{\complete{\cursor{a}}}
+    \end{equation*}
+\end{adjmulticols}
+\vspace*{-1.5cm}
+\begin{adjmulticols}{2}{-5pt}{0.11in}
+  \begin{equation*}
+        \runa{c-lambda}\;\hspace{-1.4cm} \infrule{\complete{a}}{\complete{\lambda x.a}} \label{completenessLamb}
+    \end{equation*}\break
+    \begin{equation*}
+        \runa{c-break}\;\hspace{-1.4cm} \infrule{\complete{a}}{\complete{\breakpoint{a}}} \label{completenessBreak}
+    \end{equation*}
+\end{adjmulticols}
+\label{defCompleteness}
+\end{definition}
+
+In definition \ref{defCompleteness} we define what it means for an AST to be completed. An AST is completed if it is fully constructed, i.e. contains no holes. The definition is recursive, with predicate \runa{c-var} and \runa{c-const} being the base cases, where variables and constants are completed by default. Predicates \runa{c-app}, \runa{c-lambda}, \runa{c-cursor} and \runa{c-break} simply check if their sub-tree(s) are completed, in which case they are also completed themselves.
+
+\begin{exmp}
+Assume we have a breakpoint on each node in the abstract syntax tree. We can then express step-wise evaluation by toggling off the \textit{next} breakpoint in depth-first order, and then evaluate the tree. Thus, each iteration of the expression will perform a single step in the evaluation. We can use modal operators to express depth-first traversal of the tree. If the cursor encapsulates a function application, we \textit{visit} the left subtree if there is a breakpoint in both subtrees $(\Box \texttt{break})$, and the right subtree if there is a breakpoint in only one of the subtrees $(\neg \Box \texttt{break} \land \lozenge \texttt{break})$. The equation below shows this for the function application term, and thus lacks abstractions:\\
+
+$\recursion{((@\texttt{app} \land \Box \texttt{break} \Rightarrow ((\texttt{child}\; 1).\mathbf{0} \ggg x \ggg \texttt{parent}.\mathbf{0})) \ggg (@\texttt{app} \land \neg \Box \texttt{break} \land \lozenge \texttt{break} \Rightarrow ((\texttt{child}\; 2).\mathbf{0} \ggg x \ggg \texttt{parent}.\mathbf{0}) \ggg (@\texttt{break} \Rightarrow (\replace{\texttt{break}}.\mathbf{0}))))}{x} \ggg \texttt{eval}.\mathbf{0}$
+\end{exmp}
+
+%

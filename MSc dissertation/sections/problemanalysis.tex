@@ -1,0 +1,612 @@
+
+\chapter{Problem analysis}
+
+\section{Possible problems}
+
+% \subsection*{Type check for Baillot and Ghyselen}
+% The type system for parallel complexity of message-passing processes introduced in Baillot and Ghyselen \cite{BaillotGhyselen2021} uses sized types to express parametric complexity of invoking replicated inputs, and thereby achieves precise bounds on primitively recursive processes. This requires a notion of polymorphism in the message types of replicated inputs. Baillot and Ghyselen introduce size polymorphism by bounding sizes of algebraic terms and synchronizations on channels with algebraic expressions referred to as indices that may contain index variables representing unknown sizes. We may interpret an index with an index valuation that maps its index variables to naturals, such that the index may be evaluated.\\ 
+
+% The bounds on sizes and synchronizations lead to a partial order on indices. For instance, for a process of the form $\inputch{a}{v}{}{\asyncoutputch{b}{v}{}} \mid P$ (assuming synchronizations induce a cost in time complexity of one) we must enforce that the bound on $a$ is strictly smaller than the bound on $b$. Thus, we must induce constraints on the interpretations of indices. As the type system is otherwise fairly standard, for instance using input/output types for channels, the challenge in introducing type check is to ensure constraints on indices are not violated.
+
+\subsection*{Type check for Baillot et al.}
+The type system for parallel complexity by Baillot et al. \cite{BaillotEtAl2021} introduces similar challenges to type checking regarding constraint satisfaction as Baillot and Ghyselen. Furthermore, the addition of usages also introduces the challenge of checking if usages are reliable. To check if a usage is reliable, we must consider all possible reduction sequences of the usage to ensure it cannot reduce to an erroneous state. Kobayashi showed that reliability check of a simpler variant of usages than that of Baillot et al. is decidable, as it reduced to the reachability problem of Petri nets \cite{KobayashiEtAl2000}. In general, the complexity of the reachability problem of Petri Nets is np-complete \cite{EsparzaAndNielsen}. The flexibility of usages means that the possible reduction sequences grow rapidly, making reliability check challenging.
+
+% \subsection*{Type inference for Baillot and Ghyselen}
+% Type inference for the type system introduced in Baillot and Ghyselen \cite{BaillotGhyselen2021} is complicated by similar challenges to that of type checking, such as constraint satisfaction. Another concern with respect to sized types is that we must infer indices. Here, it is relevant to consider existing work on sized type inference, such as Hughes et al. \cite{HughesEtAl1996} and Avanzini and Dal Lago \cite{AvanziniLago2017}. Here, the set of function symbols used to form indices is more strictly defined, to make inference tractable. We also must be careful with respect to recursion, predominantly with how primitive recursion can be identified.
+
+\subsection*{Type inference for Baillot et al.}
+Types with usages are generally not as obvious to type as e.g. session types. This is mainly due to their flexibility and the fact that the usage depends on how a channel is used across multiple processes. Therefore, type inference is generally preferred on a type system such as that of Baillot et al. \cite{BaillotEtAl2021}. Type inference algorithms for other type systems using a simpler variant of usages have already been introduced by Kobayashi et al. \cite{KobayashiEtAl2000}, but it remains to be seen how this scales to more complicated type systems such as the one by Baillot et al. \cite{BaillotEtAl2021}. Compared to the type system by Kobayashi et al., the type system by Baillot et al. has the additional challenges of increased complexity due to introducing intervals and sized types to usages, as well as needing to infer constraints similar to the type system of Baillot and Ghyselen \cite{BaillotGhyselen2021}.
+
+\subsection*{Type check for Das et al.} % Har de lavet det?
+The type system for parallel complexity of message-passing processes introduced in Das et al. \cite{DasEtAl2018} is based on the Curry-Howard interpretation of intuitionistic linear logic by Caires and Pfenning \cite{CairesPfenning2010}, and hence shares some properties with this work that makes algorithmic type checking difficult. That is, the use of left and right rules enable multiple typings of parallel compositions, and we have the usual notion of context splitting. Another challenge is that the temporal modalities introduced in Das et al. \cite{DasEtAl2018} are not syntax directed, and so we often have to choose between multiple valid type rules.
+
+\subsection*{Type inference for Das et al.}
+Introducing type inference for the type system introduced in Das et al. \cite{DasEtAl2018} is complicated by the same challenges imposed on type checking, such as context splitting and that not all type rules are syntax directed. Here, it is relevant to consider work on type inference for session types such as Padovani \cite{Padovani2017}, though this work is based on another definition of session types. Another concern is how we define the principal type with respect to temporal modalities, such that bounds on the span are as precise as possible. This is complicated by the fact that the modalities used to bound non-linear complexity are not syntax directed.
+
+\subsection*{Soundness results for Das et al.}
+The type system for parallel complexity of message-passing processes introduced in Das et al. \cite{DasEtAl2018} is based on the Curry-Howard interpretation of intuitionistic linear logic by Caires and Pfenning \cite{CairesPfenning2010}, such that parallel compositions are typed as cut-eliminations. This along with the non-syntax-directed nature of the temporal modalities Das et al. use to express time, complicates proofs of soundness, particularly with respect to parallel complexity, and so such proof have yet to be made.
+
+\subsection*{Higher precision for Baillot et al.}
+A defining feature of the type system of Baillot et al. \cite{BaillotEtAl2021} is the use of sized types for bounding values. Sized types combined with constraints introduced in branching allow one to determine a bound on the number of recursive communications made during reduction of a process. One of the steps of type checking a process for Baillot et al. involves checking the reliability of usages of types, which involves exploring the possible reductions of usages. Usage reductions are a sort of over-approximation of the communications possible during reduction of a process. However, while we may be able to determine an upper-bound on the number of recursive communications made during process reduction using sized types and constraints, this information is not passed on to the reduction of usages, and the usages must assume infinite possibility for recursion during the reliability check. Exploring the possibilities of incorporating this information during usage reduction is thus one possible approach. Accompanying this is the need for formal proofs stating that the type system remains sound with a new definition of usage reductions.
+
+\subsection*{Introduce sized types to Das et al.}
+The type system in Das et al. \cite{DasEtAl2018} introduces temporal modalities to the Curry-Howard interpretation of session types by Caires and Pfenning \cite{CairesPfenning2010} to express bounds on the span, rate or latency of session based protocols. However, these temporal modalities cannot express precise bounds on processes with recursive behavior. It could be interesting to introduce a notion of size polymorphism similar to how sized types are incorporated in usages in the work of Baillot et al. \cite{BaillotEtAl2021}. As opposed to annotating session prefixes with indices, it may be possible to instead introduce a new temporal modality.
+
+\subsection*{Introduce priorities to Das et al.}
+The type system in Das et al. \cite{DasEtAl2018} introduces temporal modalities to the Curry-Howard interpretation of session types by Caires and Pfenning \cite{CairesPfenning2010} to express bounds on the span, rate or latency of session based protocols. However, Dardha and Perez \cite{DardhaPerezComparison} show that such session types are strictly less expressive than usage types in the domain of deadlock freedom. It could be interesting to introduce a notion of priorities akin to that of obligations and capabilities from usages to session prefixes in the Das et al. type system, to hopefully increase its expressiveness, as we have seen in similar work by Dardha and Gay \cite{DardhaGay2018}.
+
+\subsection*{Analyze similarities and differences between time modalities and usages}
+Baillot et al. \cite{BaillotEtAl2021} point out the seeming similarities between usages of their own type system and the time modalities of the type system of Das et al. More specifically, the next operator $\ocircle$ of Das et al. is similar to delaying a usage with one time unit, denoted $\withdelay{\kinterval{1}{1}}{}\;$, and the eventually and always operators $\lozenge$ and $\Box$ of Das et al. roughly correspond to usages with the capacity and obligation $\kinterval{0}{\infty}$, denoted $\alpha^{\kinterval{0}{\infty}}_{\kinterval{0}{\infty}}$ with $\alpha \in \{\inusagesym,\outusagesym \}$. However, they do not make a comparison more precise than that. To make a more precise comparison, one can encode the session calculus of Das et al. into the $\pi$-calculus of Baillot et al., which requires the extension of variant and recursive types to the type system of Baillot et al.
+
+
+
+%% det ovenstående er godt nok; fjern udkommentering igen!
+
+
+
+
+%\section{Prioritized problems}
+
+\input{sections/pi_calculus}
+
+%\input{sections/cost_model}
+
+\chapter{Typechecking sized types for parallel complexity}
+The type system for parallel complexity of message-passing processes introduced in Baillot and Ghyselen \cite{BaillotGhyselen2021} uses sized types to express parametric complexity of invoking replicated inputs, and thereby achieves precise bounds on primitively recursive processes. This requires a notion of polymorphism in the message types of replicated inputs. Baillot and Ghyselen introduce size polymorphism by bounding sizes of algebraic terms and synchronizations on channels with algebraic expressions referred to as indices that may contain index variables representing unknown sizes. We may interpret an index with an index valuation that maps its index variables to naturals, such that the index may be evaluated.\\ 
+
+The bounds on sizes and synchronizations lead to a partial order on indices. For instance, for a process of the form $\inputch{a}{v}{}{\asyncoutputch{b}{v}{}} \mid P$ (assuming synchronizations induce a cost in time complexity of one) we must enforce that the bound on $a$ is strictly smaller than the bound on $b$. Thus, we must induce constraints on the interpretations of indices. As the type system is otherwise fairly standard, for instance using input/output types for channels, the challenge in introducing type check is to ensure constraints on indices are not violated.\\
+
+Type inference for the type system introduced in Baillot and Ghyselen \cite{BaillotGhyselen2021} is complicated by similar challenges to that of type checking, such as constraint satisfaction. Another concern with respect to sized types is that we must infer indices. Here, it is relevant to consider existing work on sized type inference, such as Hughes et al. \cite{HughesEtAl1996} and Avanzini and Dal Lago \cite{AvanziniLago2017}. The set of function symbols used to form indices should be be more strictly defined, to make inference tractable. We also must be careful with respect to recursion, predominantly with how primitive recursion can be identified. In this chapter, we go into depth with some of these challenges.
+
+% The type system for parallel complexity of message-passing processes introduced in Baillot and Ghyselen \cite{BaillotGhyselen2021} uses sized types to express parametric complexity of invoking replicated inputs, and thereby achieve precise bounds on primitively recursive processes. This requires a notion of polymorphism in the message types of replicated inputs. Baillot and Ghyselen introduce size polymorphism by bounding sizes of algebraic terms and synchronizations on channels with algebraic expressions referred to as indices that may contain index variables representing unknown sizes. We may interpret an index with an index valuation that maps its index variables to naturals, such that the index may be evaluated.\\ 
+
+% The bounds on sizes and synchronizations lead to a partial order on indices. For instance, for a process of the form $\inputch{a}{v}{}{\asyncoutputch{b}{v}{}} \mid P$ (assuming synchronizations induce a cost in time complexity of one) we must enforce that the bound on $a$ is strictly smaller than the bound on $b$. Thus, we must induce constraints on the interpretations of indices. As the type system is otherwise fairly standard, for instance using input/output types for channels, the challenge in introducing type check is to ensure constraints on indices are not violated.
+
+
+\input{sections/typetjek_baillot_ghyselen/indices}
+
+%\input{sections/typetjek_baillot_ghyselen/verifying_judgements}
+
+%\input{sections/typetjek_baillot_ghyselen/type_system}
+
+
+% In the type systems for static parallel complexity analysis of message-passing processes by Baillot and Ghyselen \cite{BaillotGhyselen2021} and Baillot et al. \cite{BaillotEtAl2021}, indices are used to keep track of sizes of inputs received on replicated inputs. As these sizes may be parametric, we view indices as algebraic expressions consisting of index variables $i,j,k\in\mathcal{V}$ ranging over a countable set, and function symbols, using meta-variable $f$, that may represent natural number constants as nullary functions as well as algebraic operators
+% \begin{align*}
+%     I,J ::= i \mid f(I_1,I_2,\dots,I_n)
+% \end{align*}
+% Each function symbol $f$ has an arity $\text{ar}(f)$ and an interpretation $[\![f]\!] : \mathbb{N}^{\text{ar}(f)} \rightarrow \mathbb{N}$. For the interpretation of binary difference, we assume that $[\![-]\!](n,m) = 0$ when $m \geq n$. As indices may contain index variables, we assume some index valuation $\rho : \mathcal{V} \rightarrow \mathbb{N}$, and extend the definition of interpretations to indices, such that $[\![I]\!]_\rho$ is a natural number instance of index $I$, according to index valuation $\rho$, where for all $i$ in $I$, $\rho(i)$ substitutes for $i$ denoted $I\{\rho(i)/i\}$. Based on the structure of the process that indices are used in the typing of, we may be able to establish relationships between the instances of these indices. For instance, a replicated input may receive values of sizes defined by an interval of two indices $[I,J]$. Then, we are only interested in index valuations $\rho$ that satisfy $[\![I]\!]_\rho \leq [\![J]\!]_\rho$. To express such relationships, we define binary constraints on indices in Definition \ref{def:indexconstr}.
+% \begin{defi}[Index constraints]\label{def:indexconstr}
+%     Given a finite set of index variables $\varphi\subset \mathcal{V}$, we define a constraint $C$ on $\varphi$ to be an expression on indices $I$ and $J$ with all free index variables in $\varphi$ written as $I \bowtie J$, where $\bowtie\;\in\{\leq,<,=,>,\geq\}$ is a binary relation on $\mathbb{N}$. A finite set of constraints is represented by meta-variable $\Phi$.
+% \end{defi}
+
+% A constraint $I \bowtie J$ on $\varphi$ is satisfied given an index valuation $\rho : \varphi \rightarrow \mathbb{N}$ when $[\![I]\!]_\rho \bowtie [\![J]\!]_\rho$ is satisfied, denoted $\rho \vDash I \bowtie J$. For a finite set of constraints $\Phi$, we write $\rho\vDash \Phi$ when $\rho \vDash C$ holds for all $C \in \Phi$. Finally, $\varphi;\Phi\vDash C$ holds when for all index valuations $\rho$ such that $\rho\vDash \Phi$ holds, we also have $\rho\vDash C$. That is, $\varphi;\Phi\vDash C$ holds exactly when $C$ does not impose further restrictions on index valuations on $\varphi$, i.e. when the model space of $\Phi$ wrt. $\varphi$ is contained in the model space of $C$ wrt. $\varphi$
+% \begin{equation*}
+%     \mathcal{M}_\varphi(\Phi) \subseteq \mathcal{M}_\varphi(\{C\})\quad\text{where}\quad\mathcal{M}_\varphi(\Phi)=\{\rho : \varphi \rightarrow \mathbb{N} \mid \rho \vDash C\;\text{for}\; C \in \Phi\}
+% \end{equation*}
+% In the following sections, we show how such judgements can be verified.
+% \subsection{Indices as multivariate polynomials}
+% % \begin{defi}[Solution space]
+% % \begin{equation*}
+% %     \text{sol}_\varphi(\Phi) = \{ \rho : \varphi \rightarrow \mathbb{N} \mid \rho \vDash C\;\text{for}\; C \in \Phi \} 
+% % \end{equation*}
+% % \end{defi}
+
+% % Satisfaction of $\varphi;\Phi\vDash I \bowtie J$ corresponds to satisfaction of $\text{sol}_\varphi(\Phi) \subseteq  \text{sol}_\varphi(\Phi \cup \{ I \bowtie  J \})$.\\
+
+% %\subsubsection*{Solution proposals}
+% To make checking of judgements on constraints tractable we reduce the set of function symbols on which indices are defined, such that indices may only contain integers and index variables, as well as addition, subtraction and multiplication operators
+% \begin{align*}
+%         I,J ::= n \mid i \mid I + J \mid I - J \mid I J
+%     \end{align*}
+% % \begin{defi}[Indices]
+% %     \begin{align*}
+% %         I,J ::= n \mid i \mid I + J \mid I - J \mid I \cdot J
+% %     \end{align*}
+% % \end{defi}
+
+% %% TODO: introducer funktioner F som kontekster! (og sorter den her sektion ..)
+
+% This restriction provides some convenient properties. That is, the restricted language of indices corresponds to the set of multivariate polynomials with integer coefficients, implying that it is a commutative ring (i.e. addition and multiplication satisfy properties analogous to those of integers), and that any index has an expansion such that each term is a unique monomial of index variables up to name and reordering, with a single integer coefficient. We formalize this form in Definition \ref{def:normindex}, referring to such indices as \textit{normalized} indices.
+% \begin{defi}[Normalized index]\label{def:normindex}
+%     Let $I$ be an index in index variables $i_1,\dots,i_n$. We say that $I$ is a \textit{normalized} index, when it is a linear combination of monomials of the form $i^\alpha=i^{\alpha_1}_1\cdots i^{\alpha_n}_n$ such that $\alpha=(\alpha_1\;\cdots\; \alpha_n)$ is an $n$-vector of non-negative exponents that uniquely identifies monomial $i^\alpha$, i.e.
+%     \begin{align*}
+%         I = \sum_{\alpha\in\mathcal{E}(I)} I_\alpha i^\alpha
+%     \end{align*}
+%     where $I_\alpha\in\mathbb{Z}$ is the coefficient of monomial $i^\alpha$ and $\mathcal{E}(I)$ is the set of exponent vectors identifying monomials in $I$. A normalized index is sparse, such that for all monomials $i^\alpha$ with $I_\alpha=0$ we have $\alpha\notin\mathcal{E}(I)$. For a finite set of index variables $\varphi$, we denote $\mathcal{E}(\varphi)$ the set of all possible exponent vectors over $\varphi$. Thus, $\mathcal{E}(I)\subset\mathcal{E}(\{i_1,\dots,i_n\})$ when $n>0$.
+% \end{defi}
+
+% Any index can be transformed to an equivalent normalized index (i.e. it is a normal form) through expansion with the distributive law, reordering by the commutative and associative laws and then by regrouping terms that share monomials. Therefore, the set of normalized indices in index variables $i_1,\dots,i_n$ and with coefficients in $\mathbb{Z}$, denoted $\mathbb{Z}[i_1,\dots,i_n]$, is a free module with the monomials as basis, as the monomials are linearly-independent. In Definition \ref{def:operationsmodule}, we show how scalar multiplication, addition and multiplication of normalized indices (i.e. linear combinations of monomials) can be defined.
+% %
+% \begin{defi}[Operations in $\freemodule$]\label{def:operationsmodule}
+% Let $I = \sum_{\alpha\in\mathcal{E}(I)}I_\alpha i^\alpha$ and $J = \sum_{\alpha\in\mathcal{E}(J)}J_\alpha i^\alpha$ be normalized indices in index variables $i_1,\dots,i_n$. We define scalar multiplication, addition and multiplication of such indices. Given a scalar $n\in\mathbb{Z}$, the scalar multiplication $n I$ is
+% %
+% \begin{align*}
+%     n I = \sum_{\alpha\in \mathcal{E}(I)} n I_\alpha I^\alpha
+% \end{align*}
+% When $n$ is a common divisor of all coefficients in $I$, i.e. $I_\alpha / n \in \mathbb{Z}$ for all $\alpha\in\mathcal{E}(I)$, the inverse operation is defined
+% \begin{align*}
+%     \frac{I}{n} = \sum_{\alpha\in \mathcal{E}(I)} \frac{I_\alpha}{n} I^\alpha\quad\text{if}\;\frac{I_\alpha}{n} \in \mathbb{Z}\;\text{for all}\;\alpha\in\mathcal{E}(I)
+% \end{align*}
+% The addition of $I$ and $J$ is the sum of scaled monomials identified by exponent vectors $\alpha\in\mathcal{E}(I)\cup \mathcal{E}(J)$ where coefficients $I_\alpha$ and $J_\alpha$ are summed when $\alpha\in\mathcal{E}(I)\cap \mathcal{E}(J)$
+% \begin{align*}
+%     I + J = \sum_{\alpha \in \mathcal{E}(I) \cup \mathcal{E}(J)}(I_\alpha + J_\alpha)i^\alpha
+% \end{align*}
+% where for any $\alpha\in \mathcal{E}(I) \cup \mathcal{E}(J)$ such that $I_\alpha + J_\alpha = 0$ we omit the corresponding zero term. The inverse of addition is always defined for elements of a polynomial ring
+% %
+% \begin{align*}
+%     I - J = \sum_{\alpha \in \mathcal{E}(I) \cup \mathcal{E}(J)}(I_\alpha - J_\alpha)i^\alpha
+% \end{align*}
+% For any $\alpha\in \mathcal{E}(I) \cup \mathcal{E}(J)$ such that $I_\alpha - J_\alpha = 0$ we omit the corresponding zero term for a sparse representation. The product of $I$ and $J$ corresponds to the sum of monomials identified by the set of sums of one exponent vector in $\alpha\in\mathcal{E}(I)$ and the other in $\beta\in\mathcal{E}(J)$, where coefficients are products $I_\alpha J_\beta$, and terms with the same monomial are grouped
+% %
+% \begin{align*}
+%     I J = \sum_{\gamma\in \{\alpha + \beta\mid \alpha\in\mathcal{E}(I), \beta\in \mathcal{E}(J)\}}\left(\sum_{(\alpha,\beta)\in \{(\alpha,\beta) \in \mathcal{E}(I) \times \mathcal{E}(J)\mid \alpha + \beta = \gamma\}} I_\alpha J_\beta \right) i^\gamma
+% \end{align*}
+% \end{defi}
+% %
+% We now formalize the transformation of an index $I$ to an equivalent normalized index in Definition \ref{def:normalizationindex}. An integer constant $n$ corresponds to scaling the monomial identified by the exponent vector of all zeroes by $n$. An index variable $i$ represents the monomial consisting of exactly one $i$ scaled by $1$. For addition, subtraction and multiplication we simply normalize the two subindices and and use the corresponding operators for normalized indices.
+% \begin{defi}[Index normalization]\label{def:normalizationindex}
+% We define the normalization of index $I$ into an equivalent normalized index $\mathcal{N}(I)$ inductively
+%     \begin{align*}
+%         \mathcal{N}(n) =&\; n\\
+%         \mathcal{N}(i) =&\; i\\
+%         \mathcal{N}(I + J) =&\; \mathcal{N}(I) + \mathcal{N}(J)\\
+%         \mathcal{N}(I - J) =&\; \mathcal{N}(I) - \mathcal{N}(J)\\
+%         \mathcal{N}(IJ) =&\; \mathcal{N}(I) \mathcal{N}(J)
+%     \end{align*}
+% \end{defi}
+
+
+% % \begin{defi}[Normalized index]\label{def:normindex}
+% %     Let $I$ be an index in $i_1,\dots,i_n$. We say that $I$ is a \textit{normalized} index, when it has exactly one term for each monomial $i^\alpha=i^{\alpha_1}_1\cdots i^{\alpha_n}_n$ with a single coefficient, i.e.
+% %     \begin{align*}
+% %         I = \sum_\alpha I_\alpha i^\alpha
+% %     \end{align*}
+% %     where $I_\alpha$ is the coefficient of monomial $i^\alpha$. A normalized index may be sparse, i.e. all monomials $i^\alpha$ such that $I_\alpha=0$ may be omitted.
+% % \end{defi}
+
+% %This enables us to view an arbitrary index as a pair of a set of multisets of index variables and a partial function from multisets of index variables to integers, utilizing that each term has a unique factor of index variables. We refer to this representation of indices as \textit{normalized} indices, as seen in Definition \ref{def:normindex}.%\\
+% %
+% %We introduce a definition of indices $I$ and $J$ that limits the format of their expressions. More specifically, we limit indices to multivariate polynomials such that they correspond to a sum of terms, where terms consist of index variables multiplied together, as well as a coefficient multiplied on each term. We describe terms using a multiset of index variables, such that the orders of variables do not matter. 
+% % \begin{defi}[Normalized indices]\label{def:normindex}
+% %     Let $\mathcal{M}$ be the set of all multisets of index variables. We define \textit{normalized} indices I, J as pairs $(\Psi, F)$ where $\Psi \in 2^\mathcal{M}$ and $F : \mathcal{M} \rightharpoonup \mathbb{Z}$ is a partial function from multisets of index variables to integers, defined as a sequence of associations $F=V_1 : n_1,V_2:n_2,\dots,V_m:n_m$ where $V_1,V_2,\dots,V_m\in \mathcal{M}$ are multisets of index variables and $n_1,n_2,\dots,n_m\in\mathbb{Z}$ are integers, such that $\Psi \subseteq \text{dom}(F) = \{V_1,V_2,\dots,V_m\}$ and $F(V_i)=n_i$. We write $\epsilon$ for the empty sequence of associations.\\
+    
+% %     A normalized index $(\Psi, F)$ represents an index $I$ of the form
+% %     \begin{align*}
+% %         I = \sum_{V \in \Psi} F(V) \cdot (\prod_{i \in V} i)
+% %     \end{align*}
+% %     %
+% %     % Constraints are defines as
+% %     % \begin{align*}
+% %     %     C ::= I \leq J
+% %     % \end{align*}
+% % \end{defi}
+% % With this representation of indices, we obtain a sort of normal form as both sets and multisets are indifferent to the order of elements and sets cannot contain duplicate elements. Note that for the empty multiset of index variables, we assume that $F(\emptyset) \cdot (\prod_{i \in \emptyset} i) = F(\emptyset)$, such that $F(\emptyset)$ can be used to represent a constant term.\\
+
+% % To make it simple to construct normalized indices, we define composition of partial functions from multisets of index variables to integers based on the algebraic operators sum, difference and product in Definition \ref{def:funcops}. As terms are identified by unique factors of index variables, we must separate the cases where an identifier $V$ is defined in both partial functions and when it is defined in either the left or right side. For the sum and difference operators when $F_1(V)=n$ and $F_2(V)=m$ we have for the composed functions that $(F_1 + F_2)(V)= n+m$ and $(F_1 - F_2)(V)=n-m$, respectively, and when $F_2(V)=n$ and $V\notin\text{dom}(F_1)$ we intuitively have $(F_1 + F_2)(V)= n$ and $(F_1 - F_2)(V)= -n$, respectively. The product of two partial functions $F_1 \cdot F_2$ corresponds to computing the expansion of a product of sums of monomials. That is, for any two monomials represented by $V_1 : n$ and $V_2 : m$ such that $F_1=F_1',V_1 : n$ and $F_2=F_2',V_2 : m$ we have $(F_1 \cdot F_2)(V_1 + V_2) = n \cdot m$ where $V_1 + V_2$ is the sum of multisets $V_1$ and $V_2$. As terms are identified by unique factors of index variables, we must consider separately the case where $V_1 = V_2$, i.e. $F_1=F_1',V:n$ and $F_2=F_2',V:m$ for some multiset of index variables $V$, as the expansion of the product may then have multiple terms with the same index variable factor that must be summed. Therefore, the expansion can be written as the product $F_1'\cdot F_2'$ with the sum $F_2'\cdot V:n + F_1'\cdot V:m$ and $V + V : n \cdot m$ corresponding to the product of the terms with the same index variable factor $V$.
+
+% % \begin{defi}[Composition of normalized indices]\label{def:funcops}
+% % We define three compositions of partial functions from multisets of index variables to integers that correspond to sum, difference and product operations, respectively. The notation is defined inductively by
+% %     \begin{align*}
+% %         F_1 + \epsilon =&\; F_1\\
+% %     F_1,V : n + F_2,V : m =&\; (F_1+F_2), V: n + m \\ 
+% %     F_1 + F_2,V : n =&\; (F_1+F_2),V : n\quad \text{if}\; V \notin \text{dom}(F_1) 
+% %     \end{align*}
+% %     \begin{align*}
+% %         F_1 - \epsilon =&\; F_1\\
+% %     F_1,V : n - F_2,V : m =&\; (F_1-F_2), V: n - m \\ 
+% %     F_1 - F_2,V : n =&\; (F_1-F_2),V : -n \quad \text{if}\; V \notin \text{dom}(F_1) 
+% %     \end{align*}
+% %     \begin{align*}
+% %         F_1 \cdot \epsilon =&\; \epsilon\\
+% %         F_1,V : n \cdot F_2,V : m =&\; (F_1\cdot F_2), (F_2\cdot V:n + F_1\cdot V:m),V + V : n \cdot m \\
+% %     F_1 \cdot F_2,V' : n =&\; (F_1\cdot F_2),{V_1} + V': F_1({V_1}) \cdot n,\dots,{V_m} + V' : F_1({V_m}) \cdot n\quad\text{where}\; V'\notin\text{dom}(F_1) = \{{V_1},\dots,{V_m}\}
+% %     \end{align*}
+% %     For convenience, we also define division of a partial function from multisets of index variables to integers, by a positive integer that is a common divisor of all integers in the codomain of the partial function
+% %     \begin{align*}
+% %         \epsilon / n =&\; \epsilon\\
+% %         (F,V : m) / n =&\; (F / n), V : m / n\quad\text{if}\;n\;\text{divides}\; m
+% %     \end{align*}
+% % \end{defi}
+
+% % Using the definitions of algebraic operators sum, difference and product for partial functions of normalized indices, we define a transformation of an arbitrary index to its normalized index equivalent in Definition \ref{def:indexnormatrans}. Intuitively a monomial index consisting of a single natural $n$ corresponds to the pair $(\{\emptyset\},\emptyset : n)$, as its identifying factor of index variables is the empty set. Similarly, a monomial consisting of a single index variable $i$ is represented by the normalized index $(\{\{i\}\},\{i\}:1)$ as its identifying factor is the singleton $\{i\}$ and its coefficient is intuitively $1$. For sum, difference and product we first transform the two subindices and then compose the resulting partial functions $F_1$ and $F_2$ as defined above. For sum and difference we union the corresponding sets of index variable factors accordingly, whereas for the product of the two partial functions $F_1$ and $F_2$, the domain now consists of the products of any two identifying factors $V_1$ and $V_2$ such that $V_1\in\text{dom}(F_1)$ and $V_2\in\text{dom}(F_2)$, as represented by the multiset sum $V_1 + V_2$. 
+
+% % \begin{defi}[Index normalization]\label{def:indexnormatrans}
+% %     We define a total function from indices to normalized indices inductively by
+% %     \begin{align*}
+% %     \text{normalize}(n) =&\; (\{\emptyset\},\emptyset : n)\\
+% %     \text{normalize}(i) =&\; (\{\{i\}\},\{i\} : 1)\\
+% %     \text{normalize}(I_1 + I_2) =&\; (\Psi_1 \cup \Psi_2, F_1 + F_2)\quad&\text{where}\; (\Psi_i,F_i) = \text{normalize}(I_i)^{(i=1,2)}\\
+% %     \text{normalize}(I_1 - I_2) =&\; (\Psi_1 \cup \Psi_2, F_1 - F_2)\quad&\text{where}\; (\Psi_i,F_i) = \text{normalize}(I_i)^{(i=1,2)}\\
+% %     \text{normalize}(I_1 \cdot I_2) =&\; (\{V_1 + V_2 \mid V_1 \in \Psi_1\;\text{and}\;V_2 \in \Psi_2\}, F_1 \cdot F_2)\quad&\text{where}\; (\Psi_i,F_i) = \text{normalize}(I_i)^{(i=1,2)}
+% % \end{align*}
+% % \end{defi}
+
+
+
+% % To more easily reason about the structure of indices we introduce index contexts. Here, $[\cdot]$ 
+% % \begin{defi}[Index context]
+% %     \begin{align*}
+% %         % \hat{I}, \hat{J} &::= [\cdot] \mid \hat{T} + I \mid T + \hat{I} \mid \hat{T}\\
+% %         % \hat{T} &::= [\cdot] \mid \hat{T} \cdot T \mid F \cdot \hat{T}
+% %         \hat{I}, \hat{J} &::= [\cdot] \mid \hat{I} + T \mid I + \hat{T}\\
+% %         \hat{T} &::= [\cdot] \mid \hat{T} \cdot T \mid T \cdot \hat{T}
+% %     \end{align*}
+% % \end{defi}
+
+
+% % \begin{defi}[Index reduction]
+% %     \begin{align*}
+% %         % Removes terms with a factor of 0
+% %         (n, F, \Psi) &\longrightarrow (n, F', \Psi') \quad \text{if } \exists n_i \in F (n_i = 0)\\ 
+% %         & \text{ where } F' = n_0, ..., n_{i-1}, n_{i+1} ..., n_{|\Psi|} \text{ and } \Psi' = \Psi_0, ..., \Psi_{i-1}, \Psi_{i+1} ..., \Psi_{|\Psi|}\\
+% %         %
+% %         % Combines similar terms with (possibly) different factors
+% %         (n, F, \Psi) &\longrightarrow (n, F', \Psi') \quad \text{if } \exists \Psi_i \in \Psi, \Psi_j \in \Psi (\Psi_i = \Psi_j)\\ 
+% %         & \text{ where } F' = n_0, ..., n_{i-1}, (n_{i} + n_{j}), ..., n_{j-1}, n_{j+1} ..., n_{|F|} \text{ and } \Psi' = \Psi_0, ..., \Psi_{i-1}, ..., \Psi_{j-1}, \Psi_{j+1} ..., \Psi_{|\Psi|}
+% %         %
+% %         % \hat{I}[n + m] &\longrightarrow \hat{I}[r] \quad \text{where } r = n + m\\
+% %         % \hat{I}[0 \cdot T] &\longrightarrow \hat{I}[0]\\
+% %         % \hat{I}[n \cdot i + m \cdot i] &\longrightarrow \hat{I}[r \cdot i]
+% %         %n + i + i ==> n + 2i
+% %     \end{align*}
+% % \end{defi}
+
+
+
+% % To convert a constraint $C$ to normal form:
+% % \begin{lstlisting}[mathescape=true]
+% % fun normalizeConstraint($C$):
+% %     Let $\alpha$ be a map from index variables in $C$ to unique priorities
+% %     Sort factors of terms in $C$ using $\alpha$ and max priority for constants
+% %     Sort terms in $C$ lexicographically
+% %     Reduce $C$ using $\longrightarrow$ until $\not\longrightarrow$
+% %     return $C$
+        
+% % fun transitiveClosure($S$):
+% %     Let $S_T = \emptyset$
+% %     for every constraint $I \leq J \in S$:
+% %         for every constraint $K \leq L \in S$:
+% %             if $J \sqsubseteq_\textit{Index} K$:
+% %                 $S_T = S_T \cup \{I \leq L\}$
+% %     if $S_T == S$:
+% %         return $S_T$
+% %     else
+% %         return transitiveClosure($S_T$)
+        
+% % fun constraintsInclude($S$, $C$):
+% %     Let $S_N = \{$normalizeConstraint($E$)$ \mid E \in S\}$
+% %     Let $S_T = $ transitiveClosure($S$)
+% %     Let $C_N = $ normalizeConstraint($C$)
+% %     if $C_N \sqsubseteq E$ for some $E \in S_T$:
+% %         return true
+% %     else
+% %         return false
+% % \end{lstlisting}
+% \subsection{Normalization of constraints}
+% A constraint may provide stronger or weaker restrictions on index variables compared to another constraint, or it may provide entirely different restrictions that are neither stronger nor weaker. For example, assuming some index $J$, if we have the constraint $3 \cdot i \leq J$, the constraint $2 \cdot i \leq J$ is redundant as index variables can only be assigned natural numbers, and thus $3 \cdot i \leq J$ implies $n \cdot i \leq J$ for any $n \leq 3$. Similarly, $I \leq n \cdot j$ implies $I \leq m \cdot j$ for any $n \leq m$. We thus define the subconstraint relation $\sqsubseteq$, and by extension the subindex relation $\sqsubseteq_\text{Index}$, in Definition \ref{def:subconstraint}. If $C_1 \sqsubseteq C_2$ we say that $C_2$ is a subconstraint of $C_1$.
+
+
+% \begin{defi}[Subindices and subconstraints] \label{def:subconstraint}
+%     We define the subindex relation $\sqsubseteq_\text{Index}$ by the following rule:
+%     \begin{align*}
+%         &I \sqsubseteq_\text{Index} J \quad \text{ if} \\
+%         &\quad (\forall \alpha \in \mathcal{E}(I) \cap \mathcal{E}(J) : I_\alpha \leq J_\alpha)\land\\
+%         &\quad (\forall \alpha \in \mathcal{E}(J) \setminus \mathcal{E}(I) : J_\alpha \geq 0)\land\\
+%         &\quad (\forall \alpha \in \mathcal{E}(I) \setminus \mathcal{E}(J) : I_\alpha \leq 0)
+%     \end{align*}
+%     % \begin{align*}
+%     %     &(\Psi, F) \sqsubseteq_\text{Index} (\Psi', F') \text{ if} \\
+%     %     &\quad (\forall V \in \Psi \cap \Psi' : F(V) \leq F'(V)) \land\\
+%     %     &\quad (\forall V \in \Psi' \setminus \Psi : F'(V) \geq 0) \land\\
+%     %     &\quad (\forall V \in \Psi \setminus \Psi' : F'(V) \leq 0)
+%     % \end{align*}
+    
+%     We define the subconstraint relation $\sqsubseteq$ by the following rule:
+%     \begin{align*}
+%       &\infrule{I' \sqsubseteq_\text{Index} I \quad J \sqsubseteq_\text{Index} J'}{I \leq J \sqsubseteq I' \leq J'}
+%       %
+%       %
+%       %&\infrule{I \leq J \sqsubseteq I' \leq J' \quad I' \leq J' \sqsubseteq I'' \leq J''}{I \leq J \sqsubseteq I'' \leq J''}
+%     \end{align*}
+% \end{defi}
+
+% Similar to indices, we also introduce a notion of normalized constraints. Normalized constraints are of the form $I \leq 0$ for some index $I$.
+
+% \begin{defi}[Normalized constraints]
+
+%     We represent normalized constraints $C$ using a single normalized constraint $I$, such that $C$ is of the form
+%     \begin{align*}
+%         C = I \leq 0
+%     \end{align*}
+
+% \end{defi}
+
+% We now show how any constraint $J \bowtie K$ can be represented using a set of normalized constraints of the form $I \leq 0$ where $I$ is a normalized index. To do this, we first represent the constraint $J \bowtie K$ using a set of constraints of the form $J \leq K$ using the function $\mathcal{N_R}$. We then finalize the normalization using the function $\mathcal{N}$ by first moving all indices to the left-hand side of the constraint.
+
+% \begin{defi}
+%     Given a constraint $I \bowtie J$ $(\bowtie\; \in \{\leq, \geq, <, >, =\})$, the function $\mathcal{N_R}$ converts $I \bowtie J$ to a set of constraints of the form $I \leq J$.
+    
+%     \begin{align*}
+%         \mathcal{N_R}(I \leq J) &= \{I \leq J\}\\
+%         \mathcal{N_R}(I \geq J) &= \{J \leq I\}\\
+%         \mathcal{N_R}(I < J) &= \{I+1 \leq J\}\\
+%         \mathcal{N_R}(I > J) &= \{J+1 \leq I\}\\
+%         \mathcal{N_R}(I = J) &= \{I \leq J, J \leq I\}
+%     \end{align*}
+% \end{defi}
+
+
+% % \begin{defi}
+% %     Given a constraint $I \leq J$, the function \textit{normalizeInequality} converts $I \leq J$ to a constraint of the form $K \leq 0$.
+    
+% %     \begin{align*}
+% %         \textit{normalizeInequality}((\Psi_1, F_1) \leq (\Psi_2, F_2)) &= (\Psi_1 \cup \Psi_2, F_1 - F_2) \leq (\emptyset, \epsilon)
+% %     \end{align*}
+% % \end{defi}
+
+% % \begin{defi}
+% %     Given a constraint of the form $I \leq J$, the function \textit{normalizeDivisor} converts $I \leq J$ to be of the form $I' \leq J'$ such that $I'$ and $J'$ contain the same terms as $I$ and $J$ but with minimal coefficients such that $I \leq J$ and $I' \leq J'$ are still equivalent.
+    
+% %     \begin{align*}
+% %         \textit{normalizeDivisor}((\Psi_1, F_1) \leq (\Psi_2, F_2)) &= (\Psi_1, F_1 / d) \leq (\Psi_2, F_2 / d)\\
+% %         &\quad\quad\text{where }d = \textit{gcd}(\textit{codom}(F_1) \cup \textit{codom}(F_2))
+% %     \end{align*}
+% %     \begin{align*}
+% %         \mathcal{N}_D(I \leq J) &= \\
+% %         &\quad\quad\text{where }d = \textit{gcd}(\textit{codom}(F_1) \cup \textit{codom}(F_2))
+% %     \end{align*}
+% % \end{defi}
+
+% \begin{defi}
+%     Given a constraint $C$, the function $\mathcal{N}$ converts $C$ into a set of normalized constraints of the form $I \leq 0$.
+
+%     % \begin{align*}
+%     %     \textit{normalizeConstraint}(C) = \{(\textit{normalizeDivisor} \circ \textit{normalizeInequality})(c) \mid c \in \textit{normalizeRelation}(C)\}
+%     % \end{align*}
+%     \begin{align*}
+%         \mathcal{N}(C) &= \left\{I-J \leq 0 \mid (I \leq J) \in \mathcal{N}_R(C)\right\}
+%     \end{align*}
+% \end{defi}
+
+% Normalized constraints have the key property that, given any two constraints $I \leq 0$ and $J \leq 0$, we can combine these to obtain a new constraint $J + I \leq 0$. This is possible as we know that both $I$ and $J$ are both non-positive, and so their sum must also be non-positive. In general, given $n$ normalized constraints $I_1 \leq 0, ..., I_n \leq 0$, we can infer any linear combination $a_1 \cdot I_1 \leq 0 + ... + a_n \cdot I_n \leq 0$ where $a_i \geq 0$ for $i = 1..n$ as new constraints that can be inferred based on the constraints $I_1 \leq 0, ..., I_n \leq 0$. Linear combinations where all coefficients are non-negative are also called \textit{conical combinations}.
+
+% %One benefit of having a constraint in normal form is that, given an ordered set of exponent vectors $?$, the constraint can be represented by a vector $(a_1, ..., a_n)$ where $n = |\varphi|$ and $a_i = $
+
+% \subsection{Verifying constraint judgements}
+% We now show how we use normalized constraints to determine if a constraint $C$ on $\varphi$ is \textit{covered} by a set of constraints $\Phi$. That is, we want to answer the question \textit{Given the constraints in $\Phi$, does the constraint $C$ impose further restrictions on index valuations on $\varphi$?}. This question can sometimes be answered in linear time with respect to the number of monomials in the normalized equivalent of constraint $C$. That is if all coefficients in the normalized constraint are non-positive, we can guarantee that the constraint is always satisfied, as stated in Lemma \ref{lemma:tautology}, recalling that only naturals substitute for index variables.
+% %
+% \begin{lemma}\label{lemma:tautology}
+% Let $I \leq 0$ be a normalized constraint in index variables $i_1,\dots,i_n$ such that $I = \sum_{\alpha\in\mathcal{E}(I)} I_\alpha i^\alpha$. Then $I \leq 0$ is satisfied for any interpretation $[\![I]\!]_\rho$ of $I$ with $\rho : \{i_1,\dots,i_n\} \longrightarrow \mathbb{N}$ if $I_\alpha \leq 0$ for $\alpha\in\mathcal{E}(I)$.
+% \begin{proof}
+% The result is obtained directly from the fact that index variables are non-negative, such that each term of $I$ is non-positive for any interpretation of $I$.
+% \end{proof}
+% \end{lemma}
+% %
+% %
+% \begin{examp}\label{example:baillotghyssimple}
+% Baillot and Ghyselen \cite{BaillotGhyselen2021} provide an example of how their type system for parallel complexity of message-passing processes can be used to bound the time complexity of a linear, a polynomial and an exponential time replicated input process. We show that we can verify all judgements on constraints in the typings of the first two processes using normalized constraints. We first define the processes $P_1$ and $P_2$
+% \begin{align*}
+%     P_i \defeq\; !\inputch{a}{n,r}{}{\tick\match{n}{\asyncoutputch{r}{}{}}{m}{\newvar{r'}{\newvar{r''}{Q_i}}}}
+% \end{align*}
+% for the corresponding definitions of $Q_1$ and $Q_2$
+% \begin{align*}
+%     Q_1 \defeq&\; \asyncoutputch{a}{m,r'}{} \mid \asyncoutputch{a}{m,r''}{} \mid \inputch{r'}{}{}{\inputch{r''}{}{}{\asyncoutputch{r}{}{}}}\\
+%     Q_2 \defeq&\; \asyncoutputch{a}{m,r'}{} \mid \inputch{r'}{}{}{(\asyncoutputch{a}{m,r''}{} \mid \asyncoutputch{r}{}{})} \mid \asyncinputch{r''}{}{}
+% \end{align*}
+% We type $Q_1$ and $Q_2$ under the respective contexts $\Gamma_1$ and $\Gamma_2$
+% \begin{align*}
+%     \Gamma_1 \defeq&\; a : \forall_0 i.\texttt{oserv}^{i+1}(\texttt{Nat}[0,i],\texttt{ch}_{i+1}()), n : \texttt{Nat}[0,i], m : \texttt{Nat}[0,i-1],\\ &\; r : \texttt{ch}_{i}(),
+%      r' : \texttt{ch}_{i}(), r'' : \texttt{ch}_i()\\
+%     %
+%     \Gamma_2 \defeq&\; a : \forall_0 i.\texttt{oserv}^{i^2+3i+2}(\texttt{Nat}[0,i],\texttt{ch}_{i+1}()), n : \texttt{Nat}[0,i], m : \texttt{Nat}[0,i-1],\\ &\; r : \texttt{ch}_{i}(),
+%      r' : \texttt{ch}_i(), r'' : \texttt{ch}_{2i-1}()
+% \end{align*}
+% Note that in the original work, the bound on the complexity of server $a$ in context $\Gamma_2$ is $(i^2+3i+2)/2$. However, we are forced to use a less precise bound, as the multiplicative inverse is not always defined for our view of indices. Upon typing process $P_1$, we amass the judgements on the left-hand side, with corresponding judgements with normalized constraints on the right-hand side
+% %
+% \begin{align*}
+%     &\{i\};\emptyset\vDash i + 1 \geq 1\kern7.5em\Longleftrightarrow &  \{i\};\emptyset\vDash -i \leq 0\\
+%   % &\{i\};\{i \geq 1\} \vDash i-1 \leq i \kern6em\Longleftrightarrow & \{i\};\{1-i \leq 0\} \vDash -1 \leq 0\\
+%     &\{i\};\{i \geq 1\} \vDash i \leq i + 1\kern5em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash -1 \leq 0\\
+%     %
+%     &\{i\};\{i \geq 1\} \vDash i \geq i\kern6.7em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash 0 \leq 0\\
+%     &\{i\};\{i \geq 1\} \vDash 0 \geq 0\kern6.45em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash 0 \leq 0
+% \end{align*}
+% %
+% As all coefficients in the normalized constraints are non-positive, each judgement is trivially satisfied, and we can verify the bound $i + 1$ on server $a$. For process $P_2$ we correspondingly have the trivially satisfied judgements
+% \begin{align*}
+%     &\{i\};\emptyset\vDash i + 1 \geq 1\kern10.3em\Longleftrightarrow &  \{i\};\emptyset\vDash -i \leq 0\\
+%     &\{i\};\{0 \leq 0\}\vDash i \leq i^2 + 3i + 2\kern5.2em\Longleftrightarrow &  \{i\};\{0\leq 0\}\vDash -i^2-2i-2 \leq 0\\
+%     %
+%     &\{i\};\{i \geq 1\} \vDash i \leq i + 1\kern7.9em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash -1 \leq 0\\
+%     %
+%     &\{i\};\{i \geq 1\} \vDash 2i-1 \leq i^2 + 3i + 2\kern3.2em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash -i^2-i-3 \leq 0\\
+%     &\{i\};\{i \geq 1\} \vDash i \geq i\kern9.7em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash 0 \leq 0\\
+%     %
+%     &\{i\};\{i \geq 1\} \vDash 0 \geq i^2+i\kern7.5em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash -i^2-i \leq 0\\
+%     %
+%     &\{i\};\{i \geq 1\} \vDash i^2+2i \geq i^2+3i+2\kern2.9em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash -i-2 \leq 0
+% \end{align*}
+
+% \end{examp}
+% %
+% In practice, it turns out that for many processes, it is sufficient to verify that constraints impose no restrictions on interpretations. In Example \ref{example:baillotghyssimple}, we show how all constraint judgements in the typings of both a linear and a polynomial time replicated input can be verified using this approach. In the general sense, however, verifying whether judgements on polynomial constraints are satisfied is a difficult problem, as it amounts to verifying that a constraint is satisfied under all interpretations that satisfy our set of known constraints. In Example \ref{example:needconic}, we show how a constraint that is not satisfied for all interpretations can be shown to be covered by a set of two constraints, by utilizing the transitive, multiplicative and additive properties of inequalities to combine the two constraints. More specifically, we can exploit the fact that we can generate new constraints from any set of normalized constraints by taking a \textit{conical} combination of their left-hand side indices, as we shall formalize in the following section.
+% %
+% \begin{examp}\label{example:needconic}
+%     Given the judgement
+%     \begin{align*}
+%         \{i\};\{i \leq 3, 5 \leq i^2\} \vDash 5i \leq 3i^2
+%     \end{align*}
+%     we want to verify that constraint $5i \leq 3i^2$ is covered by the set of constraints $\{i\leq 3, 5 \leq i^2\}$. This constraint is not satisfied by all interpretations, as substituting $1$ for $i$ yields $5 \not\leq 3$. However, we can rearrange and scale the constraints $i\leq 3$ and $5\leq i^2$ as follows
+%     \begin{align*}
+%         i \leq 3 \iff i-3\leq 0 \implies 5i - 15 \leq 0\\
+%         %
+%         5\leq i^2 \iff 0 \leq i^2-5 \implies 0 \leq 3i^2-15
+%     \end{align*}
+%     Then it follows that
+%     \begin{align*}
+%         5i-15 \leq 3i^2-15 \iff 5i \leq 3i^2
+%     \end{align*}
+%     %More generally, we can use the transitive, multiplicative and additive properties of the inequality relation to construct new constraints from a set of known constraints, thereby verifying that some constraint does not impose new restrictions on interpretations. 
+% \end{examp}
+% %
+% \subsubsection{Conical combinations of constraints}
+% We now show how constraints can be conically combined. For convenience, given a finite ordered set of exponent vectors $\Psi = \{\bm{\alpha}_1, \bm{\alpha}_2, ..., \bm{\alpha}_n\} \subset \mathcal{E}(\varphi)$, identifying monomials over a finite set of index variables $\varphi$, we represent a normalized constraint $I \leq 0$ as a vector $\left( I_{\bm{\alpha}_1}\; I_{\bm{\alpha}_2}\; \cdots\; I_{\bm{\alpha}_n} \right)_{\Psi}$. As such, the constraint $-5i + -2j + -4ij \leq 0$ can be represented by the vector $(0\; {-5}\; {-2}\; {-4})_{\Psi_1}$ where $\Psi_1=\left\{(0\; 0),(1\; 0), (0\; 1), (1\; 1)\right\} \subset \mathcal{E}(\{i,j\})$. Another way to represent that same constraint is with the vector $(0\; {-5}\; {-2}\; 0\; {-4})_{\Psi_2}$ where $\Psi_2 = \left\{(0\; 0\; 0),(1\; 0\; 0), (0\; 1\; 0),(0\; 0\; 1), (1\; 1\; 0)\right\}\subset \mathcal{E}(\{i,j,k\})$. We denote the vector representation of a constraint $C$ over a finite ordered set of exponent vectors $\Psi$ by $\mathbf{C}_{\Psi}$. We extend this notation to sets of constraints, such that $\Phi_{\Psi}$ denotes the set of vector representations over $\Psi$ of normalized constraints in $\Phi$. Then for a finite ordered set of exponent vectors $\Psi$ and a set of normalized constraints $\Phi$, we can infer any constraint $C$ represented by a vector $\mathbf{C}_\Psi\in \text{coni}(\Phi_\Psi)$ where $\text{coni}(\Phi_\Psi)$ is the \textit{conical hull} of $\Phi_\Psi$. That is, $\text{coni}(\Phi_\Psi)$ is the set of conical combinations with non-negative integer coefficients of vectors in $\Phi_\Psi$
+% %
+% \begin{align*}
+%   \text{coni}(\Phi_\Psi) = \left\{\sum^k_{i=1} a_i {\mathbf{C}^i_\Psi} : {\mathbf{C}^i_\Psi} \in \Phi_\Psi,\; a_i,k \in \mathbb{N}\right\}  
+% \end{align*}
+% %
+% Then, to check if a constraint $C^{new}$ is covered by the set of normalized constraints $\Phi = \{C_1,C_2,\dots, C_n\}$, we can test if $\mathbf{C}^{new}_\Psi$ is a member of the conical hull $\text{coni}(\Phi_\Psi)$. However, by itself, this does not take into account subconstraints of constraints in $\Phi$, as these may not necessarily be written as conical combinations of $\Phi_\Psi$. To account for these, we can include $m=|\Psi|$ vectors of size $m$ of the form $(-1\; 0\; \cdots\; 0)_\Psi, (0\; {-1}\; 0\; \cdots\; 0)_\Psi, \dots, (0\; \cdots\; 0\; {-1})_\Psi$ in $\Phi_\Psi$. As the conical hull $\text{coni}(\Phi_\Psi)$ is infinite when there exists $\mathbf{C}_\Psi \in \Phi_\Psi$ such that $\mathbf{C}_\Psi \neq \mathbf{0}$ where $\mathbf{0}$ is the vector of all zeroes, when checking for the existence of a conical combination of vectors in $\Phi_\Psi$ equal to $\mathbf{C}^\textit{new}_\Psi$, we can instead solve the following system of linear equations
+% %
+% \begin{align*}
+%     a_1 {\mathbf{C}^1_\Psi}_1 + a_2 {\mathbf{C}^2_\Psi}_1 + \cdots + a_n {\mathbf{C}^n_\Psi}_1 =&\; {\mathbf{C}^{new}_\Psi}_1\\
+%     a_1 {\mathbf{C}^1_\Psi}_2 + a_2 {\mathbf{C}^2_\Psi}_2 + \cdots + a_n {\mathbf{C}^n_\Psi}_2 =&\; {\mathbf{C}^{new}_\Psi}_2\\
+%     &\!\!\!\vdots\\
+%     a_1 {\mathbf{C}^1_\Psi}_m + a_2 {\mathbf{C}^2_\Psi}_m + \cdots + a_n {\mathbf{C}^n_\Psi}_m =&\; {\mathbf{C}^{new}_\Psi}_m
+% \end{align*}
+% %
+% where $a_1,a_2,\dots,a_m\in\mathbb{Z}_{\geq 0}$ are non-negative integer numbers. However, this is an integer programming problem, and so it is NP-hard. We can relax the requirement for $a_1,a_2,\dots,a_m$ to be integers, as the equality relation is preserved under multiplication by any positive real number. We can then view the above system as a linear program, with additional constraints $a_i \geq 0$ for $1 \geq i \geq n$. That is, let $M = \left(\mathbf{C}^1_\Psi\; \mathbf{C}^2_\Psi\; \cdots\; \mathbf{C}^n_\Psi\right)$ be a matrix with column vectors representing constraints and $\mathbf{a} = (a_1\; a_2\; \cdots\; a_n)$ be a row vector of scalars, then checking whether $\mathbf{C}^{new}_\Psi\in\text{coni}(\Phi_\Psi)$ amounts to determining if the following linear program is feasible
+% %
+% \begin{align*}
+%     \text{minimize}&\quad \mathbf{c}^T\mathbf{a}\\
+%     \text{subject to}&\quad M\mathbf{a} = \mathbf{C}^{new}_\Psi\\
+%     &\quad\mathbf{a} \geq \mathbf{0}
+% \end{align*}
+% %
+% where $\mathbf{c}$ is an arbitrary vector of length $n$ and $\mathbf{0}$ is the vector of all zeroes of length $n$. Checking feasibility of the above linear program can itself be formulated as a linear program that is guaranteed to be feasible, enabling us to use efficient polynomial time linear programming algorithms, such as interior point methods, to check whether constraints are covered. Let $\mathbf{s}$ be a new vector of length $m$, then we have the linear program
+% %
+% \begin{align*}
+%     \text{minimize}&\quad \mathbf{1}^T\mathbf{s}\\
+%     \text{subject to}&\quad M\mathbf{a} + \mathbf{s} = \mathbf{C}^{new}_\Psi\\
+%     &\quad\mathbf{a},\mathbf{s} \geq \mathbf{0}
+% \end{align*}
+% where $\mathbf{1}$ is the vector of all ones of length $m$. We can verify the feasibility of this problem with the certificate $(\mathbf{a},\mathbf{s})=(\mathbf{0},\mathbf{C}^{new}_\Psi)$. Then the original linear program is feasible if and only if the augmented problem has an optimal solution $(\mathbf{x}^*,\mathbf{s}^*)$ such that $\mathbf{s}^* = \mathbf{0}$.
+% %
+% %
+% % {\color{Orange} Overall, checking if $C^{new}_\Psi\in\text{coni}(\Phi_\Psi)$ amounts to determining if the following linear program is feasible:\\
+% % \begin{tabular}{ll}
+% %     \text{Find a vector} & $[a_1, ..., a_n]$ \\
+% %     \text{that minimizes} & $\mathbf{M} [a_1, ..., a_n]$ \\
+% %     \text{subject} to & \\
+% %     \text{and}
+% % \end{tabular}\\
+% % (TODO: Constraints skal sættes op som en matrice, så vi kan skrive det pænt i det lineære program)\\
+
+% % To determine if such a linear program has a solution, we can use the first phase of the two-phase simplex algorithm.\\
+
+% % Note that constraints exists that be be inferred from $\Phi$, but that are not inferred by the method above. For example, given a constraint $ii \leq 10$, the constraint $i \leq 3$ can be inferred, however, this is not captured by this method.}
+
+% \begin{examp}
+%     Given the three constraints
+%     \begin{align*}
+%         C^1 &= i - 3 \leq 0\\
+%         C^2 &= j + k - 2 \leq 0\\
+%         C^3 &= -k \leq 0
+%     \end{align*}
+%     we want to check if the following constraint is covered.
+%     \begin{align*}
+%         C^{new} = 2i + 3j + 2k - 15 \leq 0
+%     \end{align*}
+    
+%     We first represent the four constraints as vectors in terms of some ordered set $\varphi$ of index variables and some ordered set $\Psi$ of exponent vectors.\\
+    
+%     Let $\varphi = \{i, j, k\}$ and $\Psi = \{(1\; 0\; 0), (0\; 1\; 0), (0\; 0\; 1), (0\; 0\; 0)\}$. The constraints $C^1, C^2, C^3, C^{new}$ can now be written as the following vectors.
+%     %
+%     \begin{align*}
+%         \mathbf{C}^1_\Psi &= (1\; 0\; 0\; {-3})\\
+%         \mathbf{C}^2_\Psi &= (0\; 1\; 1\; {-2})\\
+%         \mathbf{C}^3_\Psi &= (0\; 0\; {-1}\; 0)\\
+%         \mathbf{C}^{new}_\Psi &= (2\; 3\; 2\; {-15})
+%     \end{align*}
+    
+%     With the constraints now represented as vectors, we can prepare the equation $M\mathbf{a} = \mathbf{C}^{new}_\Psi$ representing the conical combination, for which we wish to check if a solution exists given given the requirement that $\mathbf{a} \geq \mathbf{0}$. We first prepare the matrix $M$, where we represent the constraint vectors as column vectors.
+%     %
+%     \begin{align*}
+%         &M = (\mathbf{C}^1_\Psi\; \mathbf{C}^2_\Psi\; \mathbf{C}^3_\Psi\; \bm{\beta}_1\; \bm{\beta}_2\; \bm{\beta}_3\; \bm{\beta}_4) \quad \text{where } \bm{\beta}_1 = (-1\; 0\; 0\; 0), \bm{\beta}_2 = (0\; -1\; 0\; 0), \bm{\beta}_3 = (0\; 0\; -1\; 0), \bm{\beta}_4 = (0\; 0\; 0\; -1)
+%     \end{align*}
+%     %
+%     We include vectors $\bm{\beta}_i, i \in \{1, 2, 3, 4\}$ to ensure we can also use subconstraints of $\mathbf{C}^i, i \in \{1, 2, 3\}$ when checking if we can construct $\mathbf{C}^{new}_\Psi$.\\
+    
+%     To check if a solution exists to the aforementioned equation, we solve the following linear program to check if $\mathbf{s} = \mathbf{0}$. 
+%     \begin{align*}
+%         \text{minimize}&\quad \mathbf{1}^T\mathbf{s}\\
+%         \text{subject to}&\quad M\mathbf{a} + \mathbf{s} = \mathbf{C}^{new}_\Psi\\
+%         &\quad\mathbf{a},\mathbf{s} \geq \mathbf{0}
+%     \end{align*}
+    
+%     This is possible given $\mathbf{a} = (2\; 3\; 1\; 0\; 0\; 0\; 3)$, and so a solution exists to the canonical combination. Notice that we had to use the additional $\bm{\beta}$ vectors when constructing the conical combination. This shows the importance of subconstraints when checking type judgements.
+% \end{examp}
+
+% \subsubsection{Connecting related terms}
+% One problem with the above described method is that all unique monomials are seen as completely unrelated when checking for constraint inclusion. However, in reality, monomials sharing variables are also related. For example, the constraint ${-i^2 + 10 \leq 0}$ imposes restrictions on not only the monomial $i^2$ but also on the monomial $i$, notably that $-i + \sqrt{10} \leq 0$. Not taking these relations into account means a constraint may simultaneously be covered by some set of constraints while not being a member of its conical hull, thus leading to an over-approximation when type checking. We now show how we can reduce the over-approximation by inferring new, simpler constraints from more complex constraints.\\
+
+% Going back to the example of being able to infer the constraint $-i + \sqrt{10} \leq 0$ from the constraint ${-i^2 + 10 \leq 0}$, we notice that the reason this is possible is that when ${-i^2 + 10 \leq 0}$ holds, i.e. when $i \geq \sqrt{10}$, the value of $i$ can always be increased without violating the constraint. Similarly, when ${-i^2 + 10 \geq 0}$ holds, the value of $i$ can always be decreased until reaching its minimum value of 0 without violating the constraint. We can thus introduce a new simpler constraint with the same properties, i.e. $-i + \sqrt{10} \leq 0$. More specifically, the polynomials of the left-hand side of the two constraints share the same positive real-valued roots as well as the same sign for any value of $i$. In general, limiting ourselves to univariate polynomials, for any constraint whose left-hand side polynomial only has a single positive root, we can simulate such a constraint using a constraint of the form $a \cdot i + c \leq 0$. For describing complexities of programs, we expect to mostly encounter monotonic polynomials with at most a single positive real-valued root.\\
+
+% For finding the roots of a specific polynomial we can use either analytical or numerical methods. Using analytical methods has the advantage of being able to determine all roots with exact values, however, we are limited to polynomials of degree at most four as stated by the Abel-Ruffini theorem. With numerical methods, we are not limited to polynomials of a specific degree, however, numerical methods often require a given interval to search for a root and do not guarantee to find all roots. Introducing constraints with false restrictions may lead to an under-approximating type system, and so we must be careful not to introduce such. We must therefore ensure we find all roots to avoid constraints with false restrictions. We can use Descartes rule of signs to get an upper bound on the number of positive real roots of a polynomial. Descarte's rule of signs states that the number of roots in a polynomial is at most the number of sign-changes in its sequence of coefficients.\\
+
+% For our application, we decide to only consider constraints whose left-hand side polynomial is univariant and monotonic with a single root. In some cases we may use the subconstraint relation to obtain such constraints. We limit ourselves to these constraints both to keep complexity down, as well as because we expect to mainly encounter such polynomials when considering complexity analysis of programs. We use Descartes rule of signs to ensure polynomials have at most one root. We use Laguerre's method as a numerical method to find the root of the polynomial, which has the advantage that it does not require any specified interval when performing root-finding. Assuming we can find a root $r$, we add an additional constraint $\pm i + r \leq 0$ where the sign of $i$ depends on whether the original polynomial is increasing or decreasing.
+
+% \begin{examp}
+%     We want to check if the following judgement holds.
+%     $$\{i, j\}; \{-2i \leq 0, -1i^2 + 1j + 1 \leq 0\} \vDash -2i + 2 \leq 0$$
+    
+%     We can immediately notice that $-2i + 2$ cannot be written as a conical combination of the polynomials $-2i$ and $-1i^2 + 1j + 1$.\\
+    
+%     We first try to generate new constraints of the form $-a \cdot i + r \leq 0$ for some index variable $i$ and some constants $a$ and $r$ based on our two existing constraints using the root-finding method. The first constraint is already of such form, so we can only consider the second. For the second, we first use the subconstraint relation to remove the term $1j$ obtaining $-1i^2 + 1 \leq 0$. Next, we ensure that $-1i^2 + 1$ is a monotonically decreasing polynomial by checking if every coefficient excluding the constant term is negative. We then find the root $r = 1$ of the polynomial and add a new constraint $-1i + 1 \leq 0$ to our set of constraints. Finally, we see that $-2i + 2$ can be written using the conical combination $2(-1i + 1) = -2i + 2$, concluding that the constraint is included.
+% \end{examp}
+
+
+
+% %While subconstraints say that it is safe to increase the right-hand side and lower the left-hand side of a constraint, there are also cases where it is safe to either increase or decrease both sides. Notably, if a term appears on both sides of a constraint with two (possibly different) coefficients, it is safe to multiply or divide these by the same constant without affecting the restrictions imposed by the constraint. For example, the two constraints $3 \cdot i \leq 6 \cdot j$ and $6 \dot i \leq 12 \cdot j$ impose the same restrictions on $i$ and $j$ as the first 
+
+% % \begin{align*}
+% %     &\infrule{(\Psi_1, F_1') \leq (\Psi_2, F_2') \sqsubseteq I'' \leq J''}{(\Psi_1, F_1) \leq (\Psi_2, F_2) \sqsubseteq I'' \leq J''} \quad \text{ if }\\
+% %     &\quad(\forall V \in \Psi_1 \cap \Psi_2 : (F_1'(V) = F_1(V) / \text{gcd}(F_1(V), F_2(V)) \land F_2'(V) = F_2(V) / \text{gcd}(F_1(V), F_2(V))))\land\\
+% %     &\quad(\forall V \in \Psi_1 \setminus \Psi_2 : (F_1'(V) = F_1(V)))\land\\
+% %     &\quad(\forall V \in \Psi_2 \setminus \Psi_1 : (F_2'(V) = F_2(V)))
+% % \end{align*}
+
+
+
+% % \begin{enumerate}
+% %     \item Let $S' = S$
+% %     \item For every constraint $C \in S$:
+% %     \begin{enumerate}
+% %         \item Apply possible normalization rules to $C$, store in $C_N$
+% %         \item Let $S' = S' \cup C_N$
+% %     \end{enumerate}
+% %     \item If $S' != S$
+% %     \begin{itemize}
+% %         \item Let $S' = S$
+% %         \item GOTO (2)
+% %     \end{itemize}
+% % \end{enumerate}
+
+% % Index normalization rules:
+% % \begin{align*}
+% %     \infrule{}{n \longrightarrow n}\\
+% %     \infrule{n \cdot I + n \cdot J \longrightarrow K}{n \cdot (I + J) \longrightarrow K}\\
+% %     \infrule{I \longrightarrow n \quad J \longrightarrow J' \quad J' \not\in \mathbb{N}}{I + J \longrightarrow J' + n}\\
+% %     \infrule{I \longrightarrow I' \quad J \longrightarrow J' \quad I' \not\in \mathbb{N}}{I + J \longrightarrow I' + J'}\\
+% %     \condinfrule{I \rightarrow n \quad J \rightarrow m}{I + J \rightarrow r}{\text{where } r = n + m}\\
+% %     \infrule{}{0 \cdot I \longrightarrow 0}\\
+% %     \infrule{I \longrightarrow I'}{1 \cdot I \longrightarrow I'}\\
+% %     \infrule{I \longrightarrow I'}{I + 0 \longrightarrow I'}\\
+% %     \condinfrule{r \cdot I \longrightarrow K}{n \cdot m \cdot I \longrightarrow K}{\text{where } r = n + m}
+% % \end{align*}
+
+
+
+% \section{Type check for Baillot et al.}
+
+% \subsection{Solution proposals}
+
+
+% \section{Type inference for Baillot and Ghyselen.}
+
+% \subsection{Solution proposals}
+
+
+% \section{Type inference for Baillot et al.}
+
+% \subsection{Solution proposals}

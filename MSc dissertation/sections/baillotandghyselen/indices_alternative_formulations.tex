@@ -1,0 +1,70 @@
+\subsection{Alternative formulations of constraint judgements}\label{sec:cjalternativeform}
+There are several equivalent formulations of the problem of verifying the judgement $\varphi;\Phi\vDash C_0$. One such formulation is that the judgement holds, when the conjunction of constraints in $\Phi$ implies $C_0$, i.e. assuming that $n \bowtie m$ evaluates to a truth value based on membership in the relation $\bowtie$, the predicate formula $C_1 \land \cdots \land C_n \implies C_0$, where $\Phi = \{C_1,\dots,C_n\}$, must be satisfied for all valuations $\rho$ over $\varphi$. That is, let $C_i = I_i \bowtie_i J_i$, then for any valuation $\rho : \varphi \rightarrow \mathbb{N}$, the formula $([\![I_1]\!]_\rho \bowtie_1 [\![J_1]\!]_\rho) \land \cdots \land ([\![I_n]\!]_\rho \bowtie_n [\![J_n]\!]_\rho) \implies [\![I_0]\!]_\rho \bowtie_0 [\![J_0]\!]_\rho$ must be satisfied. Another interpretation of the problem is that the intersection of the feasible regions of all (inequality) constraints in $\Phi$ must be contained in the feasible region of $C_0$, or equivalently, the set of all valuations over $\varphi$ that satisfy all the constraints in $\Phi$, referred to as the model space of $\Phi$ wrt. $\varphi$, $\mathcal{M}_\varphi(\Phi)$ must be a subset of the model space of $C_0$ wrt. $\varphi$
+\begin{equation*}
+    \mathcal{M}_\varphi(\Phi) \subseteq \mathcal{M}_\varphi(\{C_0\})\quad\text{where}\quad\mathcal{M}_\varphi(\Phi)=\{\rho : \varphi \rightarrow \mathbb{N} \mid \rho \vDash C\;\text{for}\; C \in \Phi\}
+\end{equation*}
+or equivalently
+\begin{equation*}
+    \forall \rho \in \mathcal{M}_\varphi(\Phi) (\rho \in \mathcal{M}_\varphi(\{C_0\}))
+\end{equation*}
+
+Finally, given the fact that the current statement of the problem is expressed using a universal quantifier, we can negate the problem, obtaining a problem that can instead be expressed using an existential quantifier by the fact that $\neg \forall x P(x)$ is equivalent to $\exists x \neg P(x)$. This means the problem can also be expressed as 
+%
+\begin{equation*}
+    \neg (\exists \rho \in \mathcal{M}_\varphi(\Phi) (\rho \not\in \mathcal{M}_\varphi(\{C_0\})))
+\end{equation*}
+or equivalently
+\begin{equation*}
+    \mathcal{M}_\varphi(\Phi) \cap \mathcal{M}_\varphi'(\{C_0\}) = \emptyset \quad\text{where}\quad
+    \begin{matrix}
+        \mathcal{M}_\varphi(\Phi)=\{\rho : \varphi \rightarrow \mathbb{N} \mid \rho \vDash C\;\text{for all}\; C \in \Phi\}\\
+        \mathcal{M'}_\varphi(\Phi)=\{\rho : \varphi \rightarrow \mathbb{N} \mid \rho \not\vDash C\;\text{for some}\; C \in \Phi\}
+    \end{matrix}
+\end{equation*}
+Notice that $\mathcal{M}_\varphi'(\{C\})$ is equivalent to $\mathcal{M}_\varphi(\{C'\})$ where $C'$ is the inverse constraint of constraint $C$, and so $\mathcal{M}_\varphi(\Phi) \cap \mathcal{M}_\varphi'(\{C_0\}$) = $\mathcal{M}_\varphi(\Phi \cup \{C_0'\})$ given some method to invert constraints. Thus, the problem can also be expressed simply as
+\begin{equation*}
+    \mathcal{M}_\varphi(\Phi \cup \{C_0'\}) = \emptyset \quad \text{where } C_0' = \text{inverse of } C_0
+\end{equation*}
+
+In Example \ref{exmp:judgementsatisfaction}, we show how a judgement can be verified manually using the predicate logic and model-theoretic interpretations of judgements provided above.
+%
+\begin{examp}\label{exmp:judgementsatisfaction}
+    Given index variables $\varphi = \{i, j, k\}$ and constraints $\Phi = \{C_1, C_2, C_3, C_4\}$ where
+    \begin{align*}
+        C_1 &= i \geq 4\\
+        C_2 &= j \geq 2\\
+        C_3 &= -k + 3 < 0\\ % k \leq 4
+        C_4 &= i + j + k \leq 11
+    \end{align*}
+    we want to check if $\varphi; \Phi \vDash 2i + j^2 + 3k \geq 20$ always holds. %For this example we assume interpretations are as expected from usual mathematical notation.\\
+    Namely, we are interested in verifying whether the constraint $2i + j^2 + 3k \geq 20$ imposes any additional constraints to the index variables $i$, $j$ and $k$ given the existing constraints $C_1$, $C_2$, $C_3$ and $C_4$. In this case, we can notice that the minimum values of $i$, $j$ and $k$ are $4$, $2$ and $4$ respectively. As such, given these constraints, the minimum value $2i + j^2 + 3k$ may evaluate to is $2 \cdot 4 + 2^2 + 3 \cdot 4 = 24$. As such, we can conclude that $\varphi; \Phi \vDash 2i + j^2 + 3k \geq 20$ always holds.\\
+    
+    We can also consider the predicate logic interpretation of the example. It suffices to only consider the index valuations that satisfy the conjunction of constraints, of which there are four. Here, we represent a valuation $\rho$ as a set of pairs of the form $\{(i,\rho(i)) \mid i\in\varphi\}$, and so we have $\{(i,4),(j,2),(k,4)\}$, $\{(i,5),(j,2),(k,4)\}$, $\{(i,4),(j,3),(k,4)\}$ and $\{(i,4),(j,2),(k,5)\}$. We can then verify the corresponding implications to show that the judgement holds
+    %
+    \begin{align*}
+        (4 \geq 4) \land (2 \geq 2) \land ({-4}+3 < 0) \implies 4+2+4 \leq 11\\
+        %
+        (5 \geq 4) \land (2 \geq 2) \land ({-4}+3 < 0) \implies 5+2+4 \leq 11\\
+        %
+        (4 \geq 4) \land (3 \geq 2) \land ({-4}+3 < 0) \implies 4+3+4 \leq 11\\
+        %
+        (4 \geq 4) \land (2 \geq 2) \land ({-5}+3 < 0) \implies 4+2+5 \leq 11
+    \end{align*}
+    Or correspondingly in model-theoretic notation
+    {\small
+    \begin{align*}
+        \mathcal{M}_\varphi(\Phi) =&\; \{\{(i,4),(j,2),(k,4)\}, \{(i,5),(j,2),(k,4)\}, \{(i,4),(j,3),(k,4)\}, \{(i,4),(j,2),(k,5)\}\}\\
+        \mathcal{M}_\varphi(\{2i+j^2+3k\geq 20\}) =&\; \{\{(i,n_1),(j,n_2),(k,n_3)\} \mid n_1,n_2,n_3\in\mathbb{N},\; 2n_1 + n_2^2 + 3n_3 \geq 20 \}\\
+        \mathcal{M}_\varphi(\Phi) \subseteq&\; \mathcal{M}_\varphi(\{2i+j^2+3k\geq 20\})
+    \end{align*}}
+    % \begin{align*}
+    %     \mathcal{M}_\varphi(\Phi) = \left\{\{(i,4),(j,2),(k,4)\}, \{(i,5),(j,2),(k,4)\}, \{(i,4),(j,3),(k,4)\}, \{(i,4),(j,2),(k,5)\}\right\}
+    % \end{align*}
+    
+    We can also solve the inverse of the mode-theoretic interpretation of the problem. Then we want to show that $\mathcal{M}_\varphi(\Phi) \cap \mathcal{M}_\varphi'(\{2i+j^2+3k\geq 20\}) = \emptyset$ or equivalently $\mathcal{M}_\varphi(\Phi \cup \{2i+j^2+3k < 20\}) = \emptyset$. 
+    %
+    \begin{align*}
+        \mathcal{M}_\varphi(\{2i+j^2+3k < 20\}) =&\; \{\{(i,n_1),(j,n_2),(k,n_3)\} \mid n_1,n_2,n_3\in\mathbb{N},\; 2n_1 + n_2^2 + 3n_3 < 20 \}\\
+        &\kern-9em\mathcal{M}_\varphi(\Phi) \cap \mathcal{M}_\varphi'(\{2i+j^2+3k\geq 20\}) = \mathcal{M}_\varphi(\Phi \cup \{2i+j^2+3k < 20\}) = \emptyset
+    \end{align*}
+\end{examp}

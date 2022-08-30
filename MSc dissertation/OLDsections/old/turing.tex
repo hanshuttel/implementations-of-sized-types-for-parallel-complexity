@@ -1,0 +1,125 @@
+\section{Turing-completeness}
+The following is a description of how we can replicate the functionality of a Turing complete language, thereby proving that our untyped editor calculus is itself Turing complete. The language that we replicate requires the following control structures to facilitate computing any computable function according to the structured program theorem by Böhm and Jacopini \cite{}. 
+\begin{enumerate}
+    \item Executing one subprogram, and then another subprogram (sequence)
+    \item Executing one of two subprograms according to the value of a boolean expression (selection)
+    \item Repeatedly executing a subprogram as long as a boolean expression is true (iteration)
+\end{enumerate}
+
+In order to keep track of information we emulate a Turing machine tape using an AST. An example of how we do this can be seen in figure \ref{fig:address}. The root of the AST is a \texttt{lambda} node which we use to emulate the start symbol \#. Each function application represents a cell on the tape where the amount of \texttt{lambda} child nodes represents the value in the cell. The Turing machine tape head is emulated by the cursor which encapsulates \cmdchild{1} of the cell where the head is positioned.
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=350pt]{figures/tm.png}
+    \caption{Turing machine tape and equivalent AST.}
+    \label{fig:address}
+\end{figure}
+
+We now present editor expressions to move the \textit{head} of the Turing machine along the tape. Moving from one address to the next is handled by the editor expression $next$. Notice here that we emulate the infinite TM tape by substituting in a new function application if we have reached the right-most cell. Moving in the opposite direction is handled by the editor expression $prev$. Here we utilize the AST root as a tape start symbol to ensure that we cannot move left of the left-most cell. Finally we have the editor expression $first$ that recursively move up the tree until it reaches the root, whereafter it moves to the first cell.
+\begin{align*}
+    start &\triangleq \replace{\cmdlambda{x}}.(\cmdchild{1}).\replace{\cmdapp}.(\cmdchild{2})\\
+    next &\triangleq \cmdparent \ggg \cmdchild{2} \ggg (@\cmdhole \Rightarrow \replace{\cmdapp}) \ggg (\cmdchild{1}) \\
+    prev &\triangleq \cmdparent.\cmdparent \ggg (@(\cmdlambda{x}) \Rightarrow (\cmdchild{1})) \ggg \cmdchild{1} \\
+    first &\triangleq \cmdparent.\cmdrec{x}(@\cmdapp \Rightarrow \cmdparent.x) \ggg (\cmdchild{1}).(\cmdchild{1})
+\end{align*}
+
+We now present editor expressions to manipulate the values of the tape cells. Since the cursor encapsulates \cmdchild{1} of the application node we simply substitute in a hole to reset the value of the cell to 0 in the editor expression $reset$. In $increment$ we recursively move down the chain of \texttt{lambda} until we reach the bottom, whereafter we substitute the \cmdhole with a \texttt{lambda}, thereby incrementing the value by one. We guarantee that the cursor returns to the correct position by following each $\cmdchild{1}.x$ with \cmdparent. The editor expression $decrement$ works similarly, where we move down the chain, remove the last \texttt{lambda} and move back up to the initial position. 
+\begin{align*}
+    increment &\triangleq \cmdrec{x}(@\cmdbreak \Rightarrow ((\cmdchild{1}).x \ggg \cmdparent) \ggg @\cmdhole \Rightarrow \replace{\cmdbreak})\\
+    %
+    decrement &\triangleq @\cmdbreak \Rightarrow \replace{\cmdbreak} \\
+    %
+    set_0 &\triangleq \replace{\cmdhole}\\
+    %
+    set_n &\triangleq set_{n-1} \ggg increment
+\end{align*}
+
+We now present a set of more abstract editor expressions for movement. For the remainder of this section, we use a hole notation similar to the one used for our cursor context. That is, any structural definition $E_1$ may contain holes, denoted [], which can be replaced by any other expression $E_2$ using the notation $E_1[E_2]$. To clarify which definitions contain holes, we postfix [] to the editor expressions name. \\
+
+%For all expressions with these holes, we must ensure that the head returns to its initial position to prevent unexpected behaviour.\\
+
+First, we present the two expressions $i\f beg$ and $i\f nbeg$. These expressions use the lambda node at the root of the tree to check if the head is at the beginning and then conditionally executes some expression. The expression $at_n$ executes some expression at a specific position $n$, making sure to return to the original position afterwards. The expression continuously uses $prev$ until the head is at the beginning of the tape, and then uses $next$ n times to arrive at the desired position. The expression uses recursion to ensure that $prev$ and $next$ are called the appropriate amount afterwards to ensure that the cursor returns.\\
+
+The $copyto_n$ expression is used to copy the value of the current cell to some target cell n. The expression first sets the target cell to 0, and then recursively moves down the value chain incrementing the target cell by one for each $\cmdbreak$ in the chain. To increment the target cell, the cursor must return to the top of the chain, to move to the target cell. To ensure the cursor is moved to the correct position in the chain afterwards, the $atbase$ expression is used.
+
+\begin{align*}
+    i\f beg(E) &\triangleq \cmdparent.\cmdparent.((@(\cmdlambda{x}) \Rightarrow (\cmdchild{1}).(\cmdchild{1}).E) \ggg (@\cmdapp \Rightarrow (\cmdchild{1}).(\cmdchild{1})))\\
+    %
+    i\f nbeg[] &\triangleq \cmdparent.\cmdparent.((@(\cmdlambda{x}) \Rightarrow (\cmdchild{1}).(\cmdchild{1})) \ggg (@\cmdapp \Rightarrow (\cmdchild{1}).(\cmdchild{1}).[]))\\
+    %
+    at_0[] &\triangleq \cmdrec{x}(i\f beg[[]] \ggg i\f nbeg[prev \ggg x \ggg next])\\
+    %
+    at_n[] &\triangleq at_{n-1}[next \ggg [] \ggg prev]\\
+    %
+    atbase[] &\triangleq \cmdrec{x}((@\cmdapp \Rightarrow ((\cmdchild{1}).[] \ggg \cmdparent)) \ggg @\cmdbreak \Rightarrow (\cmdparent.x \ggg \cmdchild{1})))\\
+    %
+    copyto_n &\triangleq at_n[set_0] \ggg \cmdrec{x}(@\cmdbreak \Rightarrow (atbase[at_n[increment]] \ggg (\cmdchild{1}).x \ggg \cmdparent))\\
+\end{align*}
+
+% Alt over dette punkt er blevet sat ind i artiklen.
+
+We now present a set of expressions to perform basic branching and looping. The two expressions $i\f zero$ and $i\f nzero$ execute some expression based on the value of the cell at the current head position; a $\cmdhole$ signifies zero and a $\cmdhole$ one. The $while$ expression continuously executes some expression as long as the value at cell 2 is non-zero. We only check cell 2 as boolean algrebra will be performed on cells 0, 1 and 2, as we will see later.
+\begin{align*}
+    i\f zero[] &\triangleq @\cmdhole \Rightarrow []\\
+    %
+    i\f nzero[] &\triangleq @\cmdbreak \Rightarrow []\\
+    %
+    while(E) &\triangleq \cmdrec{x}(at_2(i\f nzero(E \ggg x)))
+\end{align*}
+
+Finally, we present a set of expressions for performing basic boolean algebra. The expressions only operate on cells 0, 1 and 2, with the two first being used for the arguments and the third used for the result, and the expressions may therefore often be used in conjunction with the $copyto_n$ expression. The expressions $greatereq$ and $lesseq$ perform an "greater than or equal" and a "less than or equal" check, respectively. Both expressions use the $compare$ expression, which continously decrements cell 0 and cell 1 until one of them is zero. Using this expression, $greatereq$ and $lesseq$ simply need to check if either cell 1 or cell 0 is 0, repectively. The expressions $not$, $and$ and $or$ work in a similar fashion, only setting cell 2 to 1 if cells 0 and 1 have the correct values.
+\begin{align*}
+    % Tjekker om den celle 0 og 1 begge >0, og hvis ja, trækker den 1 fra hver indtil en af dem er 0. Bruges sammen med de andre boolean operators
+    compare &\triangleq \cmdrec{x}(at_0[i\f nzero[at_1[(i\f nzero[at_0[decrement] \ggg at_1[decrement] \ggg x]]]]))\\
+    %
+    % Hvis celle 0 og 1 er begge 0, så sæt celle 2 til 1
+    %equals &\triangleq compare \ggg at_2[set_0] \ggg at_0[i\f nzero[at_1[i\f nzero[at_2[set_1]]]]]\\
+    greatereq &\triangleq compare \ggg at_2[set_0] \ggg at_1[i\f nzero[at_2[set_1]]]\\
+    %
+    % Hvis celle 0 = 0 og celle 1 > 0
+    lesseq &\triangleq compare \ggg at_2[set_0] \ggg at_0[i\f nzero[at_2[set_1]]]\\
+    %
+    not &\triangleq at_2[set_0] \ggg at_0[i\f zero[at_2[set_1]]\\
+    %
+    and &\triangleq at_2[set_0] \ggg at_0[i\f nzero[at_1[i\f nzero[at_2[set_1]]]]]\\
+    %
+    or &\triangleq at_2[set_0] \ggg at_0[i\f nzero[at_2[set_1]]] \ggg at_1[i\f nzero[at_2[set_1]]]\\
+\end{align*}
+
+\begin{align*}
+    x:=a \quad& a \ggg at_2[copyto_x]\\
+    %
+    \texttt{skip} \quad& 0\\
+    %
+    S_1;S_2 \quad& S_1 \ggg S_2\\
+    %
+    \texttt{if}\; b\; \texttt{then}\; S_1 \quad& b \ggg at_2[i\f nzero[S_1]]\\
+    %
+    \texttt{if}\; b\; \texttt{then}\; S_1\; \texttt{else}\; S_2 \quad& 
+    x:=b;\texttt{if}\; x\; \texttt{then}\; S_1; \texttt{if}\; \neg x\; \texttt{then}\; S_2\\
+    %
+    \texttt{while}\; b\; \texttt{do}\; S \quad& 
+    \cmdrec{x}(b \ggg at_2[i\f nzero[S \ggg x]])\\
+\end{align*}
+
+\begin{align*}
+    a_1<=a_2 \quad& 
+    a_1 \ggg at_2[copyto_3] \ggg a_2 \ggg at_2[copyto_0] \ggg at_3[copyto_1] \ggg lesseq\\
+    %
+    a_1>=a_2 \quad& 
+    a_1 \ggg at_2[copyto_3] \ggg a_2 \ggg at_2[copyto_0] \ggg at_3[copyto_1] \ggg greatereq\\
+    %
+    \neg b_1     \quad& b_1 \ggg at_2[copyto_0] \ggg not\\
+    b_1 \land b_2\quad& 
+    a_1 \ggg at_2[copyto_3] \ggg a_2 \ggg at_2[copyto_0] \ggg at_3[copyto_1] \ggg and\\
+    (b_1)        \quad& b_1\\
+\end{align*}
+
+\begin{align*}
+    n      \quad& at_2[set_n]\\
+    x      \quad& at_x[copyto_2]\\
+    a_1+a_2\quad& a_1 \ggg at_2[copyto_3] \ggg a_2 \ggg at_2[copyto_0] \ggg at_3[copyto_1] \ggg add\\
+    %a_1*a_2\quad& a_1 \ggg at_2[copyto_3] \ggg a_2 \ggg at_2[copyto_0] \ggg at_3[copyto_1] \ggg mul\\
+    a_1-a_2\quad& a_1 \ggg at_2[copyto_3] \ggg a_2 \ggg at_2[copyto_0] \ggg at_3[copyto_1] \ggg sub\\
+    (a_1)  \quad& a_1\\
+\end{align*}

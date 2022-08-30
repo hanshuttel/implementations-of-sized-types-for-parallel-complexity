@@ -1,0 +1,29 @@
+\chapter{Sized types}\label{sec:sizedtypes}
+In static complexity analysis, the complexities of programs are often parametric in the sizes of inputs. It is therefore useful to introduce a notion of polymorphism on the sizes of values in a program. Some of the type systems we consider, namely those of Baillot and Ghyselen \cite{BaillotGhyselen2021} and Baillot et al. \cite{BaillotEtAl2021}, enable parameterization of complexities through the use of \textit{sized types} that track the sizes of algebraic terms, in our case the naturals. These type systems are inspired by an early definition of sized types that has been used to type \textit{productive} reactive systems \cite{HughesEtAl1996}. For instance, sized types can be used to verify that the next element of an infinite stream can be computed in finite time.\\
+
+In sized types, we use \textit{indices} as the sizes of values, and so they represent the naturals extended with infinity $\mathbb{N}_\infty = \mathbb{N} \cup \{\infty\}$. We incorporate \textit{index variables} into indices, introducing polymorphism to sizes. This forces us to view indices as expressions, and so we use \textit{function symbols} to represent integer constants and operations on indices. We define indices structurally by
+\begin{align*}
+    \kern0em I,J ::= I_\mathbb{N} \mid \infty\quad\quad I_\mathbb{N} := i \mid f(I_{\mathbb{N}_1},I_{\mathbb{N}_2},\dots,I_{\mathbb{N}_n})
+\end{align*}
+where $i,j,k \in \mathcal{V}$ range over a countable set of index variables, and $f$ belongs to a given set of function symbols, containing integer constants represented as nullary function symbols, arithmetic operations such as addition and subtraction, which we may use in infix form, and primitive recursive functions. We limit ourselves to primitive recursive functions, as such functions are guaranteed to terminate, ensuring our sized types are not turing complete. For each function symbol $f$ we have an arity $\texttt{ar}(f)$ and an \textit{interpretation} $\encoding{f} : \mathbb{N}^{\texttt{ar}(f)} \rightarrow \mathbb{N}$ defining its semantics. We assume the interpretation of subtraction conforms to $n-m = 0$ when $n \leq m$, and that the other arithmetic operations on integers are defined in the usual way. As finite indices may contain index variables, we assume some index valuation $\rho : \mathcal{V} \rightarrow \mathbb{N}$ and extend the interpretations of function symbols to indices denoted $\encoding{I}_\rho$, such that $i \in \mathcal{V}$ is replaced by $\rho(i)$ in $I$. Similarly, $I\substi{J_\mathbb{N}}{i}$ denotes index $I$ with $J_\mathbb{N}$ substituted for occurrences of $i$ and intuitively, $\infty\substi{J_\mathbb{N}}{i} = \infty$. We may want to restrict the set of values that some index variable can be replaced by, and so we define index constraints in definition \ref{def:indexc}.
+
+\begin{defi}[Index constraints]
+Given a finite set of index variables $\varphi \subset \mathcal{V}$, we define a constraint $C$ on $\varphi$ to be an expression on indices $I$ and $J$ with free variables in $\varphi$ of shape $I \bowtie J$, where $\bowtie$ is a binary relation on $\mathbb{N}_\infty$ (typically $\bowtie\;\in\{\leq,<,=,\neq\}$). A finite set of constraints is denoted $\Phi$.
+\label{def:indexc}
+\end{defi}
+We say that a constraint $I \bowtie J$ on a finite set of index variables $\varphi \subset \mathcal{V}$ is \textit{satisfied} by an index valuation $\rho : \varphi \rightarrow \mathbb{N}$ denoted $\rho \vDash I \bowtie J$ if $\encoding{I}_\rho \bowtie \encoding{J}_\rho$ holds. We extend this notation to sets of constraints by $\rho \vDash \Phi$ when $\rho \vDash C$ for all $C \in \Phi$. Finally, given a finite set of index variables $\varphi \subset \mathcal{V}$ and a set of constraints $\Phi$, we write $\varphi;\Phi\vDash C$ for some constraint $C$, when for all valuations $\rho$ on $\varphi$ such that $\rho \vDash \Phi$ holds, we have that $\rho \vDash C$ also holds.
+%
+%\begin{defi}
+%The set of base types corresponds to the powerset of $\mathbb{N}$, defined by intervals %of indices $[I,J]$ bounding the sizes of naturals
+%\begin{align*}
+%    \kern18em \mathcal{B} ::= \texttt{Nat}[I,J]
+%\end{align*}
+%where for some natural $n$ with type $\texttt{Nat}[I,J]$ it must be that $I \leq n \leq %J$.
+%\begin{exmp}
+%The expression $\succc{\succc{\succc{0}}}$ has size $4$ and is compatible with types %$\texttt{Nat}[4,4]$, $\texttt{Nat}[0,4]$ and $\texttt{Nat}[0,10]$.
+%\end{exmp}
+%The above example naturally leads to a notion of subtyping of bounded naturals, to make %the type system more flexible. Specifically, the precision of bounds on naturals may be %\textit{weakened} by decreasing the lower bound or increasing the upper bound as %follows
+%\begin{align*}
+%    \kern15em\infrule{\varphi;\Phi\vDash I' \leq I\quad\quad \varphi;\Phi\vDash J \leq %J'}{\varphi;\Phi \vdash \texttt{Nat}[I,J] \sqsubseteq \texttt{Nat}[I',J']}
+%\end{align*}
+%\end{defi}%

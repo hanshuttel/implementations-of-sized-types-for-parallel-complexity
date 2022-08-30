@@ -1,0 +1,212 @@
+\chapter{Soundness of sized type implementation}\label{app:sizedtypesoundness}
+\setcounter{theorem}{10}
+
+
+\begin{lemma}[Additive advancement of time]
+Let $\Phi$ be a set of constraints with unknowns in $\varphi$ and let $T$ be a type then $\susume{\susume{T}{\varphi}{\Phi}{J}}{\varphi}{\Phi}{I} =\; \susume{T}{\varphi}{\Phi}{I+J}$.
+\begin{proof} On the structure of $T$.
+    \begin{description}
+    \item[$(\susume{\susume{\texttt{Nat}[K,L]}{\varphi}{\Phi}{J}}{\varphi}{\Phi}{I})$] obtained directly from  $\susume{\texttt{Nat}[K,L]}{\varphi}{\Phi}{J} = \texttt{Nat}[K,L]$ and $\susume{\texttt{Nat}[K,L]}{\varphi}{\Phi}{I} = \texttt{Nat}[K,L]$.
+    %
+    \item[$(\susume{\susume{\texttt{ch}^\sigma_L(\widetilde{T})}{\varphi}{\Phi}{J}}{\varphi}{\Phi}{I})$] We either have that
+    \begin{enumerate}
+        \item $\varphi;\Phi\vDash J \leq L$ and so we have that $\susume{\texttt{ch}^\sigma_L(\widetilde{T})}{\varphi}{\Phi}{J}=\texttt{ch}^\sigma_{L-J}(\widetilde{T})$. Then if $\varphi;\Phi\vDash I \leq L-J$ we also have $\varphi;\Phi\vDash I+J \leq L$ as $\varphi;\Phi\vDash J \leq L$, and so we obtain $\susume{\susume{\texttt{ch}^\sigma_L(\widetilde{T})}{\varphi}{\Phi}{J}}{\varphi}{\Phi}{I}=\susume{\texttt{ch}^\sigma_L(\widetilde{T})}{\varphi}{\Phi}{I+J}=\texttt{ch}^\sigma_{L-(I+J)}(\widetilde{T})$. Otherwise, we have that $\varphi;\Phi\nvDash I \leq L-J$, implying that $\varphi;\Phi\nvDash I+J \leq L$ as $\varphi;\Phi\vDash J \leq L$, and so we obtain $\susume{\susume{\texttt{ch}^\sigma_L(\widetilde{T})}{\varphi}{\Phi}{J}}{\varphi}{\Phi}{I}=\susume{\texttt{ch}^\sigma_L(\widetilde{T})}{\varphi}{\Phi}{I+J}=\texttt{ch}^\emptyset_{L-(I+J)}(\widetilde{T})$.
+        %
+        \item $\varphi;\Phi\nvDash J \leq L$ and so we have that $\susume{\texttt{ch}^\sigma_L(\widetilde{T})}{\varphi}{\Phi}{J}=\texttt{ch}^\emptyset_{L-J}(\widetilde{T})$ and $\susume{\texttt{ch}^\emptyset_{L-J}(\widetilde{T})}{\varphi}{\Phi}{I}=\texttt{ch}^\emptyset_{(L-J)-I}(\widetilde{T})$. It follows from the fact that $I$ is non-negative that also $\varphi;\Phi\nvDash I+J \leq L$ and so we obtain $\susume{\susume{\texttt{ch}^\sigma_L(\widetilde{T})}{\varphi}{\Phi}{J}}{\varphi}{\Phi}{I}=\texttt{ch}^\emptyset_{L-(J+I)}(\widetilde{T})=\texttt{ch}^\emptyset_{(L-J)-I}(\widetilde{T})$.
+    \end{enumerate}
+    %
+    \item[$(\susume{\susume{\forall_L\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})}{\varphi}{\Phi}{J}}{\varphi}{\Phi}{I})$] We either have that
+    \begin{enumerate}
+        \item $\varphi;\Phi\vDash J \leq L$ and so we have that $\susume{\forall_L\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})}{\varphi}{\Phi}{J}=\forall_{L-J}\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})$. Then if $\varphi;\Phi\vDash I \leq L-J$ we also have $\varphi;\Phi\vDash I+J \leq L$ as $\varphi;\Phi\vDash J \leq L$, and so we obtain $\susume{\susume{\forall_L\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})}{\varphi}{\Phi}{J}}{\varphi}{\Phi}{I}=\susume{\forall_L\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})}{\varphi}{\Phi}{I+J}=\forall_{L-(I+J)}\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})$. Otherwise, we have that $\varphi;\Phi\nvDash I \leq L-J$, implying that $\varphi;\Phi\nvDash I+J \leq L$ as $\varphi;\Phi\vDash J \leq L$, and so we obtain $\susume{\susume{\forall_L\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})}{\varphi}{\Phi}{J}}{\varphi}{\Phi}{I}=\susume{\forall_L\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})}{\varphi}{\Phi}{I+J}=\forall_{L-(I+J)}\widetilde{i}.\texttt{serv}^{\sigma\cap\{\texttt{out}\}}_K(\widetilde{T})$.
+        %
+        \item $\varphi;\Phi\nvDash J \leq L$ and so we have that $\susume{\forall_L\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})}{\varphi}{\Phi}{J}=\forall_{L-J}\widetilde{i}.\texttt{serv}^{\sigma\cap\{\texttt{out}\}}_K(\widetilde{T})$ and $\susume{\forall_{L-J}\widetilde{i}.\texttt{serv}^{\sigma\cap\{\texttt{out}\}}_K(\widetilde{T})}{\varphi}{\Phi}{I}=\forall_{(L-J)-I}\widetilde{i}.\texttt{serv}^{\sigma\cap\{\texttt{out}\}}_K(\widetilde{T})$. It follows from the fact that $I$ is non-negative that also $\varphi;\Phi\nvDash I+J \leq L$ and so we obtain $\susume{\susume{\forall_L\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})}{\varphi}{\Phi}{J}}{\varphi}{\Phi}{I}=\forall_{L-(I+J)}\widetilde{i}.\texttt{serv}^{\sigma\cap\{\texttt{out}\}}_K(\widetilde{T})=\forall_{(L-J)-I}\widetilde{i}.\texttt{serv}^{\sigma\cap\{\texttt{out}\}}_K(\widetilde{T})$.
+    \end{enumerate}
+    \end{description}
+\end{proof}
+\end{lemma}
+%
+
+% \begin{lemma}
+% If $\varphi;\Phi;\Gamma;\Delta\vdash e : T$ then $\varphi;\Phi;\Gamma;\cdot\vdash \circledcirc e : S$ with $\varphi;\Phi\vdash S \sqsubseteq T$.
+% \begin{proof} By induction on $e$. We only show the interesting cases
+%     \begin{description}
+%     %
+%     \item[$(e_\theta)$] We have two cases
+%     \begin{enumerate}
+%         \item $\theta = v$ By $\runa{S-avar}$ we have that $\varphi;\Phi;\Gamma;\Delta,v:T\vdash e_v : T$ and $\varphi;\Phi;\Gamma;\Delta,v:T\vdash e : S$ such that $\varphi;\Phi\vdash S \sqsubseteq T$. As $\circledcirc e_v = \circledcirc e$, we obtain by induction that $\varphi;\Phi;\Gamma;\cdot\vdash \circledcirc e : S'$ with $\varphi;\Phi\vdash S' \sqsubseteq S$ and by transitivity we have that $\varphi;\Phi\vdash S'\sqsubseteq T$.
+%         %
+%         \item $\theta = e'$ By $\runa{S-strength}$ we have that $\varphi;\Phi;\Gamma;\Delta\vdash e_{e'} : \texttt{Nat}[I-1,J-1]$,
+%         $\varphi;\Phi;\Gamma;\Delta\vdash e : \texttt{Nat}[I',J']$ and $\varphi;\Phi;\Gamma;\Delta\vdash e' : \texttt{Nat}[I,J]$ such that $\varphi;\Phi\vdash \texttt{Nat}[I',J']\sqsubseteq\texttt{Nat}[I-1,J-1]$. By induction we obtain $\varphi;\Phi;\Gamma;\Delta\vdash \circledcirc e : \texttt{Nat}[I'',J'']$ with $\varphi;\Phi\vdash \texttt{Nat}[I'',J''] \sqsubseteq \texttt{Nat}[I',J']$. By the transitive property of $\leq$ it follows that $\varphi;\Phi\vdash \texttt{Nat}[I'',J''] \sqsubseteq \texttt{Nat}[I-1,J-1]$. 
+%     \end{enumerate}
+%     %
+%     %\item[$(e :: e')$] By $\runa{S-cons}$ we have that $\varphi;\Phi;\Gamma\vdash_\Delta e :: e' : \texttt{List}[I+1,J+1](\mathcal{B}_1 \uplus_{\varphi;\Phi} \mathcal{B}_2)$, $\varphi;\Phi;\Gamma\vdash_\Delta e : \mathcal{B}_1$ and $\varphi;\Phi;\Gamma\vdash_\Delta e' : \texttt{List}[I,J](\mathcal{B}_2)$. As $\circledcirc (e :: e') = (\circledcirc e) :: (\circledcirc e')$, we have by induction and by $\runa{SS-lweak}$ that $\varphi;\Phi;\Gamma\vdash_\Delta \circledcirc e : \mathcal{B}_1'$ and $\varphi;\Phi;\Gamma\vdash_\emptyset \circledcirc e' : \texttt{List}[I',J'](\mathcal{B}_2')$ such that $\varphi;\Phi\vDash I \leq I'$, $\varphi;\Phi\vDash J' \leq J$, $\varphi;\Phi\vdash \mathcal{B}_1' \sqsubseteq \mathcal{B}_1$ and $\varphi;\Phi\vdash \mathcal{B}_2' \sqsubseteq \mathcal{B}_2$. By application of $\runa{S-cons}$ we obtain $\varphi;\Phi;\Gamma\vdash_\emptyset (\circledcirc e) :: (\circledcirc e') : \texttt{List}[I' + 1, J' + 1](\mathcal{B}_1' \uplus_{\varphi;\Phi} \mathcal{B}_2')$. It follows from $\varphi;\Phi\vDash I \leq I'$ and $\varphi;\Phi\vDash J' \leq J$ that also $\varphi;\Phi\vDash I+1 \leq I'+1$ and $\varphi;\Phi\vDash J'+1 \leq J+1$
+%     %%and so by $\runa{SS-nweak}$ $\varphi;\Phi\vdash\texttt{Nat}[I'+1,J'+1] \sqsubseteq \texttt{Nat}[I+1,J+1]$.
+%     %
+%     \item[$(s(e))$] By $\runa{S-succ}$ we have that $\varphi;\Phi;\Gamma;\Delta\vdash s(e) : \texttt{Nat}[I+1,J+1]$ and $\varphi;\Phi;\Gamma;\Delta\vdash e : \texttt{Nat}[I,J]$. As $\circledcirc s(e) = s(\circledcirc e)$, we have by induction and by $\runa{SS-nweak}$ that $\varphi;\Phi;\Gamma\vdash_\emptyset \circledcirc e : \texttt{Nat}[I',J']$ such that $\varphi;\Phi\vDash I \leq I'$ and $\varphi;\Phi\vDash J' \leq J$. By application of $\runa{S-succ}$ we obtain $\varphi;\Phi;\Gamma;\cdot\vdash s(\circledcirc e) : \texttt{Nat}[I' + 1, J' + 1]$. It follows from $\varphi;\Phi\vDash I \leq I'$ and $\varphi;\Phi\vDash J' \leq J$ that also $\varphi;\Phi\vDash I+1 \leq I'+1$ and $\varphi;\Phi\vDash J'+1 \leq J+1$ and so by $\runa{SS-nweak}$ $\varphi;\Phi\vdash\texttt{Nat}[I'+1,J'+1] \sqsubseteq \texttt{Nat}[I+1,J+1]$.
+%     %
+%     \end{description}
+% \end{proof}
+% \end{lemma}
+\setcounter{theorem}{16}
+\begin{lemma}[Substitution]\text{ }
+\begin{enumerate}
+    \item If $\varphi;\Phi;\Gamma,v:T\vdash e' : S$ and $\varphi;\Phi;\Gamma\vdash e : T$ then $\varphi;\Phi;\Gamma\vdash e'[v\mapsto e] : S$.
+    \item If $\varphi;\Phi;\Gamma,v:T\vdash P \triangleleft \kappa$ and $\varphi;\Phi;\Gamma\vdash e : T$ then $\varphi;\Phi;\Gamma\vdash P[v\mapsto e] \triangleleft \kappa$.
+\end{enumerate}
+\begin{proof} The first point is proved by induction on the type rules of expressions, and the second by induction on the type rules for processes. We consider them separately
+\begin{enumerate}
+    \item 
+\begin{description}
+%
+\item[$\runa{S-zero}$] We have that $\varphi;\Phi;\Gamma,v:T\vdash 0 : \texttt{Nat}[0,0]$. We obtain $\varphi;\Phi;\Gamma\vdash 0[v\mapsto e] : \texttt{Nat}[0,0]$ directly from $0[v\mapsto e] = 0$ and $\varphi;\Phi;\Gamma\vdash 0 : \texttt{Nat}[0,0]$.
+%
+\item[$\runa{S-succ}$] We have that $\varphi;\Phi;\Gamma,v:T\vdash e' : \texttt{Nat}[I,J]$, $\varphi;\Phi;\Gamma,v:T\vdash s(e') : \texttt{Nat}[I+1,J+1]$ and $\varphi;\Phi;\Gamma\vdash e : T$. By induction we obtain $\varphi;\Phi;\Gamma\vdash e'[v\mapsto e] : \texttt{Nat}[I,J]$, and so by application of $\runa{S-succ}$ we derive $\varphi;\Phi;\Gamma\vdash s(e'[v\mapsto e]) : \texttt{Nat}[I+1,J+1]$.
+%
+\item[$\runa{S-var}$] We have two cases. Either we have that $\varphi;\Phi;\Gamma,v:T\vdash v : T$ and we substitute $e$ for $v$, or we have that $\varphi;\Phi;\Gamma,v:T,w:S\vdash v : T$. The first case is obtained directly from the assumption that $\varphi;\Phi;\Gamma\vdash e : T$. The second case is obtained directly from $v[w\mapsto e] = v$ when $v\neq w$ and $\varphi;\Phi;\Gamma,v:T\vdash v : T$ by $\runa{S-var}$.
+%
+\item[$\runa{S-subsumption}$] We have that $\varphi;\Phi;\Gamma,v:T\vdash e' : S'$ and $\varphi;\Phi\vdash S' \sqsubseteq S$ such that $\varphi;\Phi;\Gamma,v:T\vdash e' : S$. By the assumption we have that $\varphi;\Phi;\Gamma\vdash e : T$, and so by induction we obtain $\varphi;\Phi;\Gamma\vdash e'[v\mapsto e] : S'$, and so by application of $\runa{S-subsumption}$, we derive $\varphi;\Phi;\Gamma\vdash e'[v\mapsto e] : S$.
+%
+% \item[$\runa{S-avar}$] We have that $\varphi;\Phi;\Gamma,v:T;\Delta,w:S'\vdash e' : S$, $\varphi;\Phi\vdash S \sqsubseteq S'$, $\varphi;\Phi;\Gamma,v:T;\Delta\vdash {e'}_w : S'$ and $\varphi;\Phi;\Gamma;\Delta,w:S'\vdash e : T$. By induction we obtain $\varphi;\Phi;\Gamma;\Delta,w:S'\vdash e'[v \mapsto T] : S$, and by application of $\runa{S-avar}$ we derive $\varphi;\Phi;\Gamma,v:T;\Delta\vdash {e'}_w[v\mapsto T] : S'$. 
+% %
+% \item[$\runa{S-strength}$] We have that $\varphi;\Phi;\Gamma,v:T;\Delta\vdash e' : \texttt{Nat}[I',J']$, $\varphi;\Phi;\Gamma,v:T;\Delta\vdash e'' : \texttt{Nat}[I,J]$, $\varphi;\Phi\vdash \texttt{Nat}[I',J'] \sqsubseteq \texttt{Nat}[I-1,J-1]$, $\varphi;\Phi;\Gamma,v:T;\Delta\vdash {e'}_{e_''} : \texttt{Nat}[I-1,J-1]$ and $\varphi;\Phi;\Gamma;\Delta\vdash e : T$. By induction we obtain $\varphi;\Phi;\Gamma,v:T;\Delta\vdash e'[v\mapsto e] : \texttt{Nat}[I',J']$ and $\varphi;\Phi;\Gamma,v:T;\Delta\vdash e''[v\mapsto e] : \texttt{Nat}[I,J]$. By application of $\runa{S-strength}$ we then obtain $\varphi;\Phi;\Gamma;\Delta\vdash {e'}_{e_''}[v\mapsto e] : \texttt{Nat}[I-1,J-1]$.
+%
+\end{description}
+    %
+    \item 
+\begin{description}
+%
+\item[$\runa{S-nil}$] We have that $\varphi;\Phi;\Gamma,v:T\vdash \nil \triangleleft \{0\}$. We obtain $\varphi;\Phi;\Gamma\vdash \nil[v\mapsto e] \triangleleft \{0\}$ directly from $\nil[v\mapsto e] = \nil$ and $\varphi;\Phi;\Gamma\vdash \nil \triangleleft \{0\}$.
+%
+\item[$\runa{S-tick}$] We have that $\varphi;\Phi;\downarrow_1\!\!(\Gamma,v:T)\vdash P \triangleleft \kappa$ and $\varphi;\Phi;\Gamma,v:T\vdash \tick{P} \triangleleft \kappa + 1$. By Lemma \ref{lemma:susumedefer}, we have that $\varphi;\Phi;\downarrow_1\!\!\Gamma\vdash e :\; \susume{T}{\varphi}{\Phi}{1}$, and so by induction we obtain $\varphi;\Phi;\downarrow_1\!\!\Gamma\vdash P[v\mapsto e] \triangleleft \kappa$. By application of $\runa{S-tick}$ we then derive $\varphi;\Phi;\Gamma\vdash \tick{P[v\mapsto e]} \triangleleft \kappa + 1$.
+%
+\item[$\runa{S-match}$] We have that $\varphi;\Phi;\Gamma,v:T\vdash e' : \texttt{Nat}[I,J]$, $\varphi;(\Phi,I\leq 0);\Gamma,v:T\vdash P \triangleleft \kappa$, $\varphi;(\Phi,J\geq 1);\Gamma,v:T,x:\texttt{Nat}[I-1,J-1]\vdash Q \triangleleft \kappa'$, $\varphi;\Phi;\Gamma,v:T\vdash \match{e}{P}{x}{Q} \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\kappa')$ and $\varphi;\Phi;\Gamma\vdash e : T$. From point 1 we obtain $\varphi;\Phi;\Gamma\vdash e'[v\mapsto e] : \texttt{Nat}[I,J]$ and by weakening (Lemma \ref{lemma:weakening}) and induction we derive $\varphi;(\Phi,I\leq 0);\Gamma\vdash P[v\mapsto e] \triangleleft \kappa$ and $\varphi;(\Phi,J\geq 1);\Gamma,x:\texttt{Nat}[I-1,J-1]\vdash Q[v\mapsto e] \triangleleft \kappa'$. Thus, by application of $\runa{S-match}$, we obtain $\varphi;\Phi;\Gamma\vdash \match{e}{P}{x}{Q}[v\mapsto e] \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\kappa')$. 
+%
+\item[$\runa{S-par}$] We have that $\varphi;\Phi;\Gamma,v:T\vdash P \triangleleft \kappa$, $\varphi;\Phi;\Gamma,v:T\vdash Q \triangleleft \kappa'$, $\varphi;\Phi;\Gamma,v:T\vdash P \mid Q \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\kappa')$ and $\varphi;\Phi;\Gamma\vdash e : T$. By induction we obtain $\varphi;\Phi;\Gamma\vdash P[v\mapsto e] \triangleleft \kappa$ and $\varphi;\Phi;\Gamma\vdash Q[v\mapsto e] \triangleleft \kappa'$. Thus, by application of $\runa{S-par}$, we derive $\varphi;\Phi;\Gamma\vdash (P \mid Q)[v\mapsto e] \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\kappa')$.
+%
+\item[$\runa{S-nu}$] We have that $\varphi;\Phi;\Gamma,v:T,a:S;\Delta\vdash P \triangleleft \kappa$, $\varphi;\Phi;\Gamma,v:T\vdash \newvar{a}{P} \triangleleft \kappa$ and $\varphi;\Phi;\Gamma\vdash e : T$. By weakening (Lemma \ref{lemma:weakening}) we obtain $\varphi;\Phi;\Gamma,a:S\vdash e : T$, and so by induction we have that $\varphi;\Phi;\Gamma,a:S\vdash P[v\mapsto e] \triangleleft \kappa$. Thus, by application of $\runa{S-nu}$ we derive $\varphi;\Phi;\Gamma\vdash (\newvar{a}{P})[v\mapsto e] \triangleleft \kappa$.
+%
+\item[$\runa{S-iserv}$] We have that $\varphi;\Phi;\Gamma,w:S\vdash a : \forall_0\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})$, $(\varphi,\widetilde{i});\Phi;\text{ready}(\varphi,\Phi,\downarrow_I\!\!(\Gamma,w:S)),\widetilde{v}:\widetilde{T}\vdash P \triangleleft \kappa$, $\varphi;\Phi;\Gamma,w:S\vdash\; !\inputch{a}{\widetilde{v}}{}{P} \triangleleft \{I\}$ and $\varphi;\Phi;\Gamma\vdash e : S$. By Lemma \ref{lemma:susumedefer} this implies $\varphi;\Phi;\text{ready}(\varphi,\Phi,\downarrow_I\!\!\Gamma)\vdash e : \text{ready}(\varphi,\Phi,\downarrow_I\!\!S)$, and from point $1$ we obtain $\varphi;\Phi;\Gamma\vdash a[w\mapsto e] : \forall_0\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})$. By weakening (Lemma \ref{lemma:weakening}) we then derive $\varphi;\Phi;\text{ready}(\varphi,\Phi,\downarrow_I\!\!\Gamma),\widetilde{v}:\widetilde{T}\vdash e : \text{ready}(\varphi,\Phi,\downarrow_I\!\!S)$, and so by induction we obtain $(\varphi,\widetilde{i});\Phi;\text{ready}(\varphi,\Phi,\downarrow_I\!\!\Gamma),\widetilde{v}:\widetilde{T}\vdash P[w\mapsto e] \triangleleft \kappa$. Finally, by application of $\runa{S-iserv}$, we derive $\varphi;\Phi;\Gamma\vdash\; !\inputch{a}{\widetilde{v}}{}{P}[w\mapsto e] \triangleleft \{I\}$.
+%
+\item[$\runa{S-ich}$] We have that $\varphi;\Phi;\Gamma,v:T\vdash a : \texttt{ch}^\sigma_I(\widetilde{S})$, $\varphi;\Phi;\downarrow_I\;\;(\Gamma,v:T),\widetilde{w}:\widetilde{S}\vdash P \triangleleft \kappa$, $\varphi;\Phi;\Gamma,v:T\vdash \inputch{a}{\widetilde{w}}{}{P} \triangleleft \kappa + I$ and $\varphi;\Phi;\Gamma\vdash e : T$. From point $1$ we obtain $\varphi;\Phi;\Gamma\vdash a[v\mapsto e] : \texttt{ch}^\sigma_I(\widetilde{S})$ (Note that it may be that $v=a$). By Lemma \ref{lemma:susumedefer}, we have that $\varphi;\Phi;\downarrow_I\!\!\Gamma\vdash e :\; \susume{T}{\varphi}{\Phi}{I}$, and so by weakening (Lemma \ref{lemma:weakening}) and induction we derive $\varphi;\Phi;\downarrow_I\;\;\Gamma,\widetilde{w}:\widetilde{S}\vdash P[v\mapsto e] \triangleleft \kappa$. Thus, by application of $\runa{S-ich}$ we obtain $\varphi;\Phi;\Gamma\vdash (\inputch{a}{\widetilde{w}}{}{P})[v\mapsto e] \triangleleft \kappa + I$. 
+%
+\item[$\runa{S-och}$] We have that $\varphi;\Phi;\Gamma,v:T\vdash a : \texttt{ch}^\sigma_I(\widetilde{S})$, $\varphi;\Phi;\downarrow_I\!\!(\Gamma,v:T)\vdash \widetilde{e}' : \widetilde{S}'$, $\varphi;\Phi;\Gamma,v:T\vdash \asyncoutputch{a}{\widetilde{e}'}{} \triangleleft \{I\}$ and $\varphi;\Phi;\Gamma\vdash e : T$. By Lemma \ref{lemma:susumedefer}, we have that $\varphi;\Phi;\downarrow_I\!\!\Gamma\vdash e :\; \susume{T}{\varphi}{\Phi}{I}$, and so from point $1$ we obtain $\varphi;\Phi;\downarrow_I\!\!\Gamma\vdash \widetilde{e}'[v\mapsto e] : \widetilde{S}'$ and $\varphi;\Phi;\Gamma\vdash a[v\mapsto e] : \texttt{ch}^\sigma_I(\widetilde{S})$. By application of $\runa{S-och}$ we thus obtain $\varphi;\Phi;\Gamma\vdash \asyncoutputch{a}{\widetilde{e}'}{}[v\mapsto e] \triangleleft \{I\}$.
+%
+\item[$\runa{S-annot}$] We have that $\varphi;\Phi;\downarrow_n\!\!(\Gamma,v:T)\vdash P \triangleleft \kappa$ and $\varphi;\Phi;\Gamma,v:T\vdash n : P \triangleleft \kappa + n$. By Lemma \ref{lemma:susumedefer}, we have that $\varphi;\Phi;\downarrow_n\!\!\Gamma\vdash e :\; \susume{T}{\varphi}{\Phi}{n}$, and so by induction we obtain $\varphi;\Phi;\downarrow_n\!\!\Gamma\vdash P[v\mapsto e] \triangleleft \kappa$. By application of $\runa{S-annot}$ we then derive $\varphi;\Phi;\Gamma\vdash n : P[v\mapsto e] \triangleleft \kappa + n$.
+%
+\item[$\runa{S-oserv}$] We have that $\varphi;\Phi;\Gamma,v:T\vdash a : \forall_0\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{S})$, $\varphi;\Phi;\downarrow_I\!\!(\Gamma,v:T)\vdash \widetilde{e}' : \widetilde{S}'$, $\varphi;\Phi;\Gamma,v:T\vdash \asyncoutputch{a}{\widetilde{e}}{} \triangleleft \{K\{\widetilde{J}/\widetilde{i}\}+I\}$ and $\varphi;\Phi;\Gamma\vdash e : T$, where $\text{instantiate}(\widetilde{i},\widetilde{S}')=\{\widetilde{J}/\widetilde{i}\}$. From point $1$ we obtain $\varphi;\Phi;\Gamma\vdash a[v\mapsto e] : \forall_0\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{S})$, and by Lemma \ref{lemma:basisdefer} we derive $\varphi;\Phi;\downarrow_I\!\!\Gamma\vdash e :\; \susume{T}{\varphi}{\Phi}{I}$. Thus, by induction we obtain $\varphi;\Phi;\downarrow_I\!\!\Gamma\vdash \widetilde{e}'[v\mapsto e] : \widetilde{S}'$. Finally, by application of $\runa{S-oserv}$, we obtain $\varphi;\Phi;\Gamma\vdash \asyncoutputch{a}{\widetilde{e}[v\mapsto e]}{} \triangleleft \{K\{\widetilde{J}/\widetilde{i}\}+I\}$.
+%
+%
+\end{description}
+\end{enumerate}
+\end{proof}
+\end{lemma}
+
+\begin{lemma}[Subject congruence]
+Let $P$ and $Q$ be processes such that $P\equiv Q$ then $\varphi;\Phi;\Gamma\vdash P \triangleleft \kappa$ if and only if $\varphi;\Phi;\Gamma\vdash Q \triangleleft \kappa'$ with $\varphi;\Phi\vDash \kappa = \kappa'$.
+\begin{proof} By induction on the rules defining $\equiv$.
+\begin{description}
+\item[$\runa{SC-nil}$] We have that $P \mid \nil \equiv P$. We either have that $\varphi;\Phi;\Gamma\vdash P \mid \nil \triangleleft \kappa'$ or $\varphi;\Phi;\Gamma\vdash P \triangleleft \kappa$. In the former case, we must use type rule $\runa{S-par}$, and so we derive $\varphi;\Phi;\Gamma\vdash P \triangleleft \kappa$. Thus, it suffices to show that $\varphi;\Phi\vDash \kappa = \kappa'$. By $\runa{S-nil}$ we have that $\varphi;\Phi;\Gamma\vdash \nil \triangleleft \{0\}$. By $\runa{S-par}$ we have that $\kappa'=\text{basis}(\varphi,\Phi,\kappa \cup \{0\}) = \text{basis}(\varphi,\Phi,\kappa)$, as $\varphi;\Phi\vDash 0 \leq \kappa$. By Lemma \ref{lemma:basisdefer} we have that $\varphi;\Phi\vDash\text{basis}(\varphi,\Phi,\kappa)=\kappa$.
+%
+\item[$\runa{SC-commu}$] We have that $P\mid Q \equiv Q\mid P$. In either case we must use type rule $\runa{S-par}$ and so we have that $\varphi;\Phi;\Gamma\vdash P \triangleleft \kappa$ and $\varphi;\Phi;\Gamma\vdash Q \triangleleft \kappa'$. By the commutative law of set union, $\kappa\cup\kappa'=\kappa'\cup\kappa$ and so by extension, $\text{basis}(\varphi,\Phi,\kappa\cup\kappa')=\text{basis}(\varphi,\Phi,\kappa'\cup\kappa)$. Thus, by application of $\runa{S-par}$ we obtain $\varphi;\Phi;\Gamma\vdash Q \mid P \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\kappa')$ and $\varphi;\Phi;\Gamma\vdash P \mid Q \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\kappa')$.
+%
+\item[$\runa{SC-assoc}$] We have that $P\mid (Q \mid R) \equiv (P\mid Q) \mid R$. In either case we must use type rule $\runa{S-par}$ twice such that $\varphi;\Phi;\Gamma\vdash P \triangleleft \kappa$, $\varphi;\Phi;\Gamma\vdash Q \triangleleft \kappa'$ and
+$\varphi;\Phi;\Gamma\vdash R \triangleleft \kappa''$. From this we obtain two derivation trees of the form in both cases
+    \begin{align*}
+        \begin{prooftree}
+        \Infer0{\pi_P}
+        \Infer1{\varphi;\Phi;\Gamma\vdash P \triangleleft \kappa}
+        %
+        \Infer0{\pi_Q}
+        \Infer1{\varphi;\Phi;\Gamma\vdash Q \triangleleft \kappa'}
+        %
+        \Infer0{\pi_R}
+        \Infer1{\varphi;\Phi;\Gamma\vdash R \triangleleft \kappa''}
+        %
+        \Infer2{\varphi;\Phi;\Gamma\vdash Q \mid R \triangleleft \text{basis}(\varphi,\Phi,\kappa'\cup\kappa'')}
+        %
+        \Infer2{\varphi;\Phi;\Gamma\vdash P \mid (Q \mid R) \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\text{basis}(\varphi,\Phi,\kappa'\cup\kappa''))}
+        \end{prooftree}\\
+        %
+        \\
+        %
+        \begin{prooftree}
+        \Infer0{\pi_P}
+        \Infer1{\varphi;\Phi;\Gamma\vdash P \triangleleft \kappa}
+        %
+        \Infer0{\pi_Q}
+        \Infer1{\varphi;\Phi;\Gamma\vdash Q \triangleleft \kappa'}
+        %
+        \Infer2{\varphi;\Phi;\Gamma\vdash P \mid Q \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\kappa')}
+        %
+        \Infer0{\pi_R}
+        \Infer1{\varphi;\Phi;\Gamma\vdash R \triangleleft \kappa''}
+        %
+        \Infer2{\varphi;\Phi;\Gamma\vdash (P \mid Q) \mid R \triangleleft \text{basis}(\varphi,\Phi,\text{basis}(\varphi,\Phi,\kappa\cup\kappa')\cup\kappa'')}
+        \end{prooftree}
+    \end{align*}
+Thus, it suffices to show that $\text{basis}(\varphi,\Phi,\kappa\cup\text{basis}(\varphi,\Phi,\kappa'\cup\kappa''))=\text{basis}(\varphi,\Phi,\text{basis}(\varphi,\Phi,\kappa\cup\kappa')\cup\kappa'')$. We obtain this directly from Lemma \ref{lemma:basisdefer}.
+%
+\item[$\runa{SC-scope}$] We have that $\newvar{a}{(P \mid Q)} \equiv \newvar{a}{P\mid Q}$ and that $a$ is not free in $Q$. We consider the implications separately
+\begin{enumerate}
+    \item We have that $\varphi;\Phi;\Gamma\vdash \newvar{a}{(P \mid Q)} \triangleleft \kappa''$. Thus, we must use type rule $\runa{S-nu}$ and $\runa{S-par}$ such that $\varphi;\Phi;\Gamma,a:T\vdash P \mid Q \triangleleft \kappa''$, $\varphi;\Phi;\Gamma,a:T\vdash P \triangleleft \kappa$ and $\varphi;\Phi;\Gamma,a:T\vdash Q \triangleleft \kappa'$. By strengthening (Lemma \ref{lemma:strengthening}) we obtain $\varphi;\Phi;\Gamma\vdash Q \triangleleft \kappa'$, and by application of $\runa{S-nu}$ we derive $\varphi;\Phi;\Gamma\vdash \newvar{a}{P} \triangleleft \kappa$. Thus, by application of $\runa{S-par}$ we obtain $\varphi;\Phi;\Gamma\vdash \newvar{a}{P} \mid Q \triangleleft \kappa''$.
+    %
+    \item We have that $\varphi;\Phi;\Gamma\vdash \newvar{a}{P} \mid Q \triangleleft \kappa''$. Thus, we must use type rule $\runa{S-par}$ and $\runa{S-nu}$ such that $\varphi;\Phi;\Gamma\vdash \newvar{a}{P} \triangleleft \kappa$, $\varphi;\Phi;\Gamma,a:T\vdash P \triangleleft \kappa$ and $\varphi;\Phi;\Gamma\vdash Q \triangleleft \kappa'$. By weakening (Lemma \ref{lemma:weakening}) we obtain $\varphi;\Phi;\Gamma,a:T\vdash Q \triangleleft \kappa'$ and so by application of $\runa{S-par}$ and $\runa{S-nu}$ we derive $\varphi;\Phi;\Gamma,a:T\vdash P \mid Q \triangleleft \kappa''$ and $\varphi;\Phi;\Gamma\vdash \newvar{a}{(P \mid Q)} \triangleleft \kappa''$.
+\end{enumerate}
+%
+\item[$\runa{SC-par}$] We have that $P\mid Q \equiv P' \mid Q$ with $P\equiv P'$. We must use type rule $\runa{S-par}$ and so we either have that $\varphi;\Phi;\Gamma\vdash P \mid Q \triangleleft \kappa''$ or $\varphi;\Phi;\Gamma\vdash P' \mid Q \triangleleft \kappa''$ with $\varphi;\Phi;\Gamma\vdash Q \triangleleft \kappa'$. When $P$ is well-typed we obtain an equivalent typing for $P'$ and vice-versa by induction. Thus, we have that $\varphi;\Phi;\Gamma\vdash P \triangleleft \kappa$ and $\varphi;\Phi;\Gamma\vdash P' \triangleleft \kappa'$ with $\varphi;\Phi\vDash \kappa = \kappa'$, and so in either case, it suffices to apply $\runa{S-par}$.
+%
+\item[$\runa{SC-res}$] We have that $\newvar{a}{P} \equiv \newvar{a}{Q}$ with $P \equiv Q$. We must use type rule $\runa{S-nu}$ and so we either have that $\varphi;\Phi;\Gamma\vdash \newvar{a}{P} \triangleleft \kappa$ with $\varphi;\Phi;\Gamma,a:T\vdash P \triangleleft \kappa$ or $\varphi;\Phi;\Gamma\vdash \newvar{a}{Q} \triangleleft \kappa'$ with $\varphi;\Phi;\Gamma,a:T\vdash Q \triangleleft \kappa'$. In either case we use induction to obtain an equivalent typing for $Q$ when we have the same typing for $P$ and vice-versa, i.e. $\varphi;\Phi\vDash \kappa = \kappa'$. Thus in either case, it suffices to apply $\runa{S-nu}$.
+%
+\item[$\runa{SC-zero}$] This result is obtained directly from $\susume{\Gamma}{\varphi}{\Phi}{0}=\Gamma$.% We have that $P \equiv 0 : P$, and so we must use type rule $\runa{S-annot}$. 
+%
+\item[$\runa{SC-sum}$] We have that $n : m : P \equiv n+m : P$, and so we must use type rule $\runa{S-annot}$. In the first case we have that $\varphi;\Phi;\downarrow_m\!\!(\downarrow_n\!\!\Gamma)\vdash P \triangleleft \kappa$, $\varphi;\Phi;\downarrow_n\!\!\Gamma\vdash m : P \triangleleft \kappa + m$ and $\varphi;\Phi;\Gamma\vdash n : m : P \triangleleft \kappa + m + n$. In the second case we have that $\varphi;\Phi;\downarrow_{n+m}\!\!\Gamma\vdash P \triangleleft \kappa$ and $\varphi;\Phi;\Gamma\vdash (n+m) : P \triangleleft \kappa + m + n$. Thus, it suffices to show that $\susume{\Gamma}{\varphi}{\Phi}{n+m} = \susume{\susume{\Gamma}{\varphi}{\Phi}{n}}{\varphi}{\Phi}{m}$. We obtain this directly from Lemma \ref{lemma:addsusume}.
+%
+\item[$\runa{SC-dis}$] We have that $n : (P \mid Q) \equiv (n : P) \mid (n : Q)$, and so we must use type rule $\runa{S-par}$ and $\runa{S-annot}$. We have the two derivation trees 
+{\small
+\begin{align*}
+    \begin{prooftree}
+    \Infer0{\pi_P}
+    \Infer1{\varphi;\Phi;\downarrow_n\!\!\Gamma\vdash P \triangleleft \kappa}
+    %
+    \Infer0{\pi_Q}
+    \Infer1{\varphi;\Phi;\downarrow_n\!\!\Gamma\vdash Q \triangleleft \kappa'}
+    %
+    \Infer2{\varphi;\Phi;\downarrow_n\!\!\Gamma\vdash P \mid Q \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\kappa')}
+    %
+    \Infer1{\varphi;\Phi;\Gamma\vdash n : (P \mid Q) \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\kappa') + n}
+    \end{prooftree}\quad
+    %
+    \begin{prooftree}
+    \Infer0{\pi_P}
+    \Infer1{\varphi;\Phi;\downarrow_n\!\!\Gamma\vdash P \triangleleft \kappa}
+    \Infer1{\varphi;\Phi;\Gamma\vdash n : P \triangleleft \kappa + n}
+    %
+    \Infer0{\pi_Q}
+    \Infer1{\varphi;\Phi;\downarrow_n\!\!\Gamma\vdash Q \triangleleft \kappa'}
+    \Infer1{\varphi;\Phi;\Gamma\vdash n : Q \triangleleft \kappa' + n}
+    %
+    \Infer2{\varphi;\Phi;\Gamma\vdash (n : P) \mid (n:Q) \triangleleft \text{basis}(\varphi,\Phi,(\kappa+n)\cup(\kappa'+n))}
+    \end{prooftree}
+\end{align*}}
+Thus, it suffices to show that $\varphi;\Phi\vDash \text{basis}(\varphi,\Phi,\kappa\cup\kappa') + n = \text{basis}(\varphi,\Phi,(\kappa+n)\cup(\kappa'+n))$. We obtain this directly from Lemma \ref{lemma:basisdefer}.
+%
+\item[$\runa{SC-ares}$] We have that $n : \newvar{a}{P} \equiv \newvar{a}{n : P}$, and so we must use type rule $\runa{S-annot}$ and $\runa{S-nu}$. We have the two derivation trees
+\begin{align*}
+    \begin{prooftree}
+    \Infer0{\pi_P}
+    \Infer1{\varphi;\Phi;\downarrow_n\!\!\Gamma,a:T\vdash P \triangleleft \kappa}
+    \Infer1{\varphi;\Phi;\downarrow_n\!\!\Gamma\vdash \newvar{a}{P} \triangleleft \kappa}
+    \Infer1{\varphi;\Phi;\Gamma\vdash n : \newvar{a}{P} \triangleleft \kappa + n}
+    \end{prooftree}\quad
+    %
+    \begin{prooftree}
+    \Infer0{\pi_P}
+    \Infer1{\varphi;\Phi;\downarrow_n\!\!(\Gamma,a:\uparrow^n\!\!T)\vdash P \triangleleft \kappa'}
+    \Infer1{\varphi;\Phi;\Gamma,a:\uparrow^n\!\!T\vdash n : P \triangleleft \kappa' + n}
+    \Infer1{\varphi;\Phi;\Gamma\vdash \newvar{a}{n : P} \triangleleft \kappa' + n}
+    \end{prooftree}
+\end{align*}
+From Lemma \ref{lemma:delayingg}, we have that $\susume{\uparrow^n\!\!T}{\varphi}{\Phi}{n}=T$, and so $\susume{\Gamma,a:\uparrow^n\!\!T^}{\varphi}{\Phi}{n}=\;\susume{\Gamma}{\varphi}{\Phi}{n},a:T$. This implies that $\kappa=\kappa'$, and so from either typing we can reach the other by application of type rule $\runa{S-nu}$ and $\runa{S-annot}$.
+\end{description}
+\end{proof}
+\end{lemma}

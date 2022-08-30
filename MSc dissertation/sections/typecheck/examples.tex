@@ -1,0 +1,262 @@
+\section{Examples}
+
+The expressiveness and accuracy of the type checker depends on the guarantees we can deduce from the structure of processes, and express as sized types for terms and constraints on indices. For instance, the pattern match construct $\match{e}{P}{x}{Q}$ provides us guarantees on the size of $e$ in the subprocesses $P$ and $Q$. This is expressed as constraints $I\leq 0$ and $J\geq 0$ in type rule $\runa{S-match}$, where $e$ is assigned a type $\texttt{Nat}[I,J]$. Additionally, the variable $x$ bound in the successor pattern must subsequently have a size in the interval $\texttt{Nat}[I-1,J-1]$. We can use this information to determine that the recursion simulated by a server is in fact primitive, such that we can guarantee termination, and bound the parallel complexity.\\
+
+However, these constraints and relationships between sized types are quite simple (and only express constant changes in size), whereas many interesting parallel algorithms use a divide and conquer approach, where the input is divided, rather than \textit{subtracted} from. Thus, we are limited to expressing constant deficits in the size of inputs for such processes, resulting in imprecise complexity bounds for some processes.\\
+
+In this section, we therefore show how the type checker can be extended with practical constructs that increase its accuracy and expressiveness. Specifically, we work towards typing a parallel merge sort implementation, and so we first extend expressions with the empty list constructor $[]$ and the \textit{cons} operator $e_1 :: e_2$ that places $e_1$ as the head of the list $e_2$. We correspondingly extend the language of types, now distinguishing between base types $\mathcal{B}$ and types
+\begin{align*}
+    \mathcal{B} ::= \texttt{Nat}[I,J] \mid \texttt{List}[I,J](\mathcal{B})
+\end{align*}
+%
+The list type is read as follows. The interval describes a lower bound and upper bound on the length of the list, and the base type $\mathcal{B}$ is the element type, which itself has size bounds. Each element must be typable as a super type of the element type of the list.\\
+
+We next extend the language of processes with a pattern match constructor for lists $\texttt{match}\; e\;\{ [] \mapsto P; x :: y \mapsto Q \}$, a control structure that compares the sizes of two (natural) expressions $\texttt{if}\; e_1 \leq e_2\; \texttt{then}\; P\;\texttt{else}\; Q$ and a constructor that splits a list into two equal-sized sublists $\texttt{split}\; e\; \texttt{into}\; (x,y) \mapsto P$. We introduce type rules accordingly.
+%
+\begin{align*}
+    &\kern-15em\runa{S-lmatch}\;\infrule{
+    \begin{matrix}
+    \varphi;\Phi;\Gamma\vdash e : \texttt{List}[I,J](\mathcal{B})\quad \varphi;(\Phi,I\leq 0);\Gamma\vdash P \triangleleft \kappa\\ 
+    \varphi;(\Phi,J\geq 1);\Gamma,x : \mathcal{B},y : \texttt{List}[I-1,J-1](\mathcal{B})\vdash Q \triangleleft \kappa'
+    \end{matrix}}{\varphi;\Phi;\Gamma\vdash \texttt{match}\; e\;\{ [] \mapsto P; x :: y \mapsto Q \} \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\kappa')}
+\end{align*}
+Rule $\runa{S-lmatch}$ types a pattern match on an expression that can be typed as a list. We type the subprocess associated with the empty list pattern under a set of constraints extended with the constraint that the lower bound on the size of the list is 0. When typing the other subprocess, we introduce the constraint that the upper bound on the size of the list is at least 1, as the pattern match construct can only reduce to this subprocess, if the matched list is non-empty. Correspondingly, we extend the type context according to the pattern $x :: y$, such that $x$ is typed as the element type of the matched list, and $y$ is assigned the type of its tail.
+%
+\begin{align*}
+    &\kern-15em\runa{S-size}\; \infrule{
+    \begin{matrix}
+    \varphi;\Phi;\Gamma\vdash e_1 : \texttt{Nat}[I,J]\quad \varphi;\Phi;\Gamma\vdash e_2 : \texttt{Nat}[K,L]\\ 
+    \varphi;(\Phi,J\leq K);\Gamma\vdash P \triangleleft \kappa \quad \varphi;(\Phi,L+1\leq I);\Gamma\vdash Q \triangleleft \kappa'
+    \end{matrix}}{\varphi;\Phi;\Gamma\vdash \texttt{if}\; e_1 \leq e_2\; \texttt{then}\; P\;\texttt{else}\; Q \triangleleft \text{basis}(\varphi,\Phi,\kappa\cup\kappa')}
+\end{align*}
+Type rule $\runa{S-size}$ types a control structure that compares the sizes of two expressions that can be typed as naturals. Upon typing the subprocess guarded by the pattern $e_1 \leq e_2$, we extend the set of known constraints on index variables with the constraint that the lower bound on the size of $e_2$ is greater than or equal to the upper bound on the size of $e_1$. This rule allows for more accurate bounds on the parallel complexity of some processes, as it allows us to tighten the size bounds on naturals.
+\begin{align*}
+    &\kern-10em\runa{S-split}\;\infrule{
+    \begin{matrix}
+    \varphi;\Phi;\Gamma\vdash e : \texttt{List}[I, J](\mathcal{B})\\ 
+    \varphi;\Phi;\Gamma,x : \texttt{List}[I/2, J/2](\mathcal{B}),y: \texttt{List}[I/2, J/2](\mathcal{B})\vdash P \triangleleft \kappa
+    \end{matrix}}{\varphi;\Phi;\Gamma\vdash \texttt{split}\; e\; \texttt{into}\; (x,y) \mapsto P \triangleleft \kappa }
+\end{align*}
+Finally, type rule $\runa{S-split}$ types the constructor that splits a list expression in two. Here, we enforce that the expression can be typed as a list, and that the continuation can be typed under the same context extended with associations for the variables bound in the constructor, such that they are typed as lists with half the size of the original expression. We are forced to use division to express the change in list size rather than factors due to the \textit{instantiate} function, but these approaches are equivalent for indices with natural coefficients and valuations, as integer division by two is only defined when two is a common factor amongst the terms of an index. Type rule $\runa{S-split}$ is useful for typing implementations of parallel divide and conquer algorithms where the input is halved, particularly those with parallel complexities that can be expressed as recurrence relations of the form $T(n) = T(n/2) + C(n)$ where $C(n)$ is the \textit{local} cost in time complexity of the algorithm.\\
+% \begin{exmp}
+%
+% \begin{align*}
+%     &P_{\text{leq}} \defeq\; !\text{leq}(n,m,r).\texttt{match}\; n\;\{\\ 
+% &\quad\quad 0 \mapsto \texttt{tick}.\overline{r}\langle s(0) \rangle;\\
+% &\quad\quads(x) \mapsto \texttt{match}\; m\;\{\\ 
+% &\quad\quad\quad\quad0 \mapsto \texttt{tick}.\overline{r}\langle 0 \rangle;\\ 
+% &\quad\quad\quad\quads(y) \mapsto \overline{\text{leq}}\langle x, y, r \rangle \}\}
+% \end{align*}
+
+% \begin{align*}
+%     \Gamma_{\text{leq}}\defeq\cdot,\text{leq} : \forall_0i,j,k,l,o,p,q.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_1(\texttt{Nat}[0,j],\texttt{Nat}[0,l],\texttt{ch}^{\{\texttt{out}\}}_1(\texttt{Nat}[0,1]))
+% \end{align*}
+
+% \begin{align*}
+%     \cdot;\cdot;\Gamma_{\text{leq}}\vdash P_{\text{leq}} \triangleleft \{0\}
+% \end{align*}
+
+% \end{exmp}
+
+
+We now show how the sequential merge function used in merge sort can be encoded in the $\pi$-calculus, and subsequently be typed. Note that there exist more sophisticated merge functions that make use of parallelism to provide better complexity bounds. However, these are out of the scope of this thesis. We encode the merge function as a server using a replicated input that receives two lists and a channel $r$ on which the merged list is \textit{returned}. We use a match construct for lists and the size comparison control structure for naturals to determine the subproblem that is then output to the server.
+\begin{align*}
+    & P_{\text{merge}}\defeq\; !\text{merge}(l_1,l_2,r).\texttt{match}\; l_1\; \{\\ 
+&\kern2em [] \mapsto \overline{r}\langle l_2 \rangle;\\
+&\quad\quad n :: l_1' \mapsto \texttt{match}\; l_2\; \{\\ 
+&\kern2em\quad\quad [] \mapsto \overline{r}\langle l_1 \rangle;\\
+&\kern1em\quad\quad\quad m :: l_2' \mapsto
+\newvar{r' : T}{\tick\texttt{if}\; n \leq m\\
+&\kern6em\texttt{then}\; \overline{\text{merge}}\langle l_1', l_2, r' \rangle \mid r'(l_3).\overline{r}\langle n :: l_3 \rangle\\
+&\kern6em\texttt{else}\; \overline{\text{merge}}\langle l_1, l_2', r' \rangle \mid r'(l_3).\overline{r}\langle m :: l_3 \rangle}
+%
+%
+% (\nu r' : T)(\overline{\text{leq}}\langle n, m, r' \rangle \mid r'(b).(\nu r'' : T')\texttt{match}\; b\; \{\\
+% &\quad\quad\quad\quad\quad\quad 0 \mapsto \overline{\text{merge}}\langle l_1', l_2, r'' \rangle \mid r''(l_3).\overline{r}\langle n : l_3 \rangle \\
+% &\quad\quad\quad\quad\quad\quad s(x) \mapsto \overline{\text{merge}}\langle l_1, l_2', r'' \rangle \mid r''(l_3).\overline{r}\langle m : l_3 \rangle 
+% \})
+\}
+\}
+%
+%
+% & P_{\text{merge}}\defeq\; !\text{merge}(l_1,l_2,r).\texttt{match}\; l_1\; \{\\ 
+% &\kern2em [] \mapsto \overline{r}\langle l_2 \rangle;\\
+% &\quad\quad n : l_1' \mapsto \texttt{match}\; l_2\; \{\\ 
+% &\kern2em\quad\quad [] \mapsto \overline{r}\langle l_1 \rangle;\\
+% &\kern1em\quad\quad\quad m : l_2' \mapsto (\nu r' : T)(\overline{\text{leq}}\langle n, m, r' \rangle \mid r'(b).(\nu r'' : T')\texttt{match}\; b\; \{\\
+% &\quad\quad\quad\quad\quad\quad 0 \mapsto \overline{\text{merge}}\langle l_1', l_2, r'' \rangle \mid r''(l_3).\overline{r}\langle n : l_3 \rangle \\
+% &\quad\quad\quad\quad\quad\quad s(x) \mapsto \overline{\text{merge}}\langle l_1, l_2', r'' \rangle \mid r''(l_3).\overline{r}\langle m : l_3 \rangle 
+% \})
+% \}
+% \}
+\end{align*}
+%
+We use the type contexts, the set of index variables and the set of constraints defined below to type the process. Notably, we assign the server a linear complexity, as we do not make use of parallelism. We omit index variables that are not used in the typing, although more index variables are required to type outputs on the server, due to the \textit{instantiate} function.
+%
+\begin{align*}
+    \Gamma_{\text{merge}}\defeq&\; \Gamma_{\text{leq}},\text{merge} : \forall_0{i,j,k,l }.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_{i+j}\left(
+    \begin{matrix}
+    \texttt{List}[0,i](\texttt{Nat}[k,l]),\\
+    \texttt{List}[0,j](\texttt{Nat}[k,l]),\\
+    \texttt{ch}^{\{\texttt{out}\}}_{i+j}(\texttt{List}[0,i+j](\texttt{Nat}[k,l]))\end{matrix}\right) \\
+    %
+    \Delta \defeq&\; \Gamma_{\text{merge}}, l_1 : \texttt{List}[0,i](\texttt{Nat}[k,l]), l_2 : \texttt{List}[0,j](\texttt{Nat}[k,l]),\\ 
+    &\;r : \texttt{ch}^{\{\texttt{out}\}}_{i+j}(\texttt{List}[0,i+j](\texttt{Nat}[k,l])),r' : \texttt{ch}^{\{\texttt{out}\}}_{i+j}(\texttt{List}[0,i+j-1](\texttt{Nat}[k,l]))\\
+    %
+    \varphi \defeq&\; \cdot,i,j,k,l\quad\quad \Phi \defeq \cdot,i\geq 1,j\geq 1
+\end{align*}
+%
+We use the following definition for the type annotation on the restriction
+\begin{align*}
+    T \defeq \texttt{ch}^{\{\texttt{out}\}}_{i+j-1}(\texttt{List}[0,i+j-1](\texttt{Nat}[k,l]))
+\end{align*}
+
+We now show that the process is typable under context $\Gamma_{\text{merge}}$. We omit some of the branches in the derivation tree for conciseness, and we do not show the typing of the two match constructors, as these are trivial. The main points of interest are the outputs to the server where we use the \textit{instantiate} function to construct substitutions. Note that we omit superfluous substitutions, i.e. those that have no effect on indices.
+
+%
+{\tiny
+\begin{align*}
+&\kern-2em\begin{prooftree}
+\Infer0{ \begin{matrix}
+\varphi;(\Phi,n\leq m);\downarrow_{i+j}\!\!\Delta\vdash r' : \texttt{ch}^{\{\texttt{out}\}}_{0}(\texttt{List}[0,i+j-1](\texttt{Nat}[k,l]))\\
+%
+ \varphi;(\Phi,n\leq m)\vdash \texttt{List}[0,i-1](\texttt{Nat}[k,l]) \sqsubseteq \texttt{List}[0,i](\texttt{Nat}[k,l])\{(i-1)/i\}
+\end{matrix}
+}
+\Infer1{ \varphi;(\Phi,n\leq m);\downarrow_1\!\!\Delta\vdash \overline{\text{merge}}\langle l_1', l_2, r' \rangle \triangleleft \{i+j\}\{(i-1)/i\} }
+%
+\Infer0{ \varphi;(\Phi,n\leq m);\downarrow_{i+j}\!\!\Delta\vdash r : \texttt{ch}^{\{\texttt{out}\}}_{0}(\texttt{List}[0,i+j](\texttt{Nat}[k,l])) }
+\Infer1{ \varphi;(\Phi,n\leq m);\downarrow_{i+j}\!\!\Delta\vdash \overline{r}\langle n : l_3 \rangle \triangleleft \{0\} }
+\Infer1{\varphi;(\Phi,n\leq m);\downarrow_1\!\!\Delta\vdash r'(l_3).\overline{r}\langle n : l_3 \rangle \triangleleft \{i+j-1\} }
+%
+\Infer2{\varphi;(\Phi,n\leq m);\downarrow_1\!\!\Delta\vdash \overline{\text{merge}}\langle l_1', l_2, r' \rangle \mid r'(l_3).\overline{r}\langle n : l_3 \rangle \triangleleft \{i+j-1\} }
+%
+\Infer1{\varphi;\Phi;\downarrow_1\!\!\Delta\vdash \texttt{if}\; n\leq m\;\texttt{then}\; \overline{\text{merge}}\langle l_1', l_2, r' \rangle \mid r'(l_3).\overline{r}\langle n : l_3 \rangle \;\texttt{else}\; \overline{\text{merge}}\langle l_1, l_2', r' \rangle \mid r'(l_3).\overline{r}\langle m : l_3 \rangle\; \triangleleft \{i+j - 1\} }
+%
+\Infer1{\varphi;\Phi;\Delta\vdash \tick{\texttt{if}\; n\leq m\;\texttt{then}\; \overline{\text{merge}}\langle l_1', l_2, r' \rangle \mid r'(l_3).\overline{r}\langle n : l_3 \rangle \;\texttt{else}\; \overline{\text{merge}}\langle l_1, l_2', r' \rangle \mid r'(l_3).\overline{r}\langle m : l_3 \rangle\; \triangleleft \{i+j\}}}
+%
+\Infer1{\vdots}
+%
+\Infer1{\cdot;\cdot;\Gamma_{\text{merge}}\vdash P_{\text{merge}} \triangleleft \{0\}}
+\end{prooftree}
+\end{align*}}
+
+
+
+
+% \begin{exmp}
+
+% \begin{align*}
+%     &P_{\text{split}} \defeq\; !\text{split}(l_1,l_2,r).\newvar{r'}{(
+%     \asyncoutputch{\text{leq}}{l_1,l_2,r'}{} \mid \inputch{r'}{b}{}{
+%     \texttt{match}\; b\; \{\\
+%     &\kern2em 0 \mapsto \texttt{match}\; l_2\;\{\\ 
+%     &\kern4em [] \mapsto \asyncoutputch{r}{l_1,l_2}{};\\
+%     &\kern4em n :: l_2' \mapsto \newvar{r''}{(\asyncoutputch{\text{split}}{n :: l_1, l_2', r''}{} \mid \inputch{r''}{l_1',l_2''}{}{\asyncoutputch{\text{split}}{l_1',l_2''}{}})}
+%     \}; \\
+%     &\kern2ems(x) \mapsto
+%     \asyncoutputch{r}{l_1,l_2}{}\}}
+%     )}
+% \end{align*}
+
+% \begin{align*}
+%     \Gamma_{\text{split}} \defeq \Gamma_{\text{leq}},\text{split} : \forall_0{i,j,k,l,o,p,q,r,s }.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_{l}(\texttt{List}[0,j],\texttt{List}[0,l],\texttt{ch}^{\{\texttt{out}\}}_{l}(\texttt{List}[0,q],\texttt{List}[0,s]))
+% \end{align*}
+
+% \begin{align*}
+%     \cdot;\cdot;\Gamma_{\text{split}}\vdash P_{\text{split}} \triangleleft \{0\}
+% \end{align*}
+
+% \end{exmp}
+
+We are now ready to encode a parallel merge sort in the $\pi$-calculus. We use a replicated input that receives a list of naturals and a channel on which the sorted list of the same size is \textit{returned}. We use the \texttt{split into} constructor to divide the list in two, with corresponding divided list size bounds, such that the two subproblems are half the size of the original problem. 
+
+\begin{align*}
+    &P_{\text{sort}} \defeq\; !\text{sort}(l, r).\texttt{split}\; l\; \texttt{into}\; (l_1,l_2) \mapsto \newvar{r_1 : T_1}{\newvar{r_2 : T_2}{(\asyncoutputch{\text{sort}}{l_1,r_1}{} \mid \asyncoutputch{\text{sort}}{l_2,r_2}{} \mid \inputch{r_1}{l_1'}{}{\\
+    &\kern3em\inputch{r_2}{l_2'}{}{\newvar{r_3 : T_3}{(\asyncoutputch{\text{merge}}{l_1',l_2',r_3}{} \mid \inputch{r_3}{l'}{}{\asyncoutputch{r}{l'}{}})}}} )}}
+    %
+    %
+    %
+    % \newvar{r_1 : T_1}{(
+    % \asyncoutputch{\text{split}}{[],l,r_1}{} \mid
+    % \inputch{r_1}{l_1,l_2}{}{\newvar{r_2 : T_2}{\newvar{r_3 : T_3}{(
+    % \asyncoutputch{\text{sort}}{l_1,r_2}{} \mid \asyncoutputch{\text{sort}}{l_2,r_3}{} \mid \inputch{r_2}{l_1'}{}{\\
+    % &\kern2em\inputch{r_3}{l_2'}{}{\newvar{r_4 : T_4}{(
+    % \asyncoutputch{\text{merge}}{l_1',l_2',r_4}{} \mid \inputch{r_4}{l'}{}{\asyncoutputch{r}{l'}{}} 
+    % )}}}
+    % )}}}
+    % )}
+%  
+%     \texttt{match}\; l\; \{\\
+% &\kern2em[]\mapsto \overline{r}\langle [] \rangle\\
+% &\quad\quad n : l' \mapsto (\nu r' : T)(\overline{\text{sort}}\langle l',r' \rangle \mid r'(l'').(\nu r'' : T')(\overline{\text{merge}}\langle n : [], l'', r'' \rangle \mid r''(l_3).\overline{r}\langle l_3 \rangle))
+% \}
+\end{align*}
+
+We type the process under the contexts and the set of index variables defined below. We assign the server a linear bound of $2i$ where $i$ is the upper bound on the size of the input list, as the two parallel subproblems then have bounds of $i$, the results of which are merged in $2i$ time using the merge function encoding. This is quite a tight bound on the parallel complexity of the parallel merge sort encoding, as its pen and paper parallel complexity can be expressed as the recurrence relation $T(n) = T(n/2) + n$, the solution of which approaches $2n$ as the size $n$ of the list approaches infinity.
+
+\begin{align*}
+    \Gamma_{\text{sort}} \defeq&\; \Gamma_{\text{merge}},\text{sort} : \forall_0{i,k,l}.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_{2i}(\texttt{List}[0,i](\texttt{Nat}[k,l]),\texttt{ch}^{\{\texttt{out}\}}_{2i}(\texttt{List}[0,i](\texttt{Nat}[k,l])))\\
+    %
+    \Delta \defeq&\; \Gamma_{\text{sort}}, l_1 : \texttt{List}[0,i/2](\texttt{Nat}[k,l]), l_2 : \texttt{List}[0,i/2](\texttt{Nat}[k,l]), r_1 : T_1, r_2, T_2 \\
+    %
+    \Delta' \defeq&\; \downarrow_i\!\!\Delta,l_1' : \texttt{List}[0,i/2](\texttt{Nat}[k,l]), l_2' : \texttt{List}[0,i/2](\texttt{Nat}[k,l]) \\
+    %
+    \Delta'' \defeq&\; \downarrow_i\!\!\Delta', l' : \texttt{List}[0,i](\texttt{Nat}[k,l]) \\
+    %
+    \varphi\defeq&\; \cdot,i,k,l
+\end{align*}
+
+We use the following definitions for the type annotations on restrictions
+\begin{align*}
+    T_1 \defeq&\; \texttt{ch}^{\{\texttt{out}\}}_{i}(\texttt{List}[0,i/2](\texttt{Nat}[k,l])) \\
+    T_2 \defeq&\; \texttt{ch}^{\{\texttt{out}\}}_{i}(\texttt{List}[0,i/2](\texttt{Nat}[k,l])) \\
+    T_3 \defeq&\; \texttt{ch}^{\{\texttt{out}\}}_{i}(\texttt{List}[0,i](\texttt{Nat}[k,l]))
+\end{align*}
+
+Finally, we show that the process is in fact typeable under type context $\Gamma_{\text{sort}}$. The type derivation tree is shown below. We again omit some of the more trivial steps of the typing and simplify the substitutions computed using the \textit{instantiate} function for conciseness.
+
+{\tiny
+\begin{align*}
+&\kern-3em\begin{prooftree}
+    \Infer0{ \begin{matrix}
+\varphi;\cdot;\Delta\vdash r_1 : \texttt{ch}^{\{\texttt{out}\}}_{i}(\texttt{List}[0,i/2](\texttt{Nat}[k,l]))\\
+%
+ \varphi;\cdot\vdash \texttt{List}[0,i/2](\texttt{Nat}[k,l]) \sqsubseteq \texttt{List}[0,i](\texttt{Nat}[k,l])\{(i/2)/i\}
+\end{matrix} }
+    \Infer1{\varphi;\cdot;\Delta\vdash \asyncoutputch{\text{sort}}{l_1,r_1}{} \triangleleft \{2i\}\{(i/2)/i\}}
+    %%
+    %
+    \Infer0{\varphi;\cdot;\Delta'\vdash \asyncoutputch{\text{merge}}{l_1',l_2',r_3}{} \triangleleft \{i\}}
+    %
+    \Infer0{ \varphi;\cdot;\Delta''\vdash {\asyncoutputch{r}{l'}{}} \triangleleft \{0\} }
+    %
+    \Infer1{\varphi;\cdot;\Delta'\vdash \inputch{r_3}{l'}{}{\asyncoutputch{r}{l'}{}} \triangleleft \{i\} }
+    %
+    \Infer2{\varphi;\cdot;\Delta'\vdash \asyncoutputch{\text{merge}}{l_1',l_2',r_3}{} \mid \inputch{r_3}{l'}{}{\asyncoutputch{r}{l'}{}} \triangleleft \{i\} }
+    \Infer1{\vdots}
+    \Infer1{\varphi;\cdot;\Delta\vdash \inputch{r_1}{l_1'}{}{
+\inputch{r_2}{l_2'}{}{\newvar{r_3 : T_3}{(\asyncoutputch{\text{merge}}{l_1',l_2',r_3}{} \mid \inputch{r_3}{l'}{}{\asyncoutputch{r}{l'}{}})}}} \triangleleft \{i\} + i }
+    %
+    \Infer2{\varphi;\cdot;\Delta\vdash \asyncoutputch{\text{sort}}{l_1,r_1}{} \mid \asyncoutputch{\text{sort}}{l_2,r_2}{} \mid \inputch{r_1}{l_1'}{}{
+\inputch{r_2}{l_2'}{}{\newvar{r_3 : T_3}{(\asyncoutputch{\text{merge}}{l_1',l_2',r_3}{} \mid \inputch{r_3}{l'}{}{\asyncoutputch{r}{l'}{}})}}} \triangleleft \{2i\} }
+    \Infer1{\vdots}
+    \Infer1{\varphi;\cdot;\Gamma_{\text{sort}}\vdash\texttt{split}\; l\; \texttt{into}\; (l_1,l_2) \mapsto \newvar{r_1 : T_1}{\newvar{r_2 : T_2}{
+    %
+    (\asyncoutputch{\text{sort}}{l_1,r_1}{} \mid \asyncoutputch{\text{sort}}{l_2,r_2}{} \mid \inputch{r_1}{l_1'}{}{\inputch{r_2}{l_2'}{}{\newvar{r_3 : T_3}{(\asyncoutputch{\text{merge}}{l_1',l_2',r_3}{} \mid \inputch{r_3}{l'}{}{\asyncoutputch{r}{l'}{}})}}} )
+    %
+    }} \triangleleft \{2i\}}
+    %
+    \Infer1{\cdot;\cdot;\Gamma_{\text{sort}}\vdash P_{\text{sort}} \triangleleft \{0\}}
+\end{prooftree}
+\end{align*}}
+
+It is possible to introduce more interesting constructors that increase the expressiveness and precision of encodings of various parallel algorithms, by introduction of constraints and by modifying sizes of terms. Such constructors are useful because of one general limitation to this work on sized types for parallel complexity. That is, we cannot express relationships between the sizes of multiple message types of channels and servers. Consider for instance the partition function used in the \textit{quicksort} algorithm to partition a list on a pivot based on the $\leq$ relation. We would like to encode the function as a server of the form
+\begin{align*}
+    !\text{partition}(l,p,r).P
+\end{align*}
+where $l$ is the list to be partitioned, $p$ is the pivot element and $r$ is a channel on which the partitioned list is returned as two lists, whose upper bounds on sizes sum to the upper bound on the size of $l$. That is, we are interested in the type
+\begin{align*}
+    \forall_0{i,j,k}.\texttt{server}^{\{\texttt{in},\texttt{out}\}}_{j}(\texttt{List}[0,i](\mathcal{B}),\mathcal{B},\texttt{ch}^{\{\texttt{out}\}}_j(\texttt{List}[0,j](\mathcal{B}),\texttt{List}[0,k](\mathcal{B})))
+\end{align*}
+such that $j+k=i$. However, we cannot guarantee this constraint based on the typing above, and so we cannot verify the bound $j$. 

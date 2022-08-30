@@ -1,0 +1,332 @@
+\section{Examples of invalid configurations}
+The following examples are written in the format $\conf{E, a}$, where $E$ is an editor expression and $a$ is the AST on which we apply the editor expression. \\
+
+In equation \ref{condsubproblem} we show how conditioned substitution can cause problems.
+\begin{equation}
+    \conf{\left(@\texttt{break} \Rightarrow \replace{\texttt{break}}\right) \ggg \texttt{child}\; 1,\; \lambda x.\hole\; \cursor{\breakpoint{c}}} \label{condsubproblem}
+\end{equation}
+ In the example we check if the cursor is at a breakpoint, and since the check is true we \textit{toggle} the breakpoint thereby making the following \texttt{child} 1 command problematic. The constant c cannot have a child which means this configuration would cause a run-time error. \\
+ 
+In equation \ref{parentproblem} we show how using the \texttt{parent} command can cause problem when the root is unknown.
+\begin{equation}
+    \conf{\left(\lozenge\texttt{hole} \Rightarrow \texttt{parent}\right) \ggg \texttt{parent},\; \cursor{\lambda x.\hole}\; c} \label{parentproblem}
+\end{equation}
+In the example we first check if there is a hole in some subtree of the current cursor. This condition holds and we therefore evaluate the \texttt{parent} command resulting in the AST $\cursor{\lambda x.\hole\; c}$. When the next \texttt{parent} command is evaluated we have a run-time error since we are already situated at the root.\\
+
+In equation \ref{astproblem} we show how an editor expression can result in an AST that would cause a run-time error when evaluated.
+\begin{equation}
+    \conf{\left(\neg\Box(\texttt{lambda}\; x) \Rightarrow \texttt{child}\; 1\right) \ggg \replace{\texttt{var}\; x}.\texttt{eval},\; \cursor{\lambda x.\hole}\; c} \label{astproblem}
+\end{equation}
+In the example we first check if it is \textbf{not} necessary that the subtree of the cursor contains a lambda expression. This condition does not hold since it is necessary. Since the condition does not hold we do not evaluate the \texttt{child} 1 command, which means the following substitution of \texttt{var} x is problematic. The substitution results in the AST $\cursor{\texttt{var}\; x}\; c$, which causes a run-time error when the command \texttt{eval} is evaluated, since the left child of the function application is no longer a function.
+%
+\section{Over-approximations}
+As we cannot determine statically whether a condition holds, we establish over-approximations to ensure run-time errors cannot occur in well-typed configurations. As equation \ref{parentproblem} shows, conditioned expressions can result in loss of information about the cursor location. As such, we enforce the cursor \textit{depth} in the tree to be the same before and after a conditioned expression. Furthermore, the first cursor movement in a conditioned expression must be a \texttt{child} prefix. As equation \ref{condsubproblem} shows, conditioned substitution also results in loss of information. Thus, we can no longer guarantee that subsequent substitution at a deeper level is well-typed. Similarly, we no longer know of the structure of the subtree, such that we must condition \texttt{child} prefixes.\\
+
+The above discussion leads to the following list of over-approximations:
+\begin{itemize}
+    \item In conditioned and recursive expressions, the cursor depth must be the same before and after.
+    \item In conditioned and recursive expressions, only the subtree encapsulated by the cursor is accessible.
+    \item After conditioned substitution, subsequent substitution at a deeper level is no longer valid, and the \texttt{child} prefix command must be conditioned.
+\end{itemize}
+%
+\section{AST type rules}
+\begin{table*}[htp]
+    \centering
+    \begin{align*}
+        \runa{t-var} &\; \infrule{\Gamma_a\left(x\right)=\tau}{\Gamma_a \vdash x : \tau}\\
+        %
+        \runa{t-const} &\; \infrule{}{\Gamma_a \vdash c : b}\\
+        %
+        \runa{t-app} &\; \infrule{\Gamma_a \vdash a_1 : \tau_1 \rightarrow \tau_2 \quad \Gamma_a \vdash a_2 : \tau_1}{\Gamma_a \vdash a_1\; a_2 : \tau_2}\\
+        %
+        \runa{t-lambda} &\; \infrule{\Gamma_a\left[x \mapsto \tau_1\right] \vdash a : \tau_2}{\Gamma_a \vdash \lambda x:\tau_1.a : \tau_1 \rightarrow \tau_2} \\
+        %
+        \runa{t-break} &\; \infrule{\Gamma_a \vdash a : \tau}{\Gamma_a \vdash \breakpoint{a} : \tau} \\
+        %
+        \runa{t-hole} &\; \infrule{}{\Gamma_a \vdash \left(\hole : \tau\right) : \tau}
+        %
+    \end{align*}
+    \caption{Type rules for abstract syntax trees.}
+    \label{tab:typerules}
+\end{table*}
+
+%\section{Type context format}
+%Here, we propose a format for type contexts of editor expressions. The context of an editor expression could be a triple $\Psi = (\Gamma_a, \tau, \Gamma)$, where $\Gamma_a$ is the type context for the subtree encapsulated by the cursor, $\tau$ is the type of the subtree and $\Gamma$ is a function or map from prefix command types to editor expression contexts. That is, contexts for editor expressions are recursive. Say we have context $(\Gamma_a, \tau, \Gamma)$. Upon a $\texttt{child}\; 1$ prefix, we \textit{look up} $\texttt{one}$ in $\Gamma$. If $\Gamma(\texttt{one}) = undef$, the expression is not well-typed. Otherwise, we evaluate the prefixed expression in the new context $\Gamma(\texttt{one})$.\\
+
+%We construct the initial context based on the AST in the configuration $\conf{E,\; a}$. Upon a substitution prefix, we modify the context, upon a child or parent prefix, we \textit{move} in the context, and upon a conditioned or recursive expression, we set some of the bindings to $undef$: $\Gamma(T)=undef$.\\
+
+%$\Gamma = T_1 : \Psi_1,...,T_n : \Psi_n$ \\
+%$\Psi = (\Gamma_a, \tau, \Gamma)$
+%Γ = T1 : Ψ1,..,Tn : Ψn
+%Ψ = (Γa, τ, Γ)
+
+\section{Experimental type system}
+
+In this section, we introduce a type system for our editor-calculus. For the type system, we introduce the syntactic categories $\tau \in \mathbf{ATyp}$ to denote types of AST nodes, $T \in \mathbf{CTyp}$ to denote \textit{child} types, and p $\in \mathbf{Pth}$ to denote AST paths.
+%
+\begin{align*}
+    \tau ::=&\; b \mid \tau_1 \rightarrow \tau_2 \mid \breakpoint{\tau} \mid \texttt{indet}\\
+    T ::=&\; \texttt{one} \mid \texttt{two}\\
+    p ::=&\; p\; T \mid \epsilon
+\end{align*}
+
+In addition to the basic and arrow types in $\mathbf{ATyp}$, we include a type for breakpoints, $\breakpoint{\tau}$, and a type to denote indeterminate types, \texttt{indet}. We use $\mathbf{Pth}$ to denote paths in an AST by storing a sequence of \textbb{one} and \textbb{two} which denote if the path goes through the first or second child.\\
+
+We define two sets for contexts in our type system. The first context, $\mathbf{ACtx}$, stores type bindings for variables in the AST. The second context, $\mathbf{ECtx}$, stores, for all available paths so far, a pair of an AST context and the type of the node at the end of the path. We use $\Gamma_a \in \mathbf{ACtx}$ and $\Gamma_e \in \mathbf{ECtx}$ as metavariables for the two contexts. To check if a path $p$ is available in a context $\Gamma_e$, we use the notion $\Gamma_e(p) \neq \text{undef}$. $\mathbf{ACtx}$ and $\mathbf{ECtx}$ are thus defined as the following.
+%
+\begin{align*}
+\mathbf{ACtx} &= \mathbf{Var} \rightharpoonup \mathbf{ATyp}\\
+\mathbf{ECtx} &= \mathbf{Pth} \rightharpoonup \left(\mathbf{ACtx} \times \mathbf{ATyp}\right)
+\end{align*}
+
+To support our type system, we modify the syntax for AST node modifications by including type annotations for application, abstraction and holes. The new syntax thus becomes the following.
+%
+\begin{align*}
+  D ::= \; & \texttt{var}\;x \mid \texttt{const}\;c \mid \texttt{app} : \tau_1 \rightarrow \tau_2, \tau_1 \mid \texttt{lambda}\; x : \tau_1 \rightarrow \tau_2 \mid \texttt{break} \mid \texttt{hole} : \tau
+\end{align*}
+
+To support breakpoint types, we introduce the notion of type consistency into our typesystem. The purpose of consistency in our type system is to ensure breakpoints types are consistent with their respective type, as defined below.
+%
+\begin{definition}{(Type consistency)}
+    We define two types $\tau_1, \tau_2$ to be \textit{consistent}, denoted $\tau_1 \sim \tau_2$, by the following rules.
+    \begin{align*}
+        \runa{cons-1} \hspace{-1cm}
+        \infrule{}{\tau \sim \tau} \hspace{-1cm}
+        \runa{cons-2} \hspace{-1cm}
+        \infrule{}{\breakpoint{\tau} \sim \tau} \hspace{-1cm}
+        \runa{cons-3} \hspace{-1cm}
+        \infrule{}{\tau \sim \breakpoint{\tau}} \hspace{-1cm}
+        \runa{cons-4}
+        \infrule{\tau_1 \sim \tau_1' \quad \tau_2 \sim \tau_2'}{(\tau_1 \rightarrow \tau_2) \sim (\tau_1' \rightarrow \tau_2')}
+    \end{align*}
+\end{definition}
+
+
+\begin{table*}[htp]
+    \centering
+    \begin{align*}
+        \runa{ctx-split-1}&\; \infrule{}{\emptyset = p \left(\emptyset\; \circ\; \emptyset\right)}\\
+        \runa{ctx-split-2}&\; \infrule{\Gamma_e = p \left({\Gamma_e}_1\; \circ\; {\Gamma_e}_2\right)}{\Gamma_e,\; p\; T_1..T_n: (\Gamma_a,\; \tau) = p \left(\left({\Gamma_e}_1,\; p\; T_1..T_n: (\Gamma_a,\; \tau)\right)\; \circ\; {\Gamma_e}_2\right)}\\
+        \runa{ctx-split-3}&\; \infrule{p_1 \neq p_2 \quad \Gamma_e = p_2 \left({\Gamma_e}_1\; \circ\; {\Gamma_e}_2\right)}{\Gamma_e,\; p_1\; T_1..T_n: (\Gamma_a,\; \tau) = p_2 \left({\Gamma_e}_1\; \circ\; \left({\Gamma_e}_2,\; p_1\; T_1..T_n: (\Gamma_a,\; \tau)\right)\right)}\\
+        %
+        \runa{ctx-update-1}&\; \infrule{}{\Gamma_e = \Gamma_e + \emptyset}\\
+        \runa{ctx-update-2}&\; \infrule{\Gamma_e = \left({\Gamma_e}_1,\; p: ({\Gamma_a}_2,\; \tau_2)\right) + {\Gamma_e}_2}{\Gamma_e,\; p: ({\Gamma_a}_1,\; \tau_1) = \left({\Gamma_e}_1,\; p: ({\Gamma_a}_2,\; \tau_2)\right) + {\Gamma_e}_2}\\
+        \runa{ctx-update-3}&\; \infrule{\Gamma_e = {\Gamma_e}_1 + {\Gamma_e}_2}{\Gamma_e,\; p: (\Gamma_a,\; \tau) = {\Gamma_e}_1 + \left({\Gamma_e}_2,\; p: (\Gamma_a,\; \tau)\right)}
+    \end{align*}
+    \caption{Context split and context update for editor contexts.}
+    \label{tab:context}
+\end{table*}
+% We define \textit{type contexts}, $\Gamma_e$ in Table \ref{tab:context} as a mapping from a path $p$ to a pair consisting of an AST context $\Gamma_a$ and AST type $\tau$. We denote the $\Gamma_e, p : (\Gamma_a, \tau)$ as the type context equal to the paths not in the domain of map $\Gamma_e$ except for $p$, where $\Gamma_e(p) = (\Gamma_a, \tau)$. For type contexts we introduce the concept of \textit{context splitting} on a path in terms of $\Gamma_e$ maintained through two sub-contexts $\Gamma_{e1}$ and $\Gamma_{e2}$. For this we require a split-operation $\circ$, defined for two sub-contexts on a path as $\Gamma_e = p(\Gamma_{e1}\; \circ \; \Gamma_{e2})$. Notice the empty context is defined with the symbol $\emptyset$ as in \runa{ctx-split-1}. In rule \runa{ctx-split-2} we have that $p$ is in $\Gamma_{e1}$, but not in $\Gamma_{e2}$. Thus, $p$ is not in $\Gamma = \Gamma_{e1}\; \circ \; \Gamma_{e2}$, which is similarly done for the \runa{ctx-split-3} in terms of $\Gamma_{e1}$.\\
+
+Next we introduce the notion of \textit{context updates} to update bindings in a context with new types for the associated path $p$. We use the addition operator $+$, to denote sum-context $\Gamma$ of two compatible type contexts $\Gamma_{e1}$ and $\Gamma_{e2}$. The rules require linear paths to not have bindings exist in another context. Thus, we can only update a context $\Gamma_{e2}$ iff no bindings for a given path is in context $\Gamma_{e1}$. In rule \runa{ctx-update-2} we have bindings in $\Gamma_{e1}$, which means we cannot add bindings to $\Gamma_{e2}$. However, in rule \runa{ctx-update-3} we allow path bindings in $\Gamma_{e2}$ since no such bindings are in context $\Gamma_{e1}$.
+
+% \begin{equation}
+%     depth(e) = \left\{
+%         \begin{array}{ll}
+%             depth(E) + 1            & \quad if e = (\texttt{child}\; n).E \\
+%             depth(E) - 1            & \quad if e = \texttt{parent}.E\\
+%             depth(E_1) + depth(E_2) & \quad if e = E_1 \ggg E_2\\
+%             depth(E)                & \quad if e = \texttt{rec}\; x.E\\
+%             depth(E)                & \quad if e = \pi.E\\
+%             0                       & \quad otherwise
+%         \end{array}
+%     \right.
+% \end{equation}
+
+\begin{definition}{(Relative cursor depth)}
+    We define the function $depth : \mathbf{Edt} \rightarrow \mathbb{Z}$, from the set of atomic editor expression to the set of integers.
+    \begin{align*}
+    depth((\texttt{child}\; n).E) &= depth(E) + 1 \\
+    depth(\texttt{parent}.E) &= depth(E) - 1 \\
+    depth(E_1 \ggg E_2) &= depth(E_1) + depth(E_2) \\
+    depth(\texttt{rec}\; x.E) &= depth(E) \\
+    depth(\pi.E) &= depth(E) \\
+    depth(E) &= 0 
+\end{align*}
+\end{definition}
+The $depth$ function statically analyses the structure of an editor expression to determine the relative depth of the cursor after evaluation of the expression. This function is used to make sure the position of the cursor before and after evaluation of an expression is the same. As the function performs a static analysis, we do not consider conditioned subexpressions. Later, in the type rules, we will see why we can safely ignore conditioned subexpressions. \\
+
+
+% Next we define the function $match : \mathbf{Aam} \times \mathbf{ACtx} \times \mathbf{ATyp} \rightarrow \{tt, f\!\!f\}$. This function returns true if the type of the given AST modification $D$, is equal to the given AST type $\tau$.  
+% \begin{align*}
+%     match(\texttt{var}\; x,\;\Gamma_a,\;\tau) &= \left\{\begin{matrix}
+%  tt & \text{if}\; \Gamma_a(x) = \tau\\ 
+%  f\!\!f & \text{otherwise}
+% \end{matrix}\right.\\
+%     match(\texttt{const}\; c,\;\Gamma_a,\; b) &= tt\\
+%     match(\texttt{app} : \tau_1 \rightarrow \tau_2,\; \tau_1,\;\Gamma_a,\; \tau_2) &= tt\\
+%     match(\texttt{lambda}\; x : \tau_1 \rightarrow \tau_2,\;\Gamma_a,\; \tau_1 \rightarrow \tau_2) &= tt\\
+%     match(\texttt{break},\;\Gamma_a,\; \tau) &= tt\\
+%     match(\texttt{hole} : \tau,\;\Gamma_a,\; \tau) &= tt\\
+%     match(D,\; \Gamma_a,\; \tau) &= f\!\!f
+% \end{align*}
+
+%\begin{equation*}
+%    %context : \left(\mathbf{Aam} \times \mathbf{ACtx}\right) \rightharpoonup %\left(\left(\mathbf{Pth} \rightarrow \left(\left(\mathbf{Var} \rightharpoonup %\mathbf{ATyp}\right) \times \mathbf{ATyp}\right)\right) \cup \{error\}\right)
+    %context : \left(\mathbf{Aam} \times \mathbf{ACtx} \times \mathbf{Pth} \right) %\rightharpoonup \mathbf{ECtx}
+%\end{equation*}
+%\begin{align*}
+% context(\texttt{const}\; c,\; \Gamma_a,\; p) =&\; \emptyset\\
+%  context(\texttt{hole} : \tau,\; \Gamma_a,\; p) =&\; \emptyset\\
+%context(\texttt{var}\; x,\; \Gamma_a,\; p) =&\; \emptyset\\
+ %context((\texttt{app} : \tau_1 \rightarrow \tau2,\; \tau_1),\; \Gamma_a,\; p) =&\; %\emptyset,\; p\; \texttt{one} : (\Gamma_a,\; \tau_1 \rightarrow \tau_2),\; p\; \texttt{two} : %(\Gamma_a,\; \tau_1)\\
+ %context(\texttt{lambda}\; x : \tau_1 \rightarrow \tau_2,\; \Gamma_a,\; p) =&\; \emptyset,\; %p\; \texttt{one} : ((\Gamma_a,\; x : \tau_1),\; \tau_2)
+%\end{align*}
+%
+%
+
+We define functions \textit{limits} and \textit{follows} to analyze which cursor movement is safe given a condition holds. \textit{limits} finds the set of possible AST node modifiers, on which the cursor may sit, given the condition holds. \textit{follows} gives a set of editor type context bindings guaranteed to be safe, given the cursor sits on AST node modifier $D$. Note that the AST type context is empty and that the node type is $\texttt{indet}$, as we cannot determine such information based on a condition. Thus, besides toggling of breakpoints, substitution is not well-typed at path $p$ if $\Gamma_e(p)=(\emptyset,\; \texttt{indet})$. We can combine functions \textit{limits} and \textit{follows} to provide additional bindings to the editor type context of a conditioned expression $\phi \Rightarrow E$. The intersection of \textit{follows} applied to each AST node modifier $D$ in the set $limits(\phi)$ is the set of bindings guaranteed to be safe, given $\phi$ holds.
+
+\theoremstyle{definition}
+\begin{definition}{(Condition constraints)}
+We define a function $limits: \mathbf{Eed} \rightarrow \mathcal{P}(\mathbf{Aam})$ from the set of conditions to the power set of the set of AST node modifiers. We assume conditions are in conjunctive normal form.
+\begin{align*}
+    limits(@D)=&\;\{D\}\\
+    limits(\neg @D)=&\;\mathbf{Aam}\setminus \{D\}\\
+    limits(\lozenge D)=&\;\{D\} \cup \{\texttt{app},\; \texttt{lambda}\; x,\; \texttt{break}\}\\
+    limits(\neg \lozenge D)=&\;\mathbf{Aam}\setminus \{D\}\\
+    limits(\Box D)=&\;\{D\} \cup \{\texttt{app},\; \texttt{lambda}\; x,\; \texttt{break}\}\\
+    limits(\neg \Box D)=&\;\mathbf{Aam}\setminus \{D\}\\
+    limits(\phi_1 \land \phi_2)=&\;limits(\phi_1) \cap limits(\phi_2)\\
+    limits(\phi_1 \lor \phi_2)=&\;limits(\phi_1) \cup limits(\phi_2)
+\end{align*}
+\end{definition}
+
+
+\theoremstyle{definition}
+\begin{definition}{(Safe movement)}
+We define a function $follows: \mathbf{Aam} \times \mathbf{Pth} \rightarrow \mathcal{P}\left(\mathbf{Pth} \times \left(\mathbf{ACtx} \times \mathbf{ATyp}\right)\right)$ from the set of pairs of AST node modifiers and paths to the power set of editor context bindings.
+\begin{align*}
+    \textit{follows}(\texttt{var}\; x,\; p)=&\; \emptyset\\
+    \textit{follows}(\texttt{const}\; c,\; p)=&\; \emptyset\\
+    \textit{follows}(\texttt{app},\; p)=&\; \{p\; \texttt{one} : (\emptyset,\; \texttt{indet}),\; p\; \texttt{two} : (\emptyset,\; \texttt{indet})\}\\
+    \textit{follows}(\texttt{lambda}\; x,\; p)=&\; \{p\; \texttt{one} : (\emptyset,\; \texttt{indet})\}\\
+    \textit{follows}(\texttt{break},\; p)=&\; \{p\; \texttt{one} : (\emptyset,\; \texttt{indet})\}\\
+    \textit{follows}(\texttt{hole},\; p)=&\; \emptyset
+\end{align*}
+\end{definition}
+
+%
+%
+We now introduce the type rules for editor expressions. Type rules for substitution are shown in table \ref{tab:typerulesv2sub} and the remaining rules are shown in table \ref{tab:typerulesv2}. The \texttt{child} n prefix is handled by \runa{t-child-1} and \runa{t-child-2}. Here we check that the cursor movement is viable by looking up the new path in $\Gamma_e$. Notice that the remaining editor expression $E$, is evaluated using the new path. The \texttt{parent} prefix is handled similarly in \runa{t-parent} with the exception being that we deconstruct the path instead of building it. When using recursion we require that the depth of the cursor is unchanged after evaluating the expression. We ensure this in \runa{t-rec} with the side condition $depth(E) = 0$. Similarly, \runa{t-cond} utilizes the same side condition to ensure that the cursor is unaffected by whether the condition holds or not. Notice here that evaluation of the conditioned expression is limited by what can follow the condition if it holds, denoted by $\delta$. Sequential composition is handled by the type rule \runa{t-seq}. Here we split the type context into $\Gamma_{e1}$, which contains information about the current subtree, and $\Gamma{e2}$, which contains information about the rest of the tree. This split ensures that the potentially hazardous evaluation of $E_1$ is kept separate from the evaluation of $E_2$.\\
+
+\begin{table*}[htp]
+    \centering
+    \begin{align*}
+        %
+        \runa{t-eval} &\; \infrule{p,\; \Gamma_e \vdash E : ok}{p,\; \Gamma_e \vdash \texttt{eval}.E : ok}\\
+        %
+        \runa{t-child-1}&\; \infrule{\Gamma_e(p\; \texttt{one}) \neq \text{undef} \quad p\; \texttt{one},\; \Gamma_e \vdash E : ok}{p,\; \Gamma_e \vdash \left(\texttt{child}\; 1\right).E : ok}\\
+        %
+        \runa{t-child-2}&\; \infrule{\Gamma_e(p\; \texttt{two}) \neq \text{undef} \quad p\; \texttt{one},\; \Gamma_e \vdash E : ok}{p,\; \Gamma_e \vdash \left(\texttt{child}\; 2\right).E : ok}\\
+        %
+        \runa{t-parent}&\; \infrule{\Gamma_e(p) \neq \text{undef} \quad p,\; \Gamma_e \vdash E : ok}{p\; T,\; \Gamma_e \vdash \texttt{parent}.E : ok}\\
+        %
+        \runa{t-rec} &\; \condinfrule{p,\; \Gamma_e \vdash E : ok}{p,\; \Gamma_e \vdash \texttt{rec} x.E : ok}{\text{if}\; depth(E) = 0}\\
+        %
+        \runa{t-cond} &\; \condinfrule{p,\; \Gamma_e + \delta \vdash E : ok}{p,\; \Gamma_e \vdash \phi \Rightarrow E : ok}{\begin{align*}
+            \text{if}\; &depth(E) = 0\;\\
+            \text{and}\; &\delta = \bigcap_{D \in limits(\phi)}follows(D,\; p)\\
+        \end{align*}}\\
+        %
+        \runa{t-seq} &\; \condinfrule{p,\; {\Gamma_e}_1 \vdash E_1 : ok \quad p,\; {\Gamma_e}_2 \vdash E_2 : ok}{p,\; \Gamma_e \vdash E_1 \ggg E_2 : ok}{\text{where}\; \Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)}\\
+        %
+        \runa{t-ref} &\; \infrule{}{p,\;\Gamma_e \vdash x : ok}\\
+        %
+        \runa{t-nil} &\; \infrule{}{p,\;\Gamma_e \vdash \mathbf{0} : ok}
+    \end{align*}
+    \caption{Type rules for editor expressions.}
+    \label{tab:typerulesv2}
+\end{table*}
+%
+%
+Table \ref{tab:typerulesv2sub} shows the type rules for substitution. For substitution to be well-typed, the AST node type $\tau$ in the type context binding associated with the current path $p$ must be consistent with the type of the AST node modifier to be inserted. In \runa{t-sub-var}, we handle the special case where we insert a variable reference $x$. For this to be well-typed, a binding $\Gamma_a(x)=\tau'$ must exist, such that $\consistent{\tau}{\tau'}$. Note that substitution replaces a subtree of the AST. Thus, the bindings in the editor type context with paths starting with $p$ are no longer valid. Therefore, we split the type context on path $p$, such that $\Gamma_e = p\left({\Gamma_e}_1\;\circ\;{\Gamma_e}_2\right)$, and evaluate the prefixed expression $E$ in the type context ${\Gamma_e}_2$. That is, the type context containing all bindings of $\Gamma_e$ not starting with $p$. Note that the binding with path exactly $p$ is in both ${\Gamma_e}_1$ and ${\Gamma_e}_2$, however. We add bindings to ${\Gamma_e}_2$ in rules $\runa{t-sub-app}$ and $\runa{t-sub-abs}$. Particularly, we expand the AST type context upon substitution for an abstraction.\\
+
+We treat substitution of breakpoints differently, as we can either toggle breakpoints on or off. Furthermore, we do not replace the subtree upon substitution for breakpoints. Instead, we must modify the bindings with paths starting with $p$, to either include or remove a $\texttt{one}$. Additionally, we change the type in the binding at the current path $p$ to indicate whether it has a breakpoint. Note that we toggle off the breakpoint if the type is of the form $\breakpoint{\tau}$, and toggle it on otherwise. Thus, the type indicates the structure of the tree.
+%
+%
+\begin{table}
+    \begin{flalign*}
+        %
+        \runa{t-sub-var} &\; \condinfrule{\Gamma_e(p)=(\Gamma_a,\;\tau) \quad \Gamma_a(x) = \tau' \quad \consistent{\tau}{\tau'} \quad p,\;{\Gamma_e}_2 \vdash E : ok}{p,\; \Gamma_e \vdash \replace{\texttt{var}\; x}.E : ok}{\text{where}\; \Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)} \\
+        %
+        \runa{t-sub-const} &\; \condinfrule{\Gamma_e(p)=(\Gamma_a,\;b) \quad p,\;{\Gamma_e}_2 \vdash E : ok}{p,\; \Gamma_e \vdash \replace{\texttt{const}\; c}.E : ok}{\text{where}\; \Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)}\\
+        %
+        \runa{t-sub-app} &\; \condinfrule{\Gamma_e(p)=(\Gamma_a,\; \tau_2') \quad \consistent{\tau_2}{\tau_2'} \quad p,\; \Gamma_e' \vdash E : ok}{p,\; \Gamma_e \vdash \replace{\texttt{app} : \tau_1 \rightarrow \tau_2,\; \tau_1}.E : ok}{\begin{align*}
+            &\text{where}\; \Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)\;\\
+            &\text{and}\; \Gamma_e' = {\Gamma_e}_2,\; p\; \texttt{one} : (\Gamma_a,\; \tau_1 \rightarrow \tau_2),\; p\; \texttt{two} : (\Gamma_a,\; \tau_1)
+        \end{align*}}\\
+        %
+        \runa{t-sub-abs} &\; \condinfrule{\Gamma_e(p)=(\Gamma_a,\; \tau_1' \rightarrow \tau_2') \quad \consistent{\tau_1 \rightarrow \tau_2}{\tau_1' \rightarrow \tau_2'} \quad p,\; \Gamma_e' \vdash E : ok}{p,\; \Gamma_e \vdash \replace{\texttt{lambda}\; x : \tau_1 \rightarrow \tau_2}.E : ok}{\begin{align*}
+        &\text{where}\;\Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)\\
+        &\text{and}\;\Gamma_e' = {\Gamma_e}_2, p\; \texttt{one} : ((\Gamma_a,\; x : \tau_1),\; \tau_2)\end{align*}} \\
+        %
+        %\runa{t-sub} &\; \infrule{match(D,\; \Gamma_a,\; \tau) = tt \quad p,\;\Gamma_e' \vdash %E : ok}{p,\;\Gamma_e \vdash \replace{D}.E : ok} \\
+        %&\text{if}\; D \neq \texttt{break}\\
+        %&\text{and}\; \Gamma_e(p)=(\Gamma_a,\;\tau) \\
+        %&\text{and}\; \Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)\\
+        %&\text{and}\; \Gamma_e' = {\Gamma_e}_2 + context(D,\; \Gamma_a)\\
+        %
+        \runa{t-sub-break-1} &\; \infrule{\Gamma_e(p)=(\Gamma_a,\; \breakpoint{\tau}) \quad p,\; \Gamma_e' \vdash E : ok}{p,\; \Gamma_e \vdash \replace{\texttt{break}} : ok} \\
+        &\text{where}\; \Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)\\
+        &\text{and}\; {\Gamma_e}_1 = \emptyset,\; p\; \texttt{one}\; T_1..T_{n_1} : ({\Gamma_a}_1,\; \tau_1),..,p\; \texttt{one}\; T_1..T_{n_m} : ({\Gamma_a}_m,\; \tau_m)\\
+        &\text{and}\; {\Gamma_e}_1' =\emptyset,\; p\; T_1..T_{n_1} : ({\Gamma_a}_1,\; \tau_1),..,p\; T_1..T_{n_m} : ({\Gamma_a}_m,\; \tau_m)\\
+        &\text{and}\; \Gamma_e' = \left({\Gamma_e}_2 + {\Gamma_e}_1'\right),\; p : (\Gamma_a,\; \tau)\\
+        %
+        \runa{t-sub-break-2} &\; \infrule{\Gamma_e(p)=(\Gamma_a,\;\tau)\quad  p,\; \Gamma_e' \vdash E : ok}{p,\; \Gamma_e \vdash \replace{\texttt{break}} : ok} \\
+        &\text{where}\; \Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)\\
+        &\text{and}\; {\Gamma_e}_1 =\emptyset,\; p\; T_1..T_{n_1} : ({\Gamma_a}_1,\; \tau_1),..,p\; T_1..T_{n_m} : ({\Gamma_a}_m,\; \tau_m)\\
+        &\text{and}\; {\Gamma_e}_1' = \emptyset,\; p\; \texttt{one}\; T_1..T_{n_1} : ({\Gamma_a}_1,\; \tau_1),..,p\; \texttt{one}\; T_1..T_{n_m} : ({\Gamma_a}_m,\; \tau_m)\\
+        &\text{and}\; \Gamma_e' = \left({\Gamma_e}_2 + {\Gamma_e}_1'\right),\; p : (\Gamma_a,\; \breakpoint{\tau})\\
+        %
+        \runa{t-sub-hole} &\; \condinfrule{\Gamma_e(p)=(\Gamma_a,\;\tau') \quad \consistent{\tau}{\tau'} \quad p,\;{\Gamma_e}_2 \vdash E : ok}{p,\; \Gamma_e \vdash \replace{\texttt{hole} : \tau}.E : ok}{\text{where}\; \Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)}
+        %
+    \end{flalign*}
+    \caption{Type rules for substitution.}
+    \label{tab:typerulesv2sub}
+\end{table}
+
+%\begin{table*}[htp]
+%    \centering
+%    \begin{align*}
+        %%
+        %\runa{t-eval} &\; \infrule{p,\; \Gamma_e \vdash E : ok \dashv p',\; \Gamma_e'}{p,\; \Gamma_e \vdash \texttt{eval}.E : %ok \dashv p',\; \Gamma_e'}\\
+        %%
+        %\runa{t-sub} &\; \infrule{T=\tau \quad p,\;\Gamma_e'' \vdash E : ok \dashv p',\;\Gamma_e'}{p,\;\Gamma_e \vdash %\replace{D}.E : ok \dashv p',\;\Gamma_e'} \\
+        %&\text{where}\; \Gamma_e(p)=(\Gamma_a,\;\tau) \\
+        %&\text{and}\; T = type(D,\;\Gamma_a) \\
+        %&\text{and}\; \Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)\\
+        %&\text{and}\; \Gamma_e'' = {\Gamma_e}_1 + context(D,\; \Gamma_a)\\
+        %%
+        %\runa{t-child-1}&\; \infrule{\Gamma_e(p\; \texttt{one}) \neq undef \quad p,\; \texttt{one},\; \Gamma_e \vdash E : ok %\dashv p',\; \Gamma_e'}{p,\; \Gamma_e \vdash \left(\texttt{child}\; 1\right).E : ok \dashv p',\; \Gamma_e'}\\
+        %%
+        %\runa{t-child-2}&\; \infrule{\Gamma_e(p\; \texttt{two}) \neq undef \quad p,\; \texttt{one},\; \Gamma_e \vdash E : ok %\dashv p',\; \Gamma_e'}{p,\; \Gamma_e \vdash \left(\texttt{child}\; 2\right).E : ok \dashv p',\; \Gamma_e'}\\
+        %%
+        %\runa{t-parent}&\; \infrule{\Gamma_e(p) \neq undef \quad p,\; \Gamma_e \vdash E : ok \dashv p',\; \Gamma_e'}{p\; T,\; %\Gamma_e \vdash \texttt{parent}.E : ok \dashv p',\; \Gamma_e'}\\
+        %%
+        %\runa{t-rec} &\; \condinfrule{p,\; {\Gamma_e}_1 \vdash E : ok \dashv p,\; \Gamma_e'}{p,\; \Gamma_e \vdash \texttt{rec} %x.E : ok \dashv p,\; {\Gamma_e}_2}{\text{where}\; \Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)}\\
+        %%
+        %\runa{t-seq} &\; \infrule{p,\; \Gamma_e \vdash E_1 : ok \dashv p'',\; \Gamma_e'' \quad p'',\; \Gamma_e'' \vdash E_2 : %ok \dashv p',\; \Gamma_e'}{p,\; \Gamma_e \vdash E_1 \ggg E_2 : ok \dashv p',\; \Gamma_e'}\\
+        %%
+        %\runa{t-cond} &\; \infrule{p,\; {\Gamma_e}_1 + \delta \vdash E : ok \dashv p,\; \Gamma_e'}{p,\; \Gamma_e \vdash \phi %\Rightarrow E : ok \dashv p,\; {\Gamma_e}_2}\\
+%        &\text{where}\; \Gamma_e = p\; ({\Gamma_e}_1\; \circ\; {\Gamma_e}_2)\\
+%        &\text{and}\; \delta = \bigcap_{D \in limits(\phi)}follows(D)\\
+%        %
+%        \runa{t-ref} &\; \infrule{}{p,\;\Gamma_e \vdash x : ok \dashv p,\;\Gamma_e}\\
+%        %
+%        \runa{t-nil} &\; \infrule{}{p,\;\Gamma_e \vdash \mathbf{0} : ok \dashv p,\;\Gamma_e}\\
+%    \end{align*}
+%    \caption{Type rules for editor expressions.}
+%    \label{tab:typerules}
+%\end{table*}
+
+\begin{theorem} (Subject reduction)
+If $\Gamma_e, \;\Gamma_a \vdash \conf{E,\;a} : ok$ and $\conf{E, a} \xrightarrow{\alpha} \conf{E', a'}$ then $\Gamma_e, \;\Gamma_a \vdash \conf{E',\;a'} : ok$.
+\end{theorem}
+
+We define \textit{well-typedness} of a configuration $\conf{E,\;a}$ by the following rule: \\
+$\condinfrule{\Gamma_a \vdash a : \tau \quad p,\; \Gamma_e \vdash E : ok}{\Gamma_e, \;\Gamma_a \vdash \conf{E,\;a} : ok}{\begin{align*}
+        &\text{where}\;\\
+        &\text{and}\;\end{align*}}$
+        
+        

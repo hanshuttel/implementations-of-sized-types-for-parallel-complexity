@@ -1,0 +1,63 @@
+\subsection*{Editor-calculus}\label{EDITCALCULUS}
+We present an editor-calculus below, of which we can describe the behaviour of a structural live-programming editor as a conditioned editor expression $E$, in which commands to evaluate and edit an AST can be interleaved. In the syntactic construct $\pi.E$, $\pi$ is a prefix that refers to an atomic editor command. That is, command $\pi$ is evaluated before continuing with expression $E$. The syntactic prefix construct $\texttt{eval}$ \textit{evaluates} an AST until the first breakpoint. The AST is evaluated in a depth-first manner. In the case of an abstraction node in the AST, where the tree splits into two branches, we define the evaluation order as the left-most term being evaluated first. \\
+
+The substitution prefix $\replace{D}$ modifies the AST node encapsulated by the cursor, by inserting an atomic expression, breakpoint or hole. We build an AST by substituting for function application or functions, as these have subtrees. By the prefixes $\texttt{child}\; n$ and \texttt{parent}, we move the cursor either to a child $n$ of a node, where $n$ is an integer, or to the parent of a node.\\ 
+
+In the syntactic construct $\phi \Rightarrow E$, expression $E$ is evaluated only if condition $\phi$ holds. We introduce the search conditions: is $D$ currently \textbf{at} the cursor ($@ D$), does $D$ exist in \textbf{some} subtree of the AST ($\lozenge D$) and does $D$ exist in \textbf{ every} subtree of the AST ($\Box  D$). Note here that the last two search conditions are directly inspired by modal logic.\\
+
+The syntactic construct $E_1 \ggg E_2$ allows sequential composition, such that we evaluate $E_2$ only after $E_1$ has been reduced to the \textit{nil} expression $\mathbf{0}$. We introduce the terms $\recursion{E}{x}$ and $x$ to handle recursion. That is, any occurrence of $x$ in $E$ are substituted for $E(x)$. This enables us to write editor expressions that traverse the abstract syntax tree or iterate an expression until a condition no longer holds, as in example \ref{ex:rembreakpoint}.
+
+\begin{align*}
+  \pi ::= \; & \texttt{eval} \mid \replace{D} \mid \texttt{child}\; n \mid \texttt{parent}\\
+  \phi ::= \; & \neg \phi \mid \phi_1 \land \phi_2 \mid \phi_1 \lor \phi_2 \mid @D \mid \lozenge D \mid \Box D\\
+  E ::= \; & \pi.E \mid \phi \Rightarrow E \mid E_1 \ggg E_2 \mid \recursion{E}{x} \mid x \mid \mathbf{0}\\
+  D ::= \; & \texttt{var}\;x \mid \texttt{const}\;c \mid \texttt{app} \mid \texttt{lambda}\; x \mid \texttt{break} \mid \texttt{hole}
+\end{align*}
+\\
+\begin{exmp}
+Assume we wanted to remove a sequence of breakpoints situated immediately within the cursor. We could then recursively move the cursor down the subtree, until we find a node that is not a breakpoint. As we backtrack, we move the cursor up and \textit{toggle} off each breakpoint, with the expression $\texttt{parent}.\replace{\texttt{break}}.\mathbf{0}$. The complete expression would be:\\
+
+$\recursion{(@\texttt{break} \Rightarrow ((\texttt{child}\; 1).\mathbf{0} \ggg x \ggg \texttt{parent}.\replace{\texttt{break}}.\mathbf{0}))}{x}$\\
+
+Thus, we control recursion with atomic commands, as these change the conditions bounding the recursion.\label{ex:rembreakpoint}
+\end{exmp}
+
+%The inclusion of the editor prefix \texttt{child} $n$ introduces certain run-time errors, as $n$ is over the naturals. Therefore, nonsensical editor expressions such as $(\texttt{child}\;99).\mathbf{0}$, are syntactically valid. We now provide an example of how the search conditions can be used in editor expressions to avoid run-time errors of this kind. We show this in example \ref{ex:childn}.\\
+
+%\begin{exmp}
+%$@(\texttt{lambda}\; x) \Rightarrow ((\texttt{child}\; 1).\mathbf{0})^* \ggg @ \texttt{app} \Rightarrow (\texttt{child}\; %\label{ex:childn}
+%\end{exmp}
+
+%In the example, we show how ($@ D$) can be used with the appropriate node to ensure that the correct child is chosen next in the context of finding the next point of evaluation.\\
+
+%We now expand upon example \ref{ex:childn} to provide a concrete example of an editor expression for step-wise evaluation using iteration and conditions. This expression can be seen in example \ref{ex:stepwiseeval}.\\
+
+%\begin{exmp}
+%$\replace{\texttt{break}}.\mathbf{0} \ggg @ (\texttt{lambda}\; x) \lor @ \texttt{app} \Rightarrow (\replace{\texttt{break}}.\mathbf{0} %\ggg @ (\texttt{lambda}\; x) \Rightarrow ((\texttt{child}\; 1).\mathbf{0})^* \ggg @ \texttt{app} \Rightarrow (\texttt{child}\; %2).\replace{\texttt{break}}.\texttt{eval}.\mathbf{0})^*$ \\
+%\label{ex:stepwiseeval}
+%\end{exmp}
+
+%This expression moves the cursor along a path in the AST, by inserting breakpoints at the \textit{right} subtree of application terms, evaluating the AST in between each insertion. The expression is conditioned by the term the cursor encapsulates, such that iteration stops upon a leaf. \\
+
+%Further safety of evaluation can be ensured through the use of search conditions by guaranteeing the exclusion of certain evaluation hazards. As an example of this, we expand the above example further to include an initial check that ensures that we do not evaluate an uncompleted tree. We show this expanded editor expression in example \ref{ex:stepwiseevalnohole}.\\
+
+%\begin{exmp}
+%$\neg\lozenge \texttt{hole} \Rightarrow (\replace{\texttt{break}}.\mathbf{0} \ggg @ (\texttt{lambda}\; x) \lor @ \texttt{app} %\Rightarrow (\replace{\texttt{break}}.\mathbf{0} \ggg @ (\texttt{lambda}\; x) \Rightarrow (\texttt{child}\; 1).\mathbf{0}^* \ggg @ %\texttt{app} \Rightarrow (\texttt{child}\; 2).\replace{\texttt{break}}.\texttt{eval}.\mathbf{0})^*)$ \\
+%\label{ex:stepwiseevalnohole}
+%\end{exmp}
+%of iteration and condition can be expressed as, $\neg(\bigcirc\texttt{break}) \Rightarrow (\texttt{eval}.\mathbf{0})^*$. This can be further reduced as such: $\neg(\bigcirc\texttt{break}) \Rightarrow \texttt{eval}.\mathbf{0}^* \ggg \neg(\bigcirc\texttt{break}) \Rightarrow \texttt{eval}.\mathbf{0}^* \ggg ... \ggg \texttt{eval}.\mathbf{0}^*$.
+%Thus, we are only allowed to evaluate the AST as long as the node is not reducible to \texttt{break}. This is done in iterations until we meet a breakpoint and end up in $\mathbf{0}^*$, which by definition \ref{conditions:structurelcongruence} is equivalent to $\mathbf{0}$.\\
+\begin{definition}{(Structural congruence)}\label{conditions:structurelcongruence}
+An editor expression $E_1$ is structurally congruent with editor expression $E_2$, denoted $E_1 \equiv E_2$, if they are equivalent up to structure, where $\equiv$ is the least relation on $\mathbf{Edt}$ satisfying the equivalences below.
+\begin{align}
+    %E_1\;\|\;E_2  &\equiv E_2\;\|\;E_1\\
+    %E\;\|\;\mathbf{0} &\equiv E\\
+    \mathbf{0} \ggg E &\equiv E\label{sc:1}\\
+    \recursion{E}{x} &\equiv E\!\left\{\!\recursion{E}{x}\!/x\right\}\label{sc:3}\\
+    \phi \Rightarrow \mathbf{0} &\equiv \mathbf{0}\label{sc:4}\\
+    \phi_1 \Rightarrow \phi_2 \Rightarrow E &\equiv \phi_2 \Rightarrow \phi_1 \Rightarrow E\label{sc:5}
+\end{align}
+\end{definition}
+We introduce the equivalences in definition \ref{conditions:structurelcongruence} to simplify the semantics of editor expressions. Notably, structural congruence accounts for the trivial cases of sequential composition and conditioned expressions. That is, a sequential composition with a nil term as left-side is structurally equivalent to its right-side. Furthermore, we account for recursion through equivalence \ref{sc:3}, in which the occurrences of the name $x$ in the expression $E$ are substituted for the recursive term $\recursion{E}{x}$. Notice that an editor expression thus may grow unbounded, if it contains an unconditioned recursive term. Finally, we define the order of conditions on an expression to be insignificant.
+
+%

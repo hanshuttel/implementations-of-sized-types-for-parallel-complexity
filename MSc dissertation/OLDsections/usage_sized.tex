@@ -1,0 +1,110 @@
+\chapter{Usages with sized types}\label{sec:usagessized}
+% Intro
+%   Something about omitting nondeterministic choice
+% Updated syntax
+% Operations on usages with sized types (\oplus, \sqcup, +) Delaying operation?
+% Same congruence rules
+% Updated reduction rules
+%   Environment from sized types
+% Updated subusages
+
+The type system by Baillot and Ghyselen \cite{BaillotGhyselen2021} imposes constraints on the use of simple channels i.e. non-replicated channels, with regards to the notion of time variance. That is, such channels are typed with an index $I$ defining an upper bound on the time within which the channel must synchronize. This translates to a sort of linearity constraint, in that inputs and outputs on such channels can only be sequenced, if no ticks interleave them. Many interesting concurrent programs, such as those using semaphores, cannot be encoded under these constraints, as they require the ability to sequence inputs and outputs. A simple example is the following process: %Note that this limitation does not apply to servers.
+%
+\begin{align*}
+    \inputch{a}{}{}{\tick\asyncoutputch{a}{}{}} \mid \outputch{a}{}{}{\tick\asyncinputch{a}{}{}}
+\end{align*}
+ We cannot type either subprocess of its parallel composition, as this requires advancing the time of channel $a$ after it has already synchronized once, meaning its time is $0$, and so advancement of time is undefined, as shown in the typing of the first subprocess as follows
+%
+\begin{align*}
+\begin{prooftree}
+\centering
+\Infer0{\cdot;\cdot;a : \channeltypeS{I}{} \vdash a : \channeltypeS{I}{}}
+%
+\Infer0{\cdot;\cdot\vdash \channeltypeS{I}{}\sqsubseteq \inchanneltypeS{I}{}}
+%
+\Infer2{\cdot;\cdot;a : \channeltypeS{I}{} \vdash a : \inchanneltypeS{I}{}}
+%
+\Infer0{\susumesim{\channeltypeS{0}{}}{1}\;\text{is undefined}}
+\Infer1{\cdot;\cdot;a :\susumesim{\channeltypeS{0}{}}{1}\vdash \asyncoutputch{a}{}{} : 0}
+\Infer1{\cdot;\cdot;a : \channeltypeS{0}{} \vdash \tick\asyncoutputch{a}{}{} : 1}
+%
+\Infer2{\cdot;\cdot;a : \channeltypeS{I}{} \vdash \inputch{a}{}{}{\tick\asyncoutputch{a}{}{}} : I + 1}
+\end{prooftree}
+\end{align*}
+
+To combat these issues, Baillot and Ghyselen together with Kobayashi introduce an extension of usages to sized types \cite{BaillotEtAl2021} to replace input/output types. The syntax of the extension is similar to the previous definition of usages, but instead of denoting obligations and capacities using naturals, we instead denote them using intervals specified by sized types. This has the obvious advantage that we can specify not just an upper bound but also a lower bound. Furthermore, because sized types allow for polymorphism using index variables, we can specify bounds relative to some input. The syntax for usages with sized types can be seen in Definition \ref{def:usagessized}.
+%
+\begin{defi}[Usages with sized types]
+Usages $U$ with sized types are defined by the following syntax.
+%
+\begin{align*}
+    \kern-2.5em U,V ::= \nil \mid \usagepref{\alpha}{A_o}{J_c}.U \mid (\uparcomp{U}{V}) \mid \;\bang{U} \quad\quad \alpha ::= \inusagesym \mid \outusagesym\quad\quad A_o, B_o ::= \kinterval{I}{J} \quad \quad J_c, I_c ::= J \mid \kinterval{I}{J}
+\end{align*}
+\label{def:usagessized}
+\end{defi}
+%
+As can be seen, the only difference is the definition of obligations and capacities. The interval of a capacity may be denoted using a single index $J$, but really this is just a shorthand for the interval $\kinterval{-\infty}{J}$. The interval $\kinterval{-\infty}{J}$ is useful and commonly appears, as the capacity denotes the time before a dual process is ready \textit{after} the time specified in the obligation. However, it is often perfectly acceptable for the dual process to be ready before the original process is ready to execute, and so the lower bound becomes $-\infty$. A usage prefix $\usagepref{\alpha}{t_o}{t_c}$ using the original definition of usages can be simulated using the new definition as $\usagepref{\alpha}{\kinterval{0}{t_o}}{t_c} = \usagepref{\alpha}{\kinterval{0}{t_o}}{\kinterval{-\infty}{t_c}}$. This showcases how the interval $\kinterval{-\infty}{J}$ often appears useful in denoting capacities.\\
+
+Note that in the original definition of usages with sized types in Baillot et al. a non-deterministic choice operator was also included. This allows for more freedom in typing pattern matching where channels may be used differently in the two branches. However, this leads to a more complex definition of usages, and so we have omitted this operator in this paper.\\
+
+With a new denotation of obligations and capacities, we also find a need for more operations on usages when defining usage reductions. The three new operations $\oslash$, $\sqcup$, and $+$ are defined in Definition \ref{def:usagesoperationssized}. The definition for the delay operation $\withdelay{A_o}{}$\; remains the same as in Definition \ref{def:lockfreedomdelaying}, but we use the new $+$ operation on indices instead of the $+$ on naturals.
+
+\begin{defi}[Operations on usages with sized types]
+The operations $\oslash$, $\sqcup$, and $+$ are defined by
+$$
+    A_o \oslash J = \kinterval{0}{Left(A_o) + J} \quad\quad A_o \oslash \kinterval{I}{J} = \kinterval{Right(A_o) + I}{Left(A_o) + J}
+$$
+\vspace{-1em}
+$$
+    \kinterval{I}{J} \sqcup \kinterval{I'}{J'} = \kinterval{max(I, I')}{max(J,J')} \quad\quad \kinterval{I}{J} + \kinterval{I'}{J'} = \kinterval{I + I'}{J + J'}
+$$
+\label{def:usagesoperationssized}
+\end{defi}
+
+The operation $\sqcup$ is the $max$ operation extended to intervals and $+$ is simply addition extended to intervals. The operation $\oslash$ takes an obligation $A_o$ and a capacity $J_c$ and computes $\bigcap_{t \in A_o} J_c + \kinterval{t}{t}$ i.e. the intersection of the capacity delayed by any value in the obligation. In the case where the capacity is a single index, we ignore the lower bound and set this to 0. This operation is useful when we want to check if the obligation of one prefix is consistent with another prefix.
+
+\begin{defi}[Usage reduction with sized types]
+    The reduction relation $\longrightarrow$ is defined as the least relation satisfying the rules
+    \begin{align*}
+        &\kern4em\infrule{\varphi; \Phi \vDash B_o \subseteq A_o \oslash I_c \quad \varphi; \Phi \vDash A_o \subseteq B_o\oslash J_c}{\varphi; \Phi \vdash \parcomp{\parcomp{\inusagepref{A_o}{I_c}.U}{\outusagepref{B_o}{J_c}.V}}{W} \longrightarrow\; \uparcomp{\withdelay{A_o \sqcup B_o}{(\uparcomp{U}{V})}}{W}}\\
+        %
+        &\kern-1em
+        \infrule{\varphi; \Phi \not\vDash (B_o \subseteq A_o \oslash I_c \land A_o \subseteq B_o \oslash J_c)}{\varphi; \Phi \vdash \parcomp{\parcomp{\inusagepref{A_o}{I_c}.U}{\outusagepref{B_o}{J_c}.V}}{W} \longrightarrow \errres} \kern7em\infrule{U \equiv U' \quad \varphi; \Phi \vdash U' \longrightarrow V' \quad V' \equiv V}{\varphi; \Phi \vdash U \longrightarrow V}
+    \end{align*}
+\label{def:usagereductionsized}
+\end{defi}
+
+The new denotation of obligation and capacity also brings a need for modified reduction rules which can be seen in Definition \ref{def:usagereductionsized}. These modified rules are similar to the ones from before, and these are actually a generalization of the ones from before. The first thing we notice is that reductions are now given under a set of index variables $\varphi$ and a set of constraints $\Phi$ to interpret the sized types of the intervals. Otherwise, in the premise, instead of checking if the obligation of one prefix is less than the capacity of the other as earlier, we now use the $\oslash$ operation on the obligation and capacity of one prefix and check if the obligation of the other is a subset of this. The new definition of reliability is similar to that of before, but we must reduce a usage $U$ under $\varphi$ and $\Phi$.
+%
+\begin{defi}[Reliability with sized types]
+    A usage $U$ is reliable if $\varphi; \Phi \vDash U \not\longrightarrow^* \errres$
+    
+    \label{def:lockfreedomreliabilitysized}
+\end{defi}
+%
+We also modify the definition of subusages with the new definition visible in Definition \ref{def:usagesubusagesized}. The most significant change here is the last rule. Again, this rule serves two purposes: to continue the subusage relation through prefixes, and to possibly strengthen the obligation and weaken the capacity. As we are now working with intervals, we must now use the subset relation instead of the less than or equal relation from before, when comparing two obligations or two capacities. Again, if a capacity of the last premise is a single index $J$, we assume the interval $\kinterval{-\infty}{J}$.
+
+\begin{defi}[Subusage with sized types]
+    The subusage relation $\sqsubseteq$ is defined as the least reflexive and transitive relation satisfying the rules
+    \begin{align*}
+        &\kern-4em\infrule{\varphi; \Phi \vdash U \equiv U'}{\varphi; \Phi \vdash U \sqsubseteq U'}\kern-2em\infrule{}{\varphi; \Phi \vdash U \sqsubseteq \nil}\kern-1em \infrule{}{\varphi; \Phi \vdash \parcomp{\usagepref{\alpha}{A_o}{J_c}.U}{\;\withdelay{A_o+J_c}{V}} \sqsubseteq \usagepref{\alpha}{A_o}{J_c}.(\parcomp{U}{V})}\\
+        %
+        &\kern-6em\infrule{\varphi; \Phi \vdash U \sqsubseteq U'}{\varphi; \Phi \vdash \uparcomp{U}{V} \sqsubseteq \uparcomp{U'}{V}}\kern-2em\infrule{\varphi; \Phi \vdash U \sqsubseteq U'}{\varphi; \Phi \vdash \bang{U} \sqsubseteq\; \bang{U'}}\kern-1em \infrule{\varphi; \Phi \vdash U \sqsubseteq U' \quad \varphi; \Phi \vDash B_o \subseteq A_o \quad \varphi; \Phi \vDash I_c \subseteq J_c}{\varphi; \Phi \vdash \usagepref{\alpha}{A_o}{I_c}.U \sqsubseteq \usagepref{\alpha}{B_o}{J_c}.U'}
+    \end{align*}
+    %
+    %\\
+    %\begin{tabular}{p{20em}p{15em}}
+    %    \infrule{\varphi; \Phi \vdash U \equiv U'}{\varphi; \Phi \vdash U \sqsubseteq U'} & 
+    %        
+    %    \infrule{}{\varphi; \Phi \vdash U \sqsubseteq \nil}\\
+    %    
+    %    \infrule{\varphi; \Phi \vdash U \sqsubseteq U'}{\varphi; \Phi \vdash \uparcomp{U}{V} \sqsubseteq %\uparcomp{U'}{V}} &
+    %        
+    %    \infrule{\varphi; \Phi \vdash U \sqsubseteq U'}{\varphi; \Phi \vdash \bang{U} \sqsubseteq\; %\bang{U'}}\\
+    %        
+    %    \infrule{}{\varphi; \Phi \vdash \parcomp{\usagepref{\alpha}{A_o}{J_c}.U}{\;\withdelay{A_o+J_c}{V}} %\sqsubseteq \usagepref{\alpha}{A_o}{J_c}.(\parcomp{U}{V})} &
+    %        
+    %    \infrule{\varphi; \Phi \vdash U \sqsubseteq U' \quad \varphi; \Phi \vDash B_o \subseteq A_o \quad %\varphi; \Phi \vDash I_c \subseteq J_c}{\varphi; \Phi \vdash \usagepref{\alpha}{A_o}{I_c}.U \sqsubseteq %\usagepref{\alpha}{B_o}{J_c}.U'}
+    %    \end{tabular}
+\label{def:usagesubusagesized}
+\end{defi}

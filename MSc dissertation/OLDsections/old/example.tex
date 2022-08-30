@@ -1,0 +1,123 @@
+\section{Example}
+Assume we want to replace all holes with a specific type in some AST $a$ by some specific subtree. Let $a=$
+$$
+\cursor{
+\lambda x\!:\!b. \lambda y\!:\!b.(
+  \lambda z\!:\!b.(\hole\!:\!b\!\! \rightarrow\!\! b\; x)
+  (\hole\!:\!b\!\! \rightarrow\!\! b\; y)
+)\; c\; c
+}
+$$
+We can then construct the the following editor expression, which replaces all holes with type $b\rightarrow b$ encapsulated by the cursor by the simple abstraction $\lambda w:b.w$.
+%
+\begin{align*}
+&a \triangleq @\texttt{app} \lor @\texttt{lambda}\; x \lor @\texttt{break} \Rightarrow\\ 
+&\quad\;\;\;((\texttt{child}\; 1).x \ggg \texttt{parent}))\\
+&b \triangleq @\texttt{app} \Rightarrow ((\texttt{child}\; 2).x \ggg \texttt{parent})\\
+&c \triangleq @\texttt{hole} \land \Theta b\!\rightarrow\!b \Rightarrow\\
+&\quad\;\;\;(\replace{\texttt{lambda}\; w: b\!\rightarrow\!b}.(\texttt{child}\; 1).\replace{\texttt{var}\; w}.\texttt{parent})\\
+&\texttt{rec}\; x.(a \ggg b \ggg c)
+\end{align*}
+
+The expression works by recursively going down the AST, substituting all holes with type $b\!\rightarrow\!b$ by $\lambda w:b.w$ in a bottom-up manner. We show that it is well-typed:
+
+%\begin{figure}
+%    \centering
+%    \begin{lstlisting}[mathescape, xleftmargin=1cm]
+%                 $\cursor{\text{app}}$           
+%                 /   \           
+%              app     c          
+%             /   \               
+%           $\lambda$x:b    c              
+%            |                    
+%           $\lambda$y:b                  
+%            |                    
+%           app                   
+%          /   \                  
+%       $\lambda$z:b     app               
+%        |     /   \              
+%      app  $\hole$:b->b y             
+%     /   \                       
+% $\hole$:b->b    x                      
+%    \end{lstlisting}
+%    \caption{Example AST visualised}
+%    \label{fig:ast_vis}
+%\end{figure}
+
+\begin{align*}
+&    p,\; \Gamma_e \vdash \texttt{rec}\; x.(a \ggg b \ggg c) : ok\; \text{iff}\; p,\; \emptyset \vdash (a \ggg b \ggg c) : ok\; &&\runa{t-rec}\\
+%
+%
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; ?)) \vdash (a \ggg b \ggg c) : ok\; &&\runa{t-seq}\; \text{iff}\;\\ 
+&p,\; (\emptyset,\; p : (\emptyset,\; ?)) \vdash a : ok\; \text{and}\; p,\; (\emptyset,\; p : (\emptyset,\; ?)) \vdash b \ggg c : ok \;\\
+%
+&\text{we show that}\; a\; \text{is well-typed:}\\
+%
+%%
+&p,\; (\emptyset,\; p : (\emptyset,\; ?)) \vdash @\texttt{app} \lor @\texttt{lambda}\; x \lor @\texttt{break} \Rightarrow ((\texttt{child}\; 1).x \ggg \texttt{parent}.\mathbf{0}) : ok\; &&\runa{t-cond}\;\text{iff}\\
+%
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; ?),\; p\; \texttt{one} : (\emptyset,\; ?)) \vdash (\texttt{child}\; 1).x \ggg \texttt{parent}.\mathbf{0} : ok\; &&\runa{t-seq}\; \text{iff} \\
+%
+%
+&p,\; (\emptyset,\; p\; \texttt{one} : (\emptyset,\; ?)) \vdash (\texttt{child}\; 1).x : ok\; &&\runa{t-child-1} \; \text{and}\\
+%
+&p\; \texttt{one},\; (\emptyset,\; p\; \texttt{one} : (\emptyset,\; ?)) \vdash x : ok\; &&\runa{(t-ref)}\; \text{and} \\
+%
+&p\; \texttt{one},\; (\emptyset,\; p : (\emptyset,\; ?),\; p\; \texttt{one} : (\emptyset,\; ?)) \vdash \texttt{parent}.\mathbf{0} : ok\; &&\runa{t-parent}\; \text{iff}\\
+%
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; ?),\; p\; \texttt{one} : (\emptyset,\; ?)) \vdash \mathbf{0} : ok\; &&\runa{t-nil}\\
+%
+%
+&\text{we show that}\; b \ggg c\; \text{is well-typed:}\\
+%
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; ?)) \vdash b \ggg c : ok\; &&\runa{t-seq}\; \text{iff}\\
+%
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; ?)) \vdash b : ok\; \text{and}\; p,\; (\emptyset,\; p : (\emptyset,\; ?)) \vdash c : ok\\
+%
+%
+&\text{we show that}\; b\; \text{is well-typed:}\\
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; ?)) \vdash @\texttt{app} \Rightarrow ((\texttt{child}\; 2).x \ggg \texttt{parent}.\mathbf{0}) : ok\; &&\runa{t-cond}\; \text{iff}\\
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; ?),\; p\; \texttt{two} : (\emptyset,\; ?)) \vdash (\texttt{child}\; 2).x \ggg \texttt{parent}.\mathbf{0} : ok\; &&\runa{t-seq}\; \text{iff}\\
+%
+%
+&p,\; (\emptyset,\; p\; \texttt{two} : (\emptyset,\; ?)) \vdash (\texttt{child}\; 2).x : ok\; &&\runa{t-child-2}\; \text{iff}\\
+%
+%
+&p\; \texttt{two},\; (\emptyset,\; p\; \texttt{two} : (\emptyset,\; ?)) \vdash x : ok\; &&\runa{t-ref}\; \text{and}\\
+%
+%
+&p\; \texttt{two},\; (\emptyset,\; p : (\emptyset,\; ?),\; p\; \texttt{two} : (\emptyset,\; ?)) \vdash \texttt{parent}.\mathbf{0} : ok\; &&\runa{t-parent}\; \text{iff}\\
+%
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; ?),\; p\; \texttt{two} : (\emptyset,\; ?)) \vdash \mathbf{0} : ok\; &&\runa{t-nil}\\
+%
+%
+&\text{we show that}\; c\; \text{is well-typed:}\\
+%
+%
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; ?)) \vdash @\texttt{hole} \land \Theta b\!\rightarrow\!b \Rightarrow  (\replace{\texttt{lambda}\; w : b\!\rightarrow\!b}).(\texttt{child}\; 1).\replace{\texttt{var}\; w}.\texttt{parent}.\mathbf{0}) : ok\; &&\runa{t-cond}\; \text{iff}\\
+%
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; b\!\rightarrow\!b)) \vdash \replace{\texttt{lambda}\; w : b\!\rightarrow\!b}).(\texttt{child}\; 1).\replace{\texttt{var}\; w}.\texttt{parent}.\mathbf{0} : ok\; &&\runa{t-sub-abs}\; \text{iff}\\
+%
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; b\!\rightarrow\!b),\; p\; \texttt{one} : ((\emptyset,\; w : b),\; b)) \vdash (\texttt{child}\; 1).\replace{\texttt{var}\; w}.\texttt{parent}.\mathbf{0} : ok\; &&\runa{t-child-1}\; \text{iff}\\
+%
+%
+&p\; \texttt{one},\; (\emptyset,\; p : (\emptyset,\; b\!\rightarrow\!b),\; p\; \texttt{one} : ((\emptyset,\; w : b),\; b)) \vdash \replace{\texttt{var}\; w}.\texttt{parent}.\mathbf{0} : ok\; &&\runa{t-sub-var}\; \text{iff}\\
+%
+%
+&p\; \texttt{one},\; (\emptyset,\; p : (\emptyset,\; b\!\rightarrow\!b),\; p\; \texttt{one} : ((\emptyset,\; w : b),\; b)) \vdash \texttt{parent}.\mathbf{0} : ok\; &&\runa{t-parent}\; \text{iff}\\
+%
+%
+&p,\; (\emptyset,\; p : (\emptyset,\; b\!\rightarrow\!b),\; p\; \texttt{one} : ((\emptyset,\; w : b),\; b)) \vdash \mathbf{0} : ok\; &&\runa{t-nil}
+%
+\end{align*}

@@ -1,0 +1,177 @@
+% \section{Introduction}
+% Type systems are formal methods comprising of sets of rules that formalize and enforce categories onto values in a program, by assigning types to its constituents. Programs that satisfy the rules of a type system are said to be well-typed, usually meaning that such programs are well-behaved, with respect to some property typically defined based on the semantics, such as \textit{well-typed programs do not go wrong} \cite{Milner1978}. In this regard, types have traditionally been used to describe permissible outcomes of computations, or more specifically what their results should be. However, since the advent of behavioral types in the 1990s, types have been used to analyze various properties with regards to the run-time behavior of programs. The term Behavioral types does not refer to a certain type discipline, but rather to a family of type disciplines that are able to describe such notions as causality, choice and resource use \cite{Huttel2016}, starting as simple as Linear types that impose linearity constraints on resources, thereby ensuring such resources are used exactly once \cite{KobayashiPierce1999}.\\
+
+% Behavioral types are particularly useful for prescribing the behavior of message-passing processes in the study of concurrency theory. Such communication makes concurrent programs notoriously complex and possibly non-deterministic, leading to a variety of difficult problems that may affect or inhibit outcomes of programs, such as ensuring deadlock or livelock freedom, or verifying that message-passing cannot result in run-time errors. In fact, most liveness properties for the pure $\pi$-calculus can be reduced to ensuring lock-freedom \cite{KobayashiSangiorgi2010}.  Behavioral type disciplines such as Session types \cite{Honda1993,HondaEtAl1998} and Usage types \cite{SumiiKobayashi1998} enable description of communication protocols in such programs, and have thereby been used successfully as bases for type disciplines capable of verifying some of these properties \cite{Kobayashi2000,Kobayashi2002,Dardha2018}.\\
+
+% More recently, behavioral types have been used in the study of static complexity analysis, to introduce type systems for which bounds on the complexities of well-typed programs can be derived from their typings. In this setting, type systems have the advantage that they are compositional, meaning they can more easily be extended to practical languages, are more comprehensible, and are simpler to prove correctness of. Therefore, type systems are typically formally grounded, and can thus verify the correctness of complexity analyses. Provided an inference algorithm, they can also infer bounds on the complexities of well-typed programs directly. We distinguish between static complexity analysis of sequential and concurrent programs. With regards to concurrent programs, we may be interested in either the sequential complexity (also called the \textit{work}), or the parallel complexity (also called the \textit{span}), where we assume infinitely many processors and maximize the parallelism. The parallel complexity is more difficult to analyze, as the maximum parallelism is largely determined by synchronizations between subprocesses over channels. Thus, type-based analysis of the span of such processes requires a resource-aware type system with respect to the behavior of channels. \\ 
+
+% While type systems for static complexity analysis have been studied extensively for sequential programs, using such notions as Sized types (Consider for instance \cite{AvanziniLago2017,LagoGaboardi2012,Hofmann2003,Hoffmann2010}), relatively few contributions have been made to that of concurrent programs since early work by Kobayashi \cite{Kobayashi2000} in 2000, and being inherently more complex to analyze than sequential programs, much work has yet to be done for concurrent programs. This is further exemplified by the recent resumption of research into static complexity analysis of $\pi$-calculus like languages led by two independent groups of researchers, using different notions of behavioral types \cite{BaillotGhyselen2021,BaillotEtAl2021,DasEtAl2018}. Therefore, we find it appropriate to compile the research of this domain from the past 20 years, to make it more accessible to new researchers.\\
+
+% In this article, we provide a survey on the most relevant behavioral type systems for parallel complexity of $\pi$-calculus like languages from the past 20 years of research. In this regard, we define a shared variant of the $\pi$-calculus, with a flexible cost model for time, for which we formally introduce and discuss behavioral type systems for bounding the parallel complexity. Specifically, we consider the early work on Usage types to bound the time of synchronizations by Kobayashi \cite{Kobayashi2000}, as well as the use of Sized types to bound the time of \textit{recursive} processes used in conjunction with Input/Output and Usage types by Baillot and Ghyselen \cite{BaillotGhyselen2021} and Baillot et al. \cite{BaillotEtAl2021}, respectively. Finally, we consider a novel approach by Das et al. \cite{DasEtAl2018} that uses Temporal Session types to prescribe timed protocols, enabling analysis of such properties as the rate, latency and complexity of communication. As a comparison taxonomy, we consider the expressiveness and precision of the type systems, as well as the current state of \textit{time reconstruction} for the respective type disciplines. \\
+
+% \input{sections/relatedwork}
+
+% The remainder of this article is organized as follows. In Section \ref{sec:picalc}, we review the variant of the $\pi$-calculus for which we discuss type systems, and in Section \ref{sec:typedisci}, we introduce the type disciplines used as bases for these type systems. Then, in Section \ref{sec:typesyst} we formally introduce the most relevant type systems for parallel complexity of $\pi$-calculus processes from recent research, and in Section \ref{sec:comparison}, we compare the expressiveness and precision of these type systems. In Section \ref{sec:inference}, we discuss type reconstruction for Session types, Usage types and Sized types. Finally, in Section \ref{sec:conc} we discuss related work followed by a brief conclusion. 
+
+%\begin{itemize}
+%    %\item Types have traditionally been used to describe permissible results of computations, but have since %the advent of behavioral types in the 1990s been used for analyzing various properties with regards to the %run-time behavior of programs.
+    %%\item Such types are particularly useful for concurrent programs in which values may be transmitted %between parallel subprograms. The behavior of such programs is notoriously difficult for programmers to %understand and may be non-deterministic, leading to the study of type-based analysis schemes for various %properties of concurrent programs, such as deadlock and livelock freedom, and correctness of communication %protocols. 
+    %%\item Of particular interest is the study of type-based static complexity analysis. While this has been %studied extensively for sequential programs, using such notions as sized types, behavioral types are %particularly useful for the study of parallel complexity (also called the span) in $\pi$-calculus like %languages, where we assume infinite processors, as it is largely dependent on the behavior of channels.
+    %%\item The study of type-based static complexity analysis of $\pi$-calculus like languages, though %commenced in the early 2000s, has not been studied extensively, in contrast to that of sequential programs %for which capable type systems enabling time reconstruction already exist. However, research in this area %has recently been picked up by multiple groups, using different notions of behavioral types. **Some %examples**
+    %\item We therefore find it appropriate to compile the research into type-based static complexity analysis %of $\pi$-calculus like languages from the past 20 years, to make the domain more accessible. In this %article, we discuss and compare the uses of Input/Output types, Usage types, and Session types to reason %about the behavior of channels, and Sized types to bound the time of recursive processes and to %parameterize the complexity by the size of inputs, to ultimately bound the parallel complexity of %$\pi$-calculus processes.
+    %\item **Contributions**
+    %\item **Related work** (Sequential programs, implicit complexity)
+    %%\item The remainder of this article is organized as follows **STRUCTURE**.
+%\end{itemize}
+%
+%
+\chapter{The $\mathbf{\pi}$-calculus}\label{sec:picalc}
+We consider a synchronous polyadic $\pi$-calculus, extended with natural numbers as algebraic terms and a \textit{match} construct that \textit{deconstructs} naturals. The sets of \textit{processes} and \textit{expressions} are defined by the syntax
+%
+\begin{align*}
+    P,Q \text{ (processes) } ::=&\; \nil \mid \left(\parcomp{P}{Q} \right) \mid \inputch{a}{\widetilde{v}}{}{P} \mid \outputch{a}{\widetilde{e}}{}{P} \mid\; \bang{\inputch{a}{\widetilde{v}}{}{P}} \mid \newvar{a}{P} \mid  \\
+    &\; \match{e}{P}{x}{Q}\\
+    e \text{ (expressions) } ::=&\; 0 \mid \succc{e} \mid v
+\end{align*}
+%
+where $a,b,c \in \mathbf{Var}$ are channel names, $x,y,z\in\textbf{Var}$ are variables for naturals and $\mathbf{Var}$ is a countably infinite set of names. We use meta-variable $v$ for arbitrary names. We use the notation $\widetilde{v}$ and $\widetilde{e}$ to denote sequences of names $v_1,v_2,\dots,v_n$ and expressions $e_1,e_2,\dots,e_n$, respectively, such that $\subst{P}{\widetilde{v}\mapsto\widetilde{e}}$ denotes the substitution of expressions $\widetilde{e}$ for free variables $\widetilde{v}$ in process $P$. The constructor $\nil$ (inaction) represents the process that does nothing. $\parcomp{P}{Q}$ is the parallel composition of subprocesses $P$ and $Q$. An input process $\inputch{a}{\widetilde{v}}{}{P}$ receives a sequence of expressions on channel $a$ identified by variables $\widetilde{v}$ in the continuation $P$. Likewise, an output process $\outputch{a}{\widetilde{e}}{}{P}$ denotes the process that transmits expressions $\widetilde{e}$ on channel $a$ and continues as $P$. Some type systems are only defined for the asynchronous $\pi$-calculus, where outputs have no continuations, for which we simply write $\asyncoutputch{a}{\widetilde{e}}{}$ to denote $\outputch{a}{\widetilde{e}}{}{\nil}$. Note that the untyped asynchronous $\pi$-calculus is only less expressive if nondeterministic choice is introduced \cite{Palamidessi1997}. The replication of an input $\bang{\inputch{a}{\widetilde{v}}{}{P}}$ represents an infinite number of copies of the input. However, for technical convenience, we only enable introduction of a single copy at a time. The restriction of name $a$ to process $P$ $\newvar{a}{P}$ dynamically introduces the new channel name $a$ in the \textit{scope} of $P$ and continues as $P$. For convenience, we may write $\newvar{\widetilde{a}}{P}$ for some process of the form $\newvar{a_1}{\newvar{a_2}{\dots\newvar{a_n}{P}}}$.\\ %Finally, we have a pattern match construct for naturals and the \texttt{tick} prefix that increases the time complexity by one, thereby enabling representation of different cost models. This construct is the only source of time complexity in the type systems by Baillot and Ghyselen \cite{BaillotGhyselen2021} and Baillot et al. \cite{BaillotEtAl2021}. 
+%In the type system for lock-freedom by Kobayashi \cite{Kobayashi2000}, we are interested in guarantees of successful communication represented by meta-variable $a$, where $\succeeds$ requires that the corresponding input or output succeeds, whereas $\emptyset$ denotes no such guarantee.
+
+We define structural congruence on processes as usual in Definition \ref{def:structcong1} \cite{Milner1993}. However, we omit the rule for $\alpha$-renaming, and as the semantics for replication is non-standard, we define it in the reduction relation. %We include rules 
+%
+\begin{defi}[Structural congruence]
+We define structural congruence $\equiv$ to be the least congruence relation satisfying the rules below
+%
+\begin{align*}
+    &\kern6em\runa{SC-zero}\;\;\parcomp{P}{\nil} \equiv P\kern2em \runa{SC-commu}\;\; \parcomp{P}{Q} \equiv \parcomp{Q}{P}\\ &\kern7em\runa{SC-assoc}\;\; \parcomp{P}{\left(\parcomp{Q}{R}\right)} \equiv \parcomp{\left(\parcomp{P}{Q}\right)}{R}\\
+    %
+    &\kern2em\runa{SC-scope}\;\;\newvar{a}{\left(\parcomp{P}{Q}\right)} \equiv \parcomp{\newvar{a}{P}}{Q}\;\; \text{ if } a \text{ is not free in } Q\\
+    %
+    &\kern2.5em\runa{SC-par}\;\;\infrule{P \equiv P'}{\parcomp{P}{Q} \equiv \parcomp{P'}{Q}} \kern2em
+    \runa{SC-res}\;\;\infrule{P \equiv Q}{\newvar{a}{P} \equiv \newvar{a}{Q}}\\
+\end{align*}
+\label{def:structcong1}
+\end{defi}
+%
+Essentially, structural congruence simplifies the semantics by introducing associativity and commutativity to parallel compositions, and extension of scopes. These properties enable us to view an arbitrary process as a sequence of names and a multiset of processes each \textit{guarded} by an input, output, or a pattern match. This interpretation of structural congruence is used for technical convenience in some of the type systems we consider, and so we formalize it in Definition \ref{def:canonform1} as canonical forms (Kobayashi \cite{Kobayashi2000} refers to this as the normal form).
+%
+\begin{defi}[Canonical form]
+A process $P$ is in canonical form if it is of the form $\newvar{\widetilde{a}}{\left(\parcomp{G_1}{\parcomp{G_2}{\parcomp{\dots}{G_n}}}\right)}$
+ where $G_1,G_2,\dots,G_n$ are referred to as guarded processes which are defined by the formation rules
+\begin{equation*}
+    G ::=\; \bang{\inputch{a}{\widetilde{y}}{}{P}} \mid \inputch{a}{\widetilde{v}}{}{P} \mid \outputch{a}{\widetilde{e}}{}{P} \mid \match{e}{P}{x}{Q}
+\end{equation*}
+When $n = 0$ the canonical form is $\newvar{\widetilde{a}}{\nil}$.
+\label{def:canonform1}
+\end{defi}
+%
+We next show a result regarding the existence of canonical forms.
+\begin{lemma}[Existence of canonical form]
+For any process $P$ there exists a process $Q$ such that $P \equiv Q$ and $Q$ is in canonical form.
+\begin{proof}
+Suppose by $\alpha$-renaming that all bound and free names are unique, then we use rule $\runa{SC-res}$ with $\runa{SC-zero}$ from left to right and $\runa{SC-scope}$ from right to left, until all restrictions are outmost and all unguarded inactions have been removed.
+\end{proof}
+\end{lemma}\label{lemma:cannform}
+
+We now define the reduction relation for the $\pi$-calculus $\longrightarrow$ in the usual way, such that $P \longrightarrow Q$ denotes that $P$ reduces to $Q$ in one reduction step \cite{Milner1993}. The rules defining the reduction relation are seen in Table \ref{tab:redurules}. We extend the usual definition with rules for replicated input and pattern matching. Reductions are synchronizations on channels and branching in pattern matches, enabled by structural congruence and rules that define reduction on subprocesses. Here, we see the non-standard definition of replication. Although the calculus we consider only has replicated input, and only allows introduction of one copy of the replicated process at a time, we can simulate the usual replication of an arbitrary process $P$ in the untyped calculus by
+$\newvar{a}{\left(\parcomp{\asyncoutputch{a}{}{}}{\;\bang{\inputch{a}{}{}{\left(\parcomp{\asyncoutputch{a}{}{}}{P}\right)}}}\right)}$.\\
+%
+\begin{table*}[ht]
+    \centering
+    \begin{framed}\vspace{-1em}\begin{tabular}{l}
+        \kern5em\runa{R-rep}\;\;\infrule{}{\parcomp{\;\bang{\inputch{a}{\widetilde{v}}{}{P}}}{\outputch{a}{\widetilde{e}}{}{Q}} \longrightarrow \parcomp{\;\bang{\inputch{a}{\widetilde{v}}{}{P}}}{\parcomp{\subst{P}{\widetilde{v}\mapsto \widetilde{e}}}{Q}}}\\[-1em]
+        %
+        \kern7em\runa{R-comm}\;\;\infrule{}{\parcomp{\inputch{a}{\widetilde{v}}{}{P}}{\outputch{a}{\widetilde{e}}{}{Q}} \longrightarrow \parcomp{\subst{P}{\widetilde{v}\mapsto \widetilde{e}}}{Q}}\\[-1em]
+        %
+        \kern6em\runa{R-zero}\;\;\infrule{}{\match{0}{P}{x}{Q} \longrightarrow P}\\[-1em]
+        %
+        \kern4em\runa{R-succ}\;\;\infrule{}{\match{\succc{e}}{P}{x}{Q} \longrightarrow \subst{Q}{x \mapsto e}}\\[-1em]
+        %
+        \kern3em\runa{R-par}\;\;\infrule{P \longrightarrow Q}{\parcomp{P}{R} \longrightarrow \parcomp{Q}{R}} \kern0em \runa{R-res}\;\;\infrule{P \longrightarrow Q}{\newvar{a}{P} \longrightarrow \newvar{a}{Q}}\\
+        %
+        \kern9em\runa{R-struct}\;\;\infrule{P \equiv P'\quad P' \longrightarrow Q'\quad Q' \equiv Q}{P \longrightarrow Q}
+    \end{tabular}\end{framed}
+    \smallskip
+    \caption{The reduction rules defining $\longrightarrow$.}
+    \label{tab:redurules}
+\end{table*}
+%
+\section{A cost-model for time}\label{sec:costmodel}
+There are several valid approaches to defining the progress of time in the $\pi$-calculus. One way, as employed by Kobayashi \cite{Kobayashi2000}, is to incur a cost in time complexity of one after each axiomatic reduction. Another widely used approach is to introduce a constructor $\tick{P}$ that incurs a cost of one, and continues as $P$ \cite{BaillotGhyselen2021, BaillotEtAl2021, DasEtAl2018}. As the former approach can be simulated by the latter by prefixing the continuations of processes that reduce axiomatically with a single $\texttt{tick}$, we choose to use the $\tick{P}$ constructor as the main cost model in this paper. Accordingly, we extend the reduction relation $\longrightarrow$ with the following rule
+%
+\begin{align*}
+    &\kern0em\runa{R-tick}\; \infrule{}{\tick P \longrightarrow P}
+\end{align*}
+%
+The type systems we consider in this paper all provide upper bounds on the parallel worst-case complexities or the \textit{span} of processes, and so we present some examples of the properties of this notion of complexity. As opposed to the worst-case sequential complexity, for which we simply count the number of reductions of ticks, the parallel worst-case complexity is more complex, in that ticks can be reduced in parallel, for the cost of one in time complexity. Consider for instance the process
+\begin{align*}
+    \kern0em\tick{\nil} \mid \tick{\nil} \mid \dots \mid \tick{\nil}
+\end{align*}
+As the $n$ unguarded ticks can be reduced in parallel, the parallel complexity is exactly one. Synchronizations over channels and branching of pattern match constructs are instantaneous, i.e. they incur a cost of zero in this cost model, and so the order of reductions may affect the parallel complexity. For instance, consider the process
+\begin{align*}
+    \kern0em\tick{\nil} \mid \inputch{a}{}{}{\tick{\nil}} \mid \asyncoutputch{a}{}{}
+\end{align*}
+If we reduce the tick first, the parallel complexity will be two. However, by synchronizing over channel $a$ first, the two ticks can be reduced in parallel, incurring a cost of one. To ensure consistency, we could assume that ticks could only be reduced if no other reductions are possible, thus introducing reduction priority. Another approach to maximizing the parallelism is to introduce integer annotations to processes as in \cite{BaillotGhyselen2021, BaillotEtAl2021}. We take this approach and introduce integer annotations to processes $m : P$, meaning $m$ units of time complexity are incurred before reducing $P$, and so it is equivalent to $P$ guarded with $m$ ticks. Intuitively, we refer to such a process as an \textit{annotated process}. We enrich the definition of structural congruence $\equiv$ with rules for annotated processes as follows
+\begin{align*}
+    \kern4em &m : (P \mid Q) \equiv (m : P) \mid (m : Q)\quad\quad m : \newvar{a}{P} \equiv \newvar{a}{(m : P)}\\
+    \kern-4em &m : (n : P) \equiv (m + n) : P\quad\quad\quad\;\;\quad 0 : P \equiv P
+\end{align*}
+This essentially means that annotations can be distributed over subprocesses of parallel compositions, annotations do not affect the semantics of restrictions, nested annotations can be combined, and the annotation $0$ has no effect (or can be introduced). We now extend the definition of canonical processes to annotated processes in Definition \ref{def:canformannp}.
+
+\begin{defi}[Canonical form for annotated processes]
+An annotated process $P$ is in canonical form if it is of the form $\newvar{\widetilde{a}}{(m_1 : G_1 \mid m_2 : G_2 \mid \dots \mid m_n : G_n)}$ where $G_1,G_2,\dots,G_n$ are guarded annotated processes of the form 
+\begin{align*}
+    G ::=\; \bang{\inputch{a}{\widetilde{y}}{}{P}} \mid \inputch{a}{\widetilde{v}}{}{P} \mid \outputch{a}{\widetilde{e}}{}{P} \mid \match{e}{P}{x}{Q} \mid \tick P
+\end{align*}
+When $n = 0$ the canonical form is $\newvar{\widetilde{a}}{(0 : \nil)}$.
+\label{def:canformannp}
+\end{defi}
+%
+Due to the enrichment of the structural congruence relation, an arbitrary annotated process is structurally congruent to an annotated process in canonical form. This enables the definition of the reduction relation $\Rightarrow$ for annotated processes in Table \ref{tab:redurulesanno}. Upon synchronization of two parallel annotated processes, we discard the least of the two annotations. The new tick constructor simply reduces to an annotation of one. Finally, we have a reduction rule that enables reduction of annotated processes.\\
+%
+\begin{table*}[ht]
+    \centering
+    \begin{framed}\begin{tabular}{l}
+        \vspace{-1.0em}
+        \kern0em\runa{RA-rep}\;\infrule{}{\parcomp{(n :\;\bang{\inputch{a}{\widetilde{v}}{}{P}})}{(m : \outputch{a}{\widetilde{e}}{}{Q})} \Rightarrow \parcomp{(n :\;\bang{\inputch{a}{\widetilde{v}}{}{P}})}{(\text{max}(n,m) : \parcomp{\subst{P}{\widetilde{v}\mapsto \widetilde{e}}}{Q}})}\\ 
+        %
+        \kern1.5em\runa{RA-comm}\;\infrule{}{\parcomp{(n : \inputch{a}{\widetilde{v}}{}{P})}{(m :\outputch{a}{\widetilde{e}}{}{Q})} \Rightarrow \text{max}(n,m) : (\parcomp{\subst{P}{\widetilde{v}\mapsto \widetilde{e}}}{Q})}        \vspace{-1em}\\
+        %
+        \kern-1em\runa{RA-tick}\;\infrule{}{\tick{P} \Rightarrow 1 : P}
+        %
+        %\vspace{-1.5em}
+        \kern-2em\runa{RA-zero}\;\infrule{}{\match{0}{P}{x}{Q} \Rightarrow P}\vspace{-1em}\\
+        %
+        \kern4em\runa{RA-succ}\;\infrule{}{\match{\succc{e}}{P}{x}{Q} \Rightarrow \subst{Q}{x \mapsto e}}\vspace{-1.0em}\\
+        %
+        \kern1em\runa{RA-par}\;\infrule{P \Rightarrow Q}{\parcomp{P}{R} \Rightarrow \parcomp{Q}{R}} \kern0em \runa{RA-res}\;\infrule{P \Rightarrow Q}{\newvar{a}{P} \Rightarrow \newvar{a}{Q}}\\
+        \kern1em\runa{RA-ann}\;\infrule{P \Rightarrow Q}{n : P \Rightarrow n : Q}
+        %
+        \kern-1em\runa{RA-struct}\;\infrule{P \equiv P'\quad P' \Rightarrow Q'\quad Q' \equiv Q}{P \Rightarrow Q}
+    \end{tabular}\end{framed}
+    \smallskip
+    \caption{The reduction rules defining $\Rightarrow$.}
+    \label{tab:redurulesanno}
+\end{table*}
+%
+
+In Definition \ref{def:paracomp}, we formally define the worst-case parallel complexity of annotated processes as in \cite{BaillotGhyselen2021,BaillotEtAl2021}.
+\begin{defi}[Parallel complexity]
+Assume $P$ is an annotated process. We then define its \textit{local parallel complexity} $\mathcal{C}_\ell(P)$ to be the maximal unguarded integer in its canonical form. \textit{The global parallel complexity} of $P$ is then given by
+\begin{align*}
+    \kern0em\text{max}\{n \mid P \Rightarrow^{\!*} Q \land \mathcal{C}_\ell(Q) = n\}
+\end{align*}
+where $\Rightarrow^{\!*}$ is the reflexive and transitive closure of $\Rightarrow$.
+\label{def:paracomp}
+\end{defi}
+
+In the following sections, we consider different type disciplines and corresponding type systems for parallel complexity analysis of $\pi$-calculus processes. Throughout these sections, we represent type environments by the metavariables $\Gamma$ and $\Delta$ as functions defined by sequences of pairs $\Gamma = v_1 : T_1,v_2 : T_n,\dots,v_n : T_n$ where $v_1,v_2,\dots,v_n \in \mathbf{Var}$ are variables and $T_1,T_2,\dots,T_n$ are types, such that $\textit{dom}(\Gamma) = \{v_1,v_2,\dots,v_n\}$ and $\Gamma(v_i) = T_i$. We extend a type environment $\Gamma$ with a pair $v : T$ when $v \notin \textit{dom}(\Gamma)$ by writing $\Gamma, v : T$ such that $\textit{dom}(\Gamma, v : T) = \textit{dom}(\Gamma) \cup \{v\}$ and $(\Gamma, v : T)(v) = T$. We write the empty type environment as $\cdot$ or $\emptyset$. Types may differ for the different type systems, and are thus defined in each section.
+
+%Considering the reduction relation $\rightarrow$ we use, synchronization over channels and reduction of pattern match constructs are the only axiomatic reductions. 
+
+
+
+
+%
+% TODO: skriv strukturen af resten af paper her !
+%

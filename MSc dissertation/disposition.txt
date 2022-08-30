@@ -1,0 +1,17 @@
+* Intro til indices + constraints (Tilpas) XXX
+
+* Algoritmisk definition af Baillot og Ghyselens typesystem
+    * Identificer problemer: constraint judgements og substitutioner
+
+* Hvorfor verifikation af constraint judgments er uafgørbart (for polynomier) i det generelle tilfælde (hertil formentlig også substitutioner pga subtyping)
+    * Reducer til Hilberts tiende problem (uafgørbart); transformer diophantine equation for at snige os udenom (-) operatorens non-standard definition XXX
+
+* Hvordan vi kan løse problemerne for judgements på lineære constraints
+    * Repræsentation af lineære indekser (og hertil lineære constraints); Tag højde for (-) operatorens non-standard definition
+    * Integer programming (eller lineær programmering)
+    * Algoritmer til at finde substitutioner
+
+* Hvordan vi kan reducere visse polynomielle problemer til lineære
+    * Alt det her med rødder
+    * Gælder måske for alle monotone (univariate) polynomier
+    * Kan vi finde substitutioner?

@@ -1,0 +1,154 @@
+\chapter{Semantic equivalence}\label{app:languageequiv}
+\setcounter{theorem}{1}
+
+\begin{lemma}
+Let $P$ and $Q$ be processes such that $P \equiv Q$, then also $P \succeq_K Q$ and $Q \succeq_K P$.\\
+
+where $\succeq_{K}$ is the structural preorder from Kobayashi \cite{Kobayashi2000}.
+\begin{proof} By induction on the rules defining $\equiv$. We only consider the rules that are unique to $\equiv$.
+\begin{description}
+    \item[$\runa{SC-par}$] By rule $\runa{SC-par}$ we have that $P \equiv P'$ such that $P \mid Q \equiv P' \mid Q$. By induction $P \succeq_K P'$ and $P' \succeq_K P$. Then it follows from $\runa{SP-par}$ that $P \mid Q \succeq_K P' \mid Q$ and $P' \mid Q \succeq_k P \mid Q$.
+    
+    \item[$\runa{SC-res}$] By rule $\runa{SC-res}$ we have that $P \equiv Q$ such that $\newvar{x}{P} \equiv \newvar{x}{Q}$. By induction $P \succeq_K Q$ and $Q \succeq_K P$. Then it follows from $\runa{SP-res}$ that $\newvar{x}{P} \succeq_K \newvar{x}{Q}$ and $\newvar{x}{Q} \succeq_k \newvar{x}{P}$.
+\end{description}
+
+\end{proof}%\label{lemma:SCImpliesSP}
+\end{lemma}
+
+\begin{lemma}[Semantic equivalence]
+Let $P$ and $P'$ be processes. We have that if
+\begin{enumerate}
+    \item $P \longrightarrow Q$ then $P \longrightarrow_{K} Q$
+    \item $P \longrightarrow_{K} Q$ and $P' \succeq_K P$ then $P' \longrightarrow R$ and $R \succeq_{K} Q$
+\end{enumerate}
+where $\longrightarrow_{K}$ and $\succeq_{K}$ are the reduction relation and structural preorder from Kobayashi \cite{Kobayashi2000}, respectively.
+\begin{proof} By induction on the rules defining $\longrightarrow$ and $\longrightarrow_{K}$. We consider the two cases separately, and we only show the clauses for non-trivial rules.
+\begin{enumerate}
+    \item 
+    \begin{description}
+        \item[\runa{R-rep}] Assume that $\bang\inputch{a}{\widetilde{v}}{}{P} \mid \outputch{a}{\widetilde{e}}{}{Q} \longrightarrow\; \bang\inputch{a}{\widetilde{v}}{}{P} \mid P[\widetilde{v}\mapsto\widetilde{e}] \mid Q$. We have that $\bang\inputch{a}{\widetilde{v}}{}{P} \mid \outputch{a}{\widetilde{e}}{}{Q}\succeq_K\; \bang\inputch{a}{\widetilde{v}}{}{P} \mid \inputch{a}{\widetilde{v}}{}{P} \mid \outputch{a}{\widetilde{e}}{}{Q}$, and so it follows from application of $\runa{K-struct}$ and $\runa{K-comm}$ that $\bang\inputch{a}{\widetilde{v}}{}{P} \mid \outputch{a}{\widetilde{e}}{}{Q} \longrightarrow_K\; \bang\inputch{a}{\widetilde{v}}{}{P} \mid P[\widetilde{v}\mapsto\widetilde{e}] \mid Q$.
+        %
+        %\item[\runa{R-comm}] Assume that $\inputch{a}{\widetilde{v}}{}{P} \mid \outputch{a}{\widetilde{e}}{}{Q} \longrightarrow P[\widetilde{v}\mapsto\widetilde{e}] \mid Q$. It trivially follows from application of $\runa{K-comm}$ that $\inputch{a}{\widetilde{v}}{}{P} \mid \outputch{a}{\widetilde{e}}{}{Q} \longrightarrow_K P[\widetilde{v}\mapsto\widetilde{e}] \mid Q$, as $\succeq_K$ is reflexive.
+        %
+        %\item[\runa{R-zero}] Assume that $\match{e}{P}{x}{Q} \longrightarrow P$
+        %
+        %\item[\runa{R-succ}]
+        %
+        %\item[\runa{R-par}]
+        %
+        %\item[\runa{R-res}]
+        
+        \item[\runa{R-struct}] Assume that $P \longrightarrow Q$ by rule $\runa{R-struct}$. Then we have that $P \equiv P_1$, $P_1 \longrightarrow P_1'$ and $P_1' \equiv Q$. By Lemma \ref{lemma:SCImpliesSP} it follows that $P \succeq_K P_1$ and $P_1' \succeq_K Q$. By induction $P' \longrightarrow_K Q'$, and so by rule $\runa{K-struct}$, $P \longrightarrow_K Q$.
+            %\begin{description}
+            %    \item[\runa{SC-par}]
+            %    
+            %    \item[\runa{SC-res}]
+            %\end{description}
+        
+        
+    \end{description} 
+    
+    \item
+    \begin{description}
+        %\item[\runa{K-comm}]
+        %    
+        %\item[\runa{K-zero}]
+        %
+        %\item[\runa{K-succ}]
+        %
+        %\item[\runa{K-par}]
+        %
+        %\item[\runa{K-res-1}]
+        %
+        %\item[\runa{K-res-2}]
+        %
+        \item[\runa{K-struct}] Assume that $P \longrightarrow_K Q$ by rule $\runa{K-struct}$ and $P' \succeq_K P$. Then we have that $P \succeq_K P_2$, $P_2 \longrightarrow_K P_2'$ and $P_2' \succeq_K Q$. We show that $P'$ can match this reduction by rule $\runa{R-struct}$ such that $P' \longrightarrow R$ and $R \succeq_K Q$. Rule $\runa{R-struct}$ implies $P' \equiv P_1$ such that $P_1 \longrightarrow P_1'$ and $P_1' \equiv R$. By Lemma \ref{lemma:SCImpliesSP}, $P' \equiv P_1$ implies $P' \succeq_K P_1$ and $P_1 \succeq_K P'$. Thus by the assumption, it must be that $P_1 \succeq_K P$, and by transitivity $P \succeq_K P_2$ implies $P_1 \succeq_K P_2$. By induction $P_1 \succeq_K P_2$ and $P_2 \longrightarrow_K P_2'$ implies $P_1 \longrightarrow P_1'$ and $P_1' \succeq_K P_2'$. Now, it suffices to show that $P_1' \equiv R$ and $P_2' \succeq_K Q$ implies $R \succeq_K Q$. By Lemma \ref{lemma:SCImpliesSP}, $P_1' \equiv R$ implies $P_1' \succeq_K R$ and $R \succeq_K P_1'$, and so it follows from $P_1' \succeq_K P_2'$ that $R \succeq_K P_2'$. By transitivity $P_2' \succeq_K Q$ implies $R \succeq_K Q$, concluding the proof.
+        
+        
+        %By the definition of $\succeq_K$, we have that $P \succeq_K P'' %\mid P_1 \mid \dots \mid P_n$ such that $P' \succeq P''$ and %$P_1,\dots,P_n$ are copies of replicated inputs in $P'$.
+        %    \begin{description}
+        %        \item[\runa{SP-rep-1}]
+        %        
+        %        \item[\runa{SP-par}]
+        %        
+        %        \item[\runa{SP-res}]
+        %        
+        %        \item[\runa{SP-rep-2}]
+        %    \end{description}
+            
+    \end{description}
+\end{enumerate}
+\end{proof}
+\end{lemma}
+%
+%%
+%
+% \begin{lemma}
+% Let $P$ and $Q$ be processes such that $P \succeq_{K} Q$. We have that if
+% \begin{enumerate}
+%     \item $P \longrightarrow R$ then $Q \longrightarrow C$ and $R \succeq_K C$
+%     \item $Q \longrightarrow R$ then $P \longrightarrow C$ and $C \succeq_K R$
+%     \item $P \longrightarrow_{K} R$ then $Q \longrightarrow_K C$ and $R \succeq_K C$ or $C \succeq_K R$
+%     \item $Q \longrightarrow_{K} R$ then $P \longrightarrow_{K} R$
+% \end{enumerate}
+% where $\longrightarrow_{K}$ and $\succeq_{K}$ is the reduction relation and structural preorder from Kobayashi \cite{Kobayashi2000}, respectively.
+% \begin{proof}
+% Proof by induction on the rules defining $\longrightarrow$ and $\longrightarrow_{K}$. We consider each case separately.
+% \begin{enumerate}
+%     \item
+%         \begin{description}
+%             \item[\runa{R-rep}]
+            
+%             \item[\runa{R-comm}]
+            
+%             \item[\runa{R-zero}]
+            
+%             \item[\runa{R-succ}]
+            
+%             \item[\runa{R-par}]
+            
+%             \item[\runa{R-res}]
+            
+%             \item[\runa{R-struct}]
+            
+%         \end{description}
+        
+%     \item 
+%         \begin{description}
+%             \item[\runa{R-rep}]
+            
+%             \item[\runa{R-comm}]
+            
+%             \item[\runa{R-zero}]
+            
+%             \item[\runa{R-succ}]
+            
+%             \item[\runa{R-par}]
+            
+%             \item[\runa{R-res}]
+            
+%             \item[\runa{R-struct}]
+            
+%         \end{description}
+%     \item 
+%         \begin{description}
+%             \item[\runa{K-comm}]
+            
+%             \item[\runa{K-zero}]
+            
+%             \item[\runa{K-succ}]
+            
+%             \item[\runa{K-par}]
+            
+%             \item[\runa{K-res-1}]
+            
+%             \item[\runa{K-res-2}]
+            
+%             \item[\runa{K-struct}]
+            
+%         \end{description}
+        
+%     \item As $P \succeq_K Q$, this trivially holds by applying rule $\runa{K-struct}$ with a corresponding reduction, such that $P \longrightarrow_K R$.
+% \end{enumerate}
+% \end{proof}
+% \end{lemma}

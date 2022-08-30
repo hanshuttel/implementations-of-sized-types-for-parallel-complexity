@@ -1,0 +1,323 @@
+\section{Sized Types with Usages for Parallel Complexity}\label{subsec:sizedwithusages}
+
+% \textit{\begin{itemize}
+%     \item Introduction / motivation
+%     \item Changes to Usage types; Introduction of intervals (Define intervals; Why?)
+%     \item Type rules
+% \end{itemize}}
+%
+% The type system by Baillot and Ghyselen \cite{BaillotGhyselen2021} imposes constraints on the use of simple channels i.e. non-replicated channels, with regards to the notion of time variance. That is, such channels are typed with an index $I$ defining an upper bound on the time within which the channel must synchronize. This translates to a sort of linearity constraint, in that inputs and outputs on such channels can only be sequenced, if no ticks interleave them. Many interesting concurrent programs, such as those using semaphores, cannot be encoded under these constraints, as they require the ability to sequence inputs and outputs. A simple example is the following process: %Note that this limitation does not apply to servers.
+
+% \begin{align*}
+%     \inputch{a}{}{}{\tick\asyncoutputch{a}{}{}} \mid \outputch{a}{}{}{\tick\asyncinputch{a}{}{}}
+% \end{align*}
+% We cannot type either subprocess of its parallel composition, as this requires advancing the time of channel $a$ after it has already synchronized once, meaning its time is $0$, and so advancement of time is undefined, as shown in the type derivation tree of the first subprocess as follows\\
+
+% \begin{align*}
+% \begin{prooftree}
+% \centering
+% \Infer0{\cdot;\cdot;a : \channeltypeS{I}{} \vdash a : \channeltypeS{I}{}}
+% %
+% \Infer0{\cdot;\cdot\vdash \channeltypeS{I}{}\sqsubseteq \inchanneltypeS{I}{}}
+% %
+% \Infer2{\cdot;\cdot;a : \channeltypeS{I}{} \vdash a : \inchanneltypeS{I}{}}
+% %
+% \Infer0{\susumesim{\channeltypeS{0}{}}{1}\;\text{is undefined}}
+% \Infer1{\cdot;\cdot;a :\susumesim{\channeltypeS{0}{}}{1}\vdash \asyncoutputch{a}{}{} : 0}
+% \Infer1{\cdot;\cdot;a : \channeltypeS{0}{} \vdash \tick\asyncoutputch{a}{}{} : 1}
+% %
+% \Infer2{\cdot;\cdot;a : \channeltypeS{I}{} \vdash \inputch{a}{}{}{\tick\asyncoutputch{a}{}{}} : I + 1}
+% \end{prooftree}
+% \end{align*}
+
+Baillot and Ghyselen together with Kobayashi introduce a new type system for parallel complexity. This type system shares many similarities with that of Baillot and Ghyselen, but with the key difference being that it uses channel types annotated with usages and sized types instead of input/output types, to enable them to type a greater range of processes. Types are defined in Definition \ref{def:sizedusagetypes}.
+%
+\begin{defi}[Types] Types for naturals and channels are given by
+\begin{align*}
+    \kern0em T,S ::= \texttt{Nat}[I,J] \mid \channeltypeusage{\widetilde{T}}{U} \mid \servU{\widetilde{i}}{K}{\widetilde{T}}{U}
+\end{align*}
+where $I,J,K$ are indices, $\widetilde{T}$ is a sequence of types $T_1,T_2,\dots,T_n$, $U$ is a usage, and $\widetilde{i}$ is a sequence of index variables $i_1,i_2,\dots,i_n$.
+\label{def:sizedusagetypes}
+\end{defi}
+
+Simple channels and server channels now also include a usage $U$. Like the type system of Baillot and Ghyselen, this type system also uses sized types, more specifically sized types with intervals, and so we use the version of usages with intervals. Unlike the type system of Baillot and Ghyselen, types of this type system do not distinguish between input/output servers, as this information is instead contained in the usage of the corresponding server. Otherwise, types are similar to before, with $\texttt{Nat}[I,J]$ representing a natural within the interval $[I,J]$ and servers that are polymorphic in index variables $\widetilde{i}$ with a complexity $K$. For convenience, we repeat the syntax of usages with sized types here:
+%
+\begin{align*}
+    \kern0em U,V ::= \nil \mid \usagepref{\alpha}{A_o}{J_c}.U \mid (\uparcomp{U}{V}) \mid \;\bang{U} \quad\quad \alpha ::= \inusagesym \mid \outusagesym\quad\quad A_o, B_o ::= \kinterval{I}{J} \quad \quad J_c, I_c ::= J \mid \kinterval{I}{J}
+\end{align*}
+
+We also introduce a subusage relation $\sqsubseteq$ for types in Table \ref{tab:sizedusagesubtype}. As usual, $T \sqsubseteq S$ means that $S$ is more general than $T$, and $T$ can thus be used as a value of type $S$.
+
+\begin{table*}[!h]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern9em\runa{SSU-nat}\;\infrule{\varphi;\Phi\vDash I' \leq I\quad\quad \varphi;\Phi\vDash J \leq J'}{
+        \varphi;\Phi\vdash \texttt{Nat}[I,J] \sqsubseteq \texttt{Nat}[I',J']}\\[-1em]
+        %
+        &\kern6em\runa{SSU-ch}\;\infrule{\varphi;\Phi\vdash \widetilde{T} \sqsubseteq \widetilde{T'}\quad\quad \varphi;\Phi\vdash \widetilde{T'} \sqsubseteq \widetilde{T} \quad\quad \varphi;\Phi\vdash U \sqsubseteq V}{\varphi;\Phi\vdash \channeltypeusage{\widetilde{T}}{U} \sqsubseteq \channeltypeusage{\widetilde{T'}}{V}}\\[-1em]
+        %
+        &\kern0em\runa{SSU-serv}\;\infrule{(\varphi,\widetilde{i});\Phi\vdash \widetilde{T}\sqsubseteq\widetilde{S}\quad\quad (\varphi,\widetilde{i});\Phi\vdash \widetilde{S}\sqsubseteq\widetilde{T}\quad\quad (\varphi,\widetilde{i});\Phi\vDash K = K' \quad\quad \varphi;\Phi\vdash U \sqsubseteq V}{\varphi;\Phi\vdash \servU{\widetilde{i}}{K}{\widetilde{T}}{U}\sqsubseteq \servU{\widetilde{i}}{K'}{\widetilde{S}}{V}}\kern23em
+    \end{align*}\vspace{-1em}\end{framed}
+    \caption{Subtyping rules for sized types with usages.}
+    \label{tab:sizedusagesubtype}
+\end{table*}
+
+Much like with Kobayashi's type system for lock-freedom, we extend the notion of reliability and the operations on usages $\uparcomp{}{}$, $\bang{}$, and $\withdelay{A_o}{}\;$ to types. A type $T$ is reliable if it is of the form $\channeltypeusage{\widetilde{T}}{U}$ or $\servU{i}{K}{\widetilde{T}}{U}$ and $U$ is reliable. Usage operations on types are defined in Definition \ref{def:sizedusagesops}.
+
+\begin{defi}[Operations on types]
+The operations $\uparcomp{}{}$, $\bang{}$, and $\withdelay{A_o}{}$ for types are defined by\\
+\begin{tabular}{ll}
+    $\tparcomp{\natinterval{I}{J}}{\natinterval{I}{J}} = \natinterval{I}{J}$ & $\tparcomp{\channeltypeusage{\widetilde{T}}{U}}{\channeltypeusage{\widetilde{T}}{V}} = \channeltypeusage{\widetilde{T}}{(\uparcomp{T}{V})}$\\
+    %
+    $\bang{\natinterval{I}{J}} = \natinterval{I}{J}$ & $\bang{\channeltypeusage{\widetilde{T}}{U}} = \channeltypeusage{\widetilde{T}}{(\bang{U})}$\\
+    %
+    $\withdelay{A_o}{\natinterval{I}{J}} = \natinterval{I}{J}$ & $\withdelay{A_o}{\channeltypeusage{\widetilde{T}}{U}} = \channeltypeusage{\widetilde{T}}{(\withdelay{A_o}{U})}$
+\end{tabular}
+\vspace{-0.3cm}
+\begin{align*}
+    &\kern-2em\tparcomp{\servU{i}{K}{\widetilde{T}}{U}}{\servU{i}{K}{\widetilde{T}}{V}} = \servU{i}{K}{\widetilde{T}}{(\uparcomp{U}{V})}\\
+    &\kern-2em\bang{\servU{i}{K}{\widetilde{T}}{U}} = \servU{i}{K}{\widetilde{T}}{(\bang{U})}\\
+    &\kern-2.3em\withdelay{A_o}{\servU{i}{K}{\widetilde{T}}{U}} = \servU{i}{K}{\widetilde{T}}{(\withdelay{A_o}{U})}
+\end{align*}
+\label{def:sizedusagesops}
+\end{defi}
+
+We define $J_c; K$ to represent the complexity of a process $P = \inputch{a}{\widetilde{e}}{}{Q}$ or $P = \outputch{a}{\widetilde{e}}{}{Q}$ when the corresponding usage of $a$ has capacity $J_c$ and $Q$ has complexity $K$. It is defined in Definition $\ref{def:sizedusagesemi}$. When $J_c = \kinterval{\infty}{\infty}$, the input/output will never succeed and the complexity is defined as $\kinterval{0}{0}$. Because $Q$ may never succeed, the lower bound of $J_c; K$ will always be 0.
+
+\begin{defi}
+Given a capacity $J_c$ and an interval $K = \kinterval{K_1}{K_2}$, we define $J_c;K$ by\\
+\begin{tabular}{lll}
+    $J; \kinterval{K_1}{K_2} = \kinterval{0}{J+K_2}$ & $\kinterval{\infty}{\infty};\kinterval{K_1}{K_2} = \kinterval{0}{0}$ & $\kinterval{I_\mathbb{N}}{J};\kinterval{K_1}{K_2} = \kinterval{0}{J + K_2}$
+\end{tabular}
+\label{def:sizedusagesemi}
+\end{defi}
+
+\subsubsection{Sized types with usages type rules}
+
+Finally, typing rules are defined in Table \ref{tab:sizedusagetyperules}. Expressions are typed just as in the type system of Baillot and Ghyselen, but with the new definition of subtypes. Processes are typed according to the rules shown in Table \ref{tab:sizedusagetyperules}. Like the type system of Baillot and Ghyselen, type judgements are of the form $\varphi;\Phi;\Gamma\vdash P : K$ with $\varphi$ and $\Phi$ denoting sets of index variables and constraints, respectively, and $\Gamma$ a type context. $K$ still denotes the complexity of the process $P$, but is now an interval.\\
+
+Many of these type rules are very similar to those of Baillot and Ghyselen, with the most novel ones being the ones handling communication. $\runa{SU-nu}$ ensures all names have a reliable usage. $\runa{SU-Par}$ splits the type context in two to type $P$ and $Q$, and the complexity of $\parcomp{P}{Q}$ is the maximum of the two. $\runa{SU-ich}$ types a simple input on name $a$. To type such an input, we must assume its corresponding usage has obligation $\kinterval{0}{0}$, which often requires subtyping. Assuming this, we can type the continuation $P$ while assuming the communication has occurred. Finally, we must delay the type context and complexity in the conclusion by the capacity $J_c$ of $a$, as it may take $J_c$ time before communication succeeds. $\runa{SU-och}$ is similar to $\runa{SU-ich}$. $\runa{SU-iserv}$ is also similar to $\runa{SU-ich}$, but defers any management of complexity to the $\runa{SU-oserv}$ rule, and therefore assigns any server a complexity of $\kinterval{0}{0}$. Finally, $\runa{SU-oserv}$ is similar to $\runa{SU-och}$, but handles the case where an output process communicates with a server. It must therefore also account for the complexity of the server, and the final complexity is therefore the maximum of the complexity of the server and the complexity of the continuation.
+
+\begin{table*}[!ht]
+    \centering
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern47em\\[-2em] % Stretch frame
+        &\kern2em\runa{SU-zero}\;\infrule{}{\varphi;\Phi;\Gamma\vdash \nil \triangleleft \kinterval{0}{0}}\;\kern1em\runa{SU-par}\; \infrule{\varphi;\Phi;\Gamma\vdash P \triangleleft K_1\quad \varphi;\Phi;\Delta\vdash Q \triangleleft K_2}{\varphi;\Phi;\parcomp{\Gamma}{\Delta}\vdash \parcomp{P}{Q} \triangleleft K_1 \sqcup K_2}\hspace{9em}\\[-1em]
+        %
+        &\kern0em\runa{SU-tick}\;\infrule{\varphi;\Phi;\Gamma\vdash P \triangleleft K}{\varphi;\Phi;\withdelay{\kinterval{1}{1}}{\Gamma}\vdash \tick{P}\triangleleft K + \kinterval{1}{1}}\;
+        \kern4em\runa{SU-ich}\;\infrule{\varphi;\Phi;\Gamma,a:\withusage{\channeltype{\widetilde{T}}}{U},\widetilde{v}:\widetilde{T}\vdash P \triangleleft K}{\varphi;\Phi;\withdelay{J_c}{\Gamma,a:\withusage{\channeltype{\widetilde{T}}}{\usagepref{\texttt{In}}{\kinterval{0}{0}}{J_c}.U}}\vdash \inputch{a}{\widetilde{v}}{}{P}\triangleleft J_c;K}\\[-1em]
+        %
+        &\kern5em\runa{SU-iserv}\; \infrule{
+            (\varphi;\widetilde{i});\Phi;\Gamma,a : \servt{\widetilde{i}}{K}{\widetilde{T}}{U},\widetilde{v} : \widetilde{T} \vdash P \triangleleft K
+        }{
+            \varphi;\Phi;\withdelay{J_c}{\;\bang{\Gamma},a : \servt{\widetilde{i}}{ K }{ \widetilde{T} }{ \bang{\inusagepref{\kinterval{0}{0}}{J_c}}.U } \vdash\; \bang \inputch{a}{\widetilde{v}}{}{P} \triangleleft \kinterval{0}{0} }
+        }\\[-1em]
+        %
+        &\kern4em\runa{SU-och}\; \infrule{\varphi;\Phi;\Gamma',a : \withusage{\channeltype{\widetilde{T}}}{V}\vdash \widetilde{e} : \widetilde{T}\quad \varphi;\Phi;\Gamma,a : \withusage{\channeltype{\widetilde{T}}}{U}\vdash P \triangleleft K}{\varphi;\Phi;\withdelay{J_c}{(\parcomp{\Gamma}{\Gamma'}),a : \withusage{\channeltype{\widetilde{T}}}{\outusagepref{\kinterval{0}{0}}{J_c}.(\parcomp{V}{U})\vdash \outputch{a}{\widetilde{e}}{}{P} \triangleleft J_c;K}}}\\[-1em]
+        %
+        &\kern1em\runa{SU-oserv}\; \infrule{
+            \varphi;\Phi;\Gamma',a : \servt{\widetilde{i}}{K}{\widetilde{T}}{V} \vdash \widetilde{e} : \widetilde{T}\substi{\widetilde{I_\mathbb{N}}}{\widetilde{i}}\quad \varphi;\Phi;\Gamma,a : \servt{\widetilde{i}}{K}{\widetilde{T}}{U}\vdash P \triangleleft K'
+        }{
+            \varphi;\Phi;\withdelay{J_c}{(\parcomp{\Gamma}{\Gamma'}),a : \servt{\widetilde{i}}{K}{\widetilde{T}}{\outusagepref{\kinterval{0}{0}}{J_c}.(\parcomp{V}{U})}\vdash \outputch{a}{\widetilde{e}}{}{P} \triangleleft J_c;(K' \sqcup K\substi{\widetilde{I_\mathbb{N}}}{\widetilde{i}})}
+        }\\[-1em]
+        %
+        &\kern-0em\runa{SU-match}\; \infrule{
+            \varphi;\Phi;\Gamma\vdash e : \typenat\!\kinterval{I}{J}\quad \varphi;\Phi,I\leq 0;\Gamma\vdash P \triangleleft K\quad \varphi;\Phi,J \geq 1;\Gamma,x : \typenat\!\kinterval{I-1}{J-1}\vdash Q \triangleleft K
+        }{
+            \varphi;\Phi;\Gamma\vdash \match{e}{P}{x}{Q} \triangleleft K
+        }\\[-1em]
+        %
+        &\kern1em\runa{SU-nu}\; \infrule{
+            \varphi;\Phi;\Gamma,a : T \vdash P \triangleleft K\quad \reliableU{T}
+        }{
+            \varphi;\Phi;\Gamma\vdash \newvar{a}{P}\triangleleft K
+        }\;
+        \kern3em\runa{SU-sub}\; \infrule{
+            \varphi;\Phi;\Delta\vdash P \triangleleft K\quad \varphi;\Phi;\vdash \Gamma \sqsubseteq \Delta\quad \varphi;\Phi\vDash K \subseteq K'
+        }{
+            \varphi;\Phi;\Gamma\vdash P \triangleleft K'
+        }
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Typing rules for processes with Sized Types and Usages.}
+    \label{tab:sizedusagetyperules}
+\end{table*}
+
+\subsection{Soundness}
+
+As with the type system of Baillot and Ghyselen, the type system is proven sound by proving a subject reduction property, as well as proving a safety property stating that the complexity given by their type system is an upper-bound on the actual parallel complexity of the process \cite{BaillotEtAl2021}. The subject reduction property is proved by induction on the rules defining $\Rightarrow$, and the safety property can be deduced from the typing rules.
+
+\begin{theorem}[Subject reduction]
+If $\varphi;\Phi;\Gamma\vdash P \triangleleft K$ with all types in $\Gamma$ reliable and $P \Rightarrow Q$ then there exists $\Gamma'$ with $\varphi;\Phi \vdash \Gamma \longrightarrow^* \Gamma'$ and $\varphi;\Phi;\Gamma' \vdash Q \triangleleft K$.
+\label{theorem:betalsubjectreduction}
+\end{theorem}
+\begin{proof}
+By induction on the rules defining $\Rightarrow$ \cite{BaillotEtAl2021}.
+\end{proof}
+
+\begin{theorem}
+Let $P$ be an annotated process and $m$ be its global parallel complexity. Then, if $\varphi;\Phi;\Gamma \vdash P \triangleleft \kinterval{I}{J}$ with all types in $\Gamma$ reliable, then we have $\varphi;\Phi \vDash J \geq m$. Moreover, if $\Gamma$ does not contain any integer variables, we have $\varphi;\Phi \vDash I \leq m$.
+\end{theorem}
+\begin{proof}
+By an intermediary result that $\varphi;\Phi;\Gamma \vdash P \triangleleft \kinterval{I}{J}$ implies $\varphi;\Phi\vDash J\geq C_\ell(P)$ it follows from $m = \text{max}(n \mid P \Rightarrow^* Q \land C_\ell(Q)=n)$ and Theorem \ref{theorem:betalsubjectreduction} that also $\varphi;\Phi\vDash J\geq m$ \cite{BaillotEtAl2021}.
+\end{proof}
+
+\subsection{An example: The Fibonacci sequence with semaphores}\label{sec:sizedwithusagesexample}
+
+As with the type system of Baillot and Ghyselen, we again visit the example of calculating the Fibonacci sequence. As before, we are interested in the number of additions, however, to showcase the increased expressiveness of this type system, we add a semaphore to the computation, such that only a single addition can be done in parallel. This effectively forces the computation to be done sequentially instead of in parallel. By showing the typing of this process, we assume it is clear that the type system is also able to type a similar process without the semaphore. For the implementations of the \textit{add} and \textit{fib} servers, we use the ones from before, but for the \textit{add} server we add an input to a channel \textit{sem} before the \texttt{tick} operation to simulate an acquisition of a semaphore, as well as an output after the add operation to the same \textit{sem} channel to simulate a release of the semaphore. We assign a unique semaphore to each computation of the Fibonacci sequence, such that we can type the \textit{sem} channel based on the input given to the fib server. The fib server is thus given by the following process.
+
+\begin{align*}
+    &P_\text{fib}\defeq\; \bang\inputch{\text{fib}}{n,r}{}{\newvar{sem}{(P_{fibrec}(sem) \mid \asyncoutputch{\text{fibrec}}{n,r}{} \mid \asyncoutputch{sem}{}{})}}\\
+    \\
+    %
+    &P_\text{fibrec}(sem)\defeq\\
+    &\quad \bang\inputch{\text{fibrec}}{n,r}{}{
+         \texttt{match}\; n\; \{ 0 \mapsto \asyncoutputch{r}{0}{}\!;\;
+              \succc{n_1} \mapsto\\ 
+              &\kern3em\texttt{match}\; n_1\; \{
+                    0 \mapsto \asyncoutputch{r}{\succc{0}}{}\!;\;
+                    \succc{n_2} \mapsto B_\text{fibrec}(n_1, n_2, r, sem)\}\}
+    }\\
+    \\
+    %
+    &B_\text{fibrec}(n_1, n_2, r, sem) \defeq\\
+    &\quad\newvar{r_1,r_2,r_3}{(\asyncoutputch{\text{fibrec}}{n_1,r_1}{}\mid\asyncoutputch{\text{fibrec}}{n_2,r_2}{}\\
+    &\quad\mid \inputch{r_2}{m_2}{}{\inputch{r_1}{m_1}{}{\inputch{sem}{}{}{\outputch{\text{add}}{m_1,m_2,r_3}{}{\asyncoutputch{sem}{}{}}}}\mid \inputch{r_3}{m_3}{}{\tick\asyncoutputch{r}{m_3}{}}})}
+\end{align*}
+
+% \begin{align*}
+%     \text{add}: \servU{i,j,k}{\kinterval{0}{0}}{\texttt{Nat}[0,i],\texttt{Nat}[j,k],\channeltypeusage{\texttt{Nat}[j,i+k]}{\outusagepref{\kinterval{0}{0}}{0}}}{\repinusagepref{\kinterval{0}{0}}{\infty}.\outusagepref{\kinterval{0}{0}}{0}}
+% \end{align*}
+
+We can assign the following types to the two servers fib and fibrec:
+
+\begin{align*}
+    &\text{fib}: \withcomplex{\servt{i}{\kinterval{0}{\infty}}{\natintervalsingle{i}, T_{ret}}{\repinusagepref{\kinterval{0}{0}}{\infty}}}{\kinterval{0}{0}}\\
+    %
+    &\text{fibrec}: \withcomplex{\servt{i}{\kinterval{0}{\infty}}{\natintervalsingle{i},T_{ret}}{\repinusagepref{\kinterval{0}{0}}{\infty}.(\uparcomp{\outusagepref{\kinterval{0}{\infty}}{0}}{\outusagepref{\kinterval{0}{\infty}}{0}})}}{\kinterval{0}{0}}\\
+    %
+    &\quad T_{ret} \triangleq \channeltypeusage{\natintervalsingle{f(i)}}{\outusagepref{\kinterval{0}{\infty}}{0}}\\
+\end{align*}
+
+% \begin{align*}
+% \begin{prooftree}
+% \Infer0[]{i;\emptyset;\Gamma \vdash \inputch{r_2}{m_2}{}{(...)} \triangleleft K_1}
+% %
+% \Infer0[]{i;\emptyset;\Gamma \vdash \inputch{r_3}{m_3}{}{(...)} \triangleleft K_2}
+% %
+% \Infer2[]{i;\emptyset;\Gamma \vdash \inputch{r_2}{m_2}{}{(...) \mid \inputch{r_3}{m_3}{}{(...)}} \triangleleft K_1 \sqcup K_2}
+% \end{prooftree}
+% \end{align*}
+
+% \begin{align*}
+%     &\text{fib}: \withcomplex{\servt{i}{\kinterval{0}{\textit{fib}(i)}}{\natintervalsingle{i}, \channeltypeusage{\natintervalsingle{\textit{fib}(i)}}{\outusagepref{\kinterval{\textit{fib}(i)}{\textit{fib}(i)}}{0}}}{\repinusagepref{\kinterval{0}{0}}{\infty}}}{\kinterval{0}{0}}\\
+%     %
+%     &\text{fibrec}: \withcomplex{\servt{i}{\kinterval{0}{\textit{fib}(i)}}{\natintervalsingle{i},T_{ret},T_{sem}}{\repinusagepref{\kinterval{0}{0}}{\infty}.(\uparcomp{\outusagepref{\kinterval{0}{\infty}}{0}}{\outusagepref{\kinterval{0}{\infty}}{0}})}}{\kinterval{0}{0}}\\
+%     %
+%     &T_{ret} \triangleq \channeltypeusage{\natintervalsingle{\textit{fib}(i)}}{\outusagepref{\kinterval{\textit{fib}(i)}{\textit{fib}(i)}}{0}} \quad T_{sem} \triangleq \channeltypeusage{}{\repinusagepref{\kinterval{0}{\infty}}{\infty}.\outusagepref{\kinterval{1}{\infty}}{\infty}}\\
+% \end{align*}
+
+Here, $f$ is a function denoting the complexity of a call to fibrec. While this process is well-typed, it unfortunately fails to provide a precise bound. Of particular interest here are the types of the return channel of fib, as well as the semaphore given to fib. Here, we see that we must assign a type with usage capacity $\infty$ to to the semaphore inside fibrec. By type rules $\runa{SU-ich}$, $\runa{SU-tick}$, $\runa{SU-och}$, and $\runa{SU-iserv}$, we must assign a complexity of $\kinterval{0}{\infty}$ to the server fibrec. \\
+
+To better understand why we must assign the semaphore a capacity of $\infty$, we take a look at the types of the channel names used for communication inside fibrec, $r_1$, $r_2$, $r_3$, $r$, and $sem$. The function $s$ denotes the time taken before we can acquire the semaphore by inputting on the channel $sem$. The following types are all relative to the creation point of their corresponding variables, before any reductions have been made on the usages.
+
+\begin{align*}
+    r_1:\;& \channeltypeusage{\natinterval{0}{f(i-1)}}{\uparcomp{\outusagepref{\kinterval{0}{0}}{f(i-1)}}{\inusagepref{\kinterval{0}{f(i-2)}}{f(i-2)}}}\\
+    %
+    r_2:\;& \channeltypeusage{\natintervalsingle{f(i-2)}}{\uparcomp{\outusagepref{\kinterval{0}{0}}{f(i-2)}}{\inusagepref{\kinterval{0}{0}}{f(i-1)}}}\\
+    %
+    r_3:\;& \channeltypeusage{\natinterval{0}{f(i)}}{\uparcomp{\outusagepref{\kinterval{0}{f(i-1)+f(i-2)+s(i)}}{0}}{\inusagepref{\kinterval{0}{0}}{f(i-1)+f(i-2)+s(i)}}\\
+    %
+    r:\;& \channeltypeusage{\natintervalsingle{f(i)}}{\outusagepref{\kinterval{0}{f(i-1)+f(i-2)+s(i)+1}}{0} \mid \outusagepref{\kinterval{0}{0}}{f(i-1)+f(i-2)+s(i)+1}}}\\
+    %
+    sem:\;& \bang\channeltypeusage{}{\uparcomp{\repinusagepref{\kinterval{0}{f(i-1)+f(i-2)}}{s(i)}.\outusagepref{\kinterval{0}{s(i)}}{0}}{\outusagepref{\kinterval{0}{s(i)}}{0}}}\\
+\end{align*}
+
+The main limitation here lies in the typing of the semaphore itself. For the type of $sem$ to be reliable, our only option is to define $s$ as $s(i) = \infty$. This is due to the way usages are checked for reliability by checking if any reduction of them can reduce to $\errres$. When reducing $\bang\channeltypeusage{}{\uparcomp{\repinusagepref{\kinterval{0}{f(i-1)+f(i-2)}}{s(i)}.\outusagepref{\kinterval{0}{s(i)}}{0}}{\outusagepref{\kinterval{0}{s(i)}}{0}}}$, we get a new usage $\bang\channeltypeusage{}{\uparcomp{\repinusagepref{\kinterval{0}{f(i-1)+f(i-2)}}{s(i)}.\outusagepref{\kinterval{0}{s(i)}}{0}}{\;\withdelay{s(i)}{\outusagepref{\kinterval{0}{s(i)}}{0}}}}$. This can again be reduced infinitely often, further delaying the right-most $\texttt{Out}$ prefix. This essentially means that it must hold that $s(i) = n \cdot s(i)$, which is only possible if $s(i) = \infty$. This also has the consequence that the obligation of the $\texttt{Out}$ usage prefix of return channel $r$ must be $\kinterval{0}{\infty}$, meaning that any receiving side of $r$ must have capacity $\infty$.\\
+
+% \begin{align*}
+%     &\asyncoutputch{f_0}{0}{} \mid \asyncoutputch{f_0}{0}{} \mid \asyncoutputch{f_1}{1}{} \mid \asyncoutputch{f_1}{1}{} \mid \asyncoutputch{f_1}{1}{}\\
+%     \mid\;& \inputch{f_0}{n}{}{\inputch{f_1}{m}{}{\inputch{sem}{}{}{\outputch{add}{n, m, f_2}{}{\tick\asyncoutputch{sem}{}{}}}}}\\
+%     \mid\;& \inputch{f_0}{n}{}{\inputch{f_1}{m}{}{\inputch{sem}{}{}{\outputch{add}{n, m, f_2}{}{\tick\asyncoutputch{sem}{}{}}}}}\\
+%     \mid\;& \inputch{f_1}{n}{}{\inputch{f_2}{m}{}{\inputch{sem}{}{}{\outputch{add}{n, m, f_3}{}{\tick\asyncoutputch{sem}{}{}}}}}\\
+%     \mid\;& \inputch{f_2}{n}{}{\inputch{f_3}{m}{}{\inputch{sem}{}{}{\outputch{add}{n, m, f_4}{}{\tick\asyncoutputch{sem}{}{}}}}}\\
+%     \mid\;& \asyncinputch{f_4}{v}{} \mid \asyncoutputch{sem}{}{}
+% \end{align*}
+
+% \begin{align*}
+%     f_0:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{0}}{0} \mid \outusagepref{\kinterval{0}{0}}{0}} \mid \inusagepref{\kinterval{0}{0}}{0} \mid \inusagepref{\kinterval{0}{0}}{0}\\
+%     f_1:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{0}}{0} \mid \outusagepref{\kinterval{0}{0}}{0}} \mid \outusagepref{\kinterval{0}{0}}{0} \mid \inusagepref{\kinterval{0}{0}}{0} \mid \inusagepref{\kinterval{0}{0}}{0} \mid \inusagepref{\kinterval{0}{0}}{0}\\
+%     f_2:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{s}}{0} \mid \outusagepref{\kinterval{0}{s}}{0} \mid \inusagepref{\kinterval{0}{0}}{s} \mid \inusagepref{\kinterval{0}{0}}{s}}\\
+%     f_3:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{s+s}}{s} \mid \inusagepref{\kinterval{0}{s}}{s+s}}\\
+%     f_4:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{s+s+s}}{0} \mid \inusagepref{\kinterval{0}{0}}{s+s+s}}\\
+%     sem:\;& \inusagepref{\kinterval{0}{0}}{s+s}.\outusagepref{\kinterval{1}{1}}{0} \mid \inusagepref{\kinterval{0}{0}}{s+s}.\outusagepref{\kinterval{1}{1}}{0} \mid \inusagepref{\kinterval{0}{s}}{s+s}.\outusagepref{\kinterval{1}{1}}{0} \mid \inusagepref{\kinterval{0}{s+s}}{s+s}.\outusagepref{\kinterval{1}{1}}{0} \mid \outusagepref{\kinterval{0}{0}}{0}
+% \end{align*}
+
+We now show a calculation of the Fibonacci sequence that can be typed. For this, we will not show a process to calculate any arbitrary value of the sequence, but instead show a process calculating a specific value in the sequence - in this case the third value, not counting zero. The process is comprised of all the calls required to calculate the third value in parallel. The channels $f_i$ each output the value of $fib(i)$ the necessary amount of times to output $fib(3)$ on $f_3$. As before, a $\texttt{tick}$ is included for each output to $add$, and a semaphore is acquired before each.
+
+\begin{align*}
+    &\asyncoutputch{f_0}{0}{} \mid \asyncoutputch{f_1}{1}{} \mid \asyncoutputch{f_1}{1}{}\\
+    \mid\;& \inputch{f_0}{n}{}{\inputch{f_1}{m}{}{\inputch{sem}{}{}{\outputch{add}{n, m, f_2}{}{\tick\asyncoutputch{sem}{}{}}}}}\\
+    \mid\;& \inputch{f_1}{n}{}{\inputch{f_2}{m}{}{\inputch{sem}{}{}{\outputch{add}{n, m, f_3}{}{\tick\asyncoutputch{sem}{}{}}}}}\\
+    \mid\;& \asyncinputch{f_3}{v}{} \mid \asyncoutputch{sem}{}{}
+\end{align*}
+
+We can now assign the following types to channels $f_0$, $f_1$, $f_2$, $f_3$, and $sem$.
+
+\begin{align*}
+    f_0:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{0}}{0}} \mid \inusagepref{\kinterval{0}{0}}{0}\\
+    f_1:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{0}}{0}} \mid \outusagepref{\kinterval{0}{0}}{0} \mid \inusagepref{\kinterval{0}{0}}{0} \mid \inusagepref{\kinterval{0}{0}}{0}\\
+    f_2:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{s}}{0} \mid \inusagepref{\kinterval{0}{0}}{s}}\\
+    f_3:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{s+s}}{s} \mid \inusagepref{\kinterval{0}{s}}{s+s}}\\
+    sem:\;& \channeltypeusage{}{\inusagepref{\kinterval{0}{s}}{s+s+1}.\outusagepref{\kinterval{1}{1}}{s+s} \mid \inusagepref{\kinterval{0}{s+s}}{s+s}.\outusagepref{\kinterval{1}{1}}{s+s} \mid \outusagepref{\kinterval{0}{0}}{2}}
+\end{align*}
+
+As before, we have $s$ denoting the time required to acquire the semaphore. Since we no longer use a server, $s$ is no longer a function of a polymorphic variable. Here, the minimum valid value for $s$ for the types to be reliable is $1$. By letting $s=1$, we obtain a complexity of $\kinterval{0}{2}$ by typing rule $\runa{SU-ich}$ to type the final input on $f_3$.
+
+% \begin{align*}
+% \begin{prooftree}
+% \Infer0[]{...}
+% \Infer0[]{...}
+% \Infer0[]{\emptyset; \emptyset; T''' \vdash f_2: \channeltypeusage{}{?}}
+% %
+% \Infer0[]{\emptyset; \emptyset; T''' \vdash \asyncoutputch{sem}{}{} \triangleleft \kinterval{0}{0}}
+% %
+% \Infer1[]{\emptyset; \emptyset; T''' \vdash \tick\asyncoutputch{sem}{}{} \triangleleft \kinterval{1}{1}}
+% %
+% \Infer2[]{\emptyset; \emptyset; T''' \vdash \outputch{add}{n, m, f_2}{}{\tick\asyncoutputch{sem}{}{}} \triangleleft \kinterval{1}{1} \sqcup \kinterval{0}{0}}
+% %
+% \Infer1[]{\emptyset; \emptyset; T'' \vdash \inputch{sem}{}{}{\outputch{add}{n, m, f_2}{}{\tick\asyncoutputch{sem}{}{}}} \triangleleft 0; \kinterval{1}{1}}
+% %
+% \Infer2[]{\emptyset; \emptyset; T' \vdash \inputch{f_1}{m}{}{\inputch{sem}{}{}{\outputch{add}{n, m, f_2}{}{\tick\asyncoutputch{sem}{}{}}}} \triangleleft 0; \kinterval{1}{1}}
+% %
+% \Infer2[]{\emptyset; \emptyset; T \vdash \inputch{f_0}{n}{}{\inputch{f_1}{m}{}{\inputch{sem}{}{}{\outputch{add}{n, m, f_2}{}{\tick\asyncoutputch{sem}{}{}}}}} \triangleleft 0; \kinterval{1}{1}}
+% \end{prooftree}
+% \end{align*}
+
+% \begin{align*}
+% T''' &= add: T_{add}, sem: \channeltypeusage{}{\outusagepref{\kinterval{0}{0}}{0}}\\
+% T'' &= add: T_{add}, sem: \channeltypeusage{}{\inusagepref{\kinterval{0}{0}}{0}.\outusagepref{\kinterval{0}{0}}{0}}\\
+% T' &= add: T_{add}, sem: \channeltypeusage{}{\inusagepref{\kinterval{0}{0}}{0}.\outusagepref{\kinterval{0}{0}}{0}}, f_1: \channeltypeusage{?}{\inusagepref{\kinterval{0}{0}}{0}}\\
+% T &= add: T_{add}, sem: \channeltypeusage{}{\inusagepref{\kinterval{0}{0}}{0}.\outusagepref{\kinterval{0}{0}}{0}}, f_1: \channeltypeusage{?}{\inusagepref{\kinterval{0}{0}}{0}}, f_0: \channeltypeusage{?}{\inusagepref{\kinterval{0}{0}}{0}}
+% \end{align*}
+
+
+
+% \begin{align*}
+%     &\asyncoutputch{f_0}{0}{} \mid \asyncoutputch{f_1}{1}{} \mid \asyncoutputch{f_1}{1}{}\\
+%     \mid\;& \inputch{f_0}{n}{}{\inputch{f_1}{m}{}{\inputch{sem}{}{}{\outputch{add}{n, m, r_2}{}{\asyncoutputch{sem}{}{}}}}} \mid \inputch{r_2}{v}{}{\tick\asyncoutputch{f_2}{v}{}}\\
+%     \mid\;& \inputch{f_1}{n}{}{\inputch{f_2}{m}{}{\inputch{sem}{}{}{\outputch{add}{n, m, r_3}{}{\asyncoutputch{sem}{}{}}}}} \mid \inputch{r_3}{v}{}{\tick\asyncoutputch{f_3}{v}{}}\\
+%     \mid\;& \asyncinputch{f_3}{v}{} \mid \asyncoutputch{sem}{}{}
+% \end{align*}
+
+% \begin{align*}
+%     f_0:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{0}}{0} \mid \inusagepref{\kinterval{0}{0}}{0}}\\
+%     f_1:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{0}}{0} \mid \outusagepref{\kinterval{0}{0}}{0} \mid \inusagepref{\kinterval{0}{0}}{0} \mid \inusagepref{\kinterval{0}{0}}{0}}\\
+%     f_2:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{s+1}}{0} \mid \inusagepref{\kinterval{0}{0}}{s+1}} \quad\quad r_2: \channeltypeusage{}{\outusagepref{\kinterval{0}{s}}{0} \mid \inusagepref{\kinterval{0}{0}}{s}}\\
+%     f_3:\;& \channeltypeusage{}{\outusagepref{\kinterval{0}{s+2}}{0} \mid \inusagepref{\kinterval{0}{0}}{s+2} \quad\quad r_3: \channeltypeusage{}{\outusagepref{\kinterval{0}{s+1}}{0} \mid \inusagepref{\kinterval{0}{0}}{s+1}}}\\
+%     sem:\;& \channeltypeusage{}{\inusagepref{\kinterval{0}{0}}{s}.\outusagepref{\kinterval{0}{0}}{0} \mid \inusagepref{\kinterval{0}{s+1}}{s}.\outusagepref{\kinterval{0}{0}}{0} \mid \outusagepref{\kinterval{0}{0}}{s+1}}
+% \end{align*}
+
+% \begin{align*}
+%     &\;\inusagepref{\kinterval{0}{0}}{s}.\outusagepref{\kinterval{1}{1}}{0} \mid \inusagepref{\kinterval{0}{0}}{s}.\outusagepref{\kinterval{1}{1}}{0} \mid \outusagepref{\kinterval{0}{0}}{0}\\
+%     \Rightarrow&\; \inusagepref{\kinterval{0}{0}}{s}.\outusagepref{\kinterval{1}{1}}{1} \mid \outusagepref{\kinterval{1}{1}}{0} \Rightarrow \errres\\
+% \end{align*}

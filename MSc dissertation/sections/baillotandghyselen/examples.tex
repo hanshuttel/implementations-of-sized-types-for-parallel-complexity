@@ -1,0 +1,20 @@
+
+\section{Soundness}
+
+Baillot and Ghyselen \cite{BaillotGhyselen2021} prove the soundness of their type system with respect to parallel complexity, using a subject reduction property and a safety property. The subject reduction property states that the reduction relation $\Longrightarrow$ is type-preserving, and is proved by induction on the rules defining $\Longrightarrow$. The safety property states that the index assigned to a well-typed process is an upper bound on the parallel complexity of the process, which follows from subject reduction and the definition of local complexity.
+
+\begin{theorem}[Subject reduction]
+If $\varphi;\Phi;\Gamma\vdash P \triangleleft K$ and $P \Rightarrow Q$ then $\varphi;\Phi;\Gamma\vdash Q \triangleleft K$.
+\begin{proof}
+By induction on the reduction rules defining $\Longrightarrow$ \cite{BaillotGhyselen2021}.
+\end{proof}
+\end{theorem}
+%
+
+%
+\begin{theorem}[Parallel complexity]
+Let $P$ be an annotated process and $m$ be its parallel complexity. Then, for a typing $\varphi;\Phi;\Gamma\vdash P \triangleleft K$ we have that $\varphi;\Phi\vDash K \geq m$.
+\begin{proof}
+Follows from subject reduction and the definition of local complexity \cite{BaillotGhyselen2021}. 
+\end{proof}
+\end{theorem}

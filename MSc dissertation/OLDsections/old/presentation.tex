@@ -1,0 +1,52 @@
+\section{Presentation}
+\subsection{Syntax}
+Add prefixes \texttt{copy} and \texttt{paste}:
+\begin{align*}
+  \pi ::= \; & \texttt{eval} \mid \replace{D} \mid \texttt{child}\; n \mid \texttt{parent} \mid \texttt{copy} \mid \texttt{paste}\\
+  \phi ::= \; & \neg \phi \mid \phi_1 \land \phi_2 \mid \phi_1 \lor \phi_2 \mid @D \mid \lozenge D \mid \Box D\\
+  E ::= \; & \pi.E \mid \condexpto{\phi}{E_1}{E_2} \mid E_1 \ggg E_2 \mid \recursion{E}{x} \mid x \mid \mathbf{0}\\
+  D ::= \; & \texttt{var}\;x \mid \texttt{const}\;c \mid \texttt{app} \mid \texttt{lambda}\; x \mid \texttt{break} \mid \texttt{hole}
+\end{align*}
+
+\subsection{Semantics}
+Edit \runa{context} rule (and modify other rules to include $a_c$ in configurations):
+\begin{align*}
+    \runa{context}\; \condinfrule{\conf{a,\; a_c} \xrightarrow{\pi} \conf{a',\; a_c'}}{\conf{\pi.E,\; \cursorctx{a},\; a_c} \xrightarrow{\pi} \conf{E,\; \cursorctx{a'},\; a_c'}}{\text{where}\; \pi \neq \texttt{eval}}\\
+\end{align*}
+
+Add \runa{copy} and \runa{paste} rules:
+\begin{align*}
+    \runa{copy}\; \infrule{}{\conf{\cursor{\hat{a}},\; a_c} \xrightarrow{\texttt{copy}} \conf{\cursor{\hat{a}},\; \hat{a}}}\\
+    \runa{paste}\; \infrule{}{\conf{\cursor{\hat{a}},\; a_c} \xrightarrow{\texttt{paste}} \conf{\cursor{a_c},\; a_c}}
+\end{align*}
+
+\subsection{Type system}
+Ensure that you cannot paste an empty tree and that the pasted tree is compatible with the cursor position.
+\begin{align*}
+    \runa{t-copy}\; \infrule{\Gamma_e(p)=(\Gamma_a,\; \tau')\quad p,\; \Gamma_e,\; \tau' \vdash E : ok}{p,\; \Gamma_e,\; \tau \vdash \texttt{copy}.E : ok}\\
+    \runa{t-paste}\; \condinfrule{\Gamma_e(p)=(\Gamma_a,\; \tau')\quad \consistent{\tau}{\tau'}\quad p,\; (\overline{p}\; \Gamma_e,\; p : (\Gamma_a,\; \tau)),\; \tau \vdash E : ok}{p,\; \Gamma_e,\; \tau \vdash \texttt{paste}.E : ok}{\text{if}\; \tau \neq \texttt{?}}
+\end{align*}
+Conditional and recursive expressions make copy and paste indeterminate, and so the \textit{copy} type must be $\texttt{?}$ after such expressions. It may therefore be necessary to introduce a \textit{copy} type condition similar to $\Theta \tau$. For sequential composition, $E_1 \ggg E_2$, we must ensure that any changes to the \textit{copy} type in $E_1$ must be reflected in the type checking of $E_2$.\\
+
+Add error predicates for \runa{t-copy} and \runa{t-paste}:
+\begin{align*}
+    \runa{copy}_{ERROR} \; &p,\; \Gamma_e,\; \tau \vdash \texttt{copy}.E \rightarrow \texttt{wrong} \\
+    &\text{if} \; \Gamma_e(p) \neq (\Gamma_a,\; \tau')\\
+    &\text{or} \; p,\; \Gamma_e,\; \tau' \vdash E \rightarrow \texttt{wrong}
+    %&\text{or} \; \Gamma_e(p) = \texttt{undef}
+\end{align*}
+
+\begin{align*}
+    \runa{paste}_{ERROR}\; &p,\; \Gamma_e,\; \tau \vdash \texttt{paste}.E \rightarrow \texttt{wrong}\\
+    &\text{if} \; p,\; (\overline{p}\; \Gamma_e,\; p : (\Gamma_a,\; \tau)),\; \tau \vdash E \rightarrow \texttt{wrong}\\
+    &\text{or} \; \Gamma_e(p) \neq (\Gamma_a,\; \tau')\\
+    &\text{or} \; \tau \not\sim \tau'\\
+    &\text{or} \; \tau = \texttt{?}
+\end{align*}
+
+
+\begin{align*}
+    &p,\; \Gamma_e \vdash \conf{(\texttt{child}\; 1).E,\; \cursor{\breakpoint{c}}} : ok\\
+    &\conf{(\texttt{child}\; 1).E,\; \cursor{\breakpoint{c}}} \xrightarrow{\texttt{child}\; 1} \conf{E,\; \breakpoint{\cursor{c}}}\\
+    &\restrict{p}{\Gamma_e}{\texttt{child}\; 1} = \left(p\; \texttt{one},\; \Gamma_e\right)
+\end{align*}

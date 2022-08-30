@@ -1,0 +1,70 @@
+\section{A comparison of type systems}\label{sec:comparison}
+
+% Noter
+%
+% Baillot et al. Conjecture om at deres er strictly mere expressive end Baillot and Ghyselen
+%   Baillot and Ghyselen giver i nogle tilfælde mere præcise bounds
+%
+% Baillot et al. - sammenligning mellem temporal operators og usages (https://cdn.discordapp.com/attachments/880826978066903063/920611627055853618/unknown.png)
+
+
+% \begin{itemize}\itshape
+%     \item Turing-completeness:
+%     \begin{itemize}
+%         \item Embedding of Simply Typed Lambda calculus (with recursion) into Pi-calculus
+%         \item Prove/Disprove Turing completeness by showing this embedding is well-typed/embedding the types calculus in question into a less expressive language (for each typesystem)
+%     \end{itemize}
+    
+%     \item Complexity bounds:
+%     \begin{itemize}
+%         \item What can be typed with "tight" bounds
+%     \end{itemize}
+% \end{itemize}
+
+
+
+% \begin{align*}
+%     \encoding{x \mapsto M} \defeq&\; \bang{\inputch{x}{w}{}{\!\encoding{M}\!w}}\\
+%     %
+%     \encoding{\lambda x.M}\!u \defeq&\; \inputch{u}{x}{}{\inputch{u}{v}{}{\!\encoding{M}\!v}}\\
+%     %
+%     \encoding{x}\!u \defeq&\; \asyncoutputch{x}{u}{}{}\\
+%     %
+%     \encoding{M\; N}\!u \defeq&\; \newvar{v}{\left(\parcomp{\encoding{M}\!v}{\newvar{x}{\outputch{v}{x}{}{\outputch{v}{u}{}{\!\encoding{x\mapsto N}}}}}\right)}\;\; \text{(for some}\; x\;\text{not free in}\; N\text{)}
+% \end{align*}
+
+In this section, we qualitatively analyze the four type systems we have considered in this article. We first compare their expressive power, i.e. how many programs can be typed in them. Afterwards, we compare the precision of the bounds they provide on the span, and finally we look at the current state of time reconstruction for each of the type systems.
+
+\subsection{Expressiveness}
+We first consider the expressiveness of the type system given by Kobayashi from Section \ref{sec:lockfreedomts} for time-bounded processes. Being the type system that puts the least requirements on time, this type system is naturally able to type a lot of programs. By allowing all time-tags as well as obligations and capacities of usages to be $\infty$, we essentially boil the type system down to a simply typed $\pi$-calculus as all usages are trivially reliable and all time tags are in compliance.\\
+
+The type system given by Baillot and Ghyselen from Section \ref{sec:b&gts} puts some more restraints on which programs can be typed. As seen in Section \ref{sec:usagessized}, a process such as $\inputch{a}{}{}{\tick\asyncoutputch{a}{}{}} \mid \outputch{a}{}{}{\tick\asyncinputch{a}{}{}}$ cannot be typed. However, this restriction primarily appears when channels are not used linearly, and the linear $\pi$-calculus in itself is expressive enough to express parallel computation \cite{PiCalculusLinearity}. As we have already discussed, this also means that common programming patterns such as semaphores cannot be typed. Baillot and Ghyselen also point out that session types can be encoded in the linear $\pi$-calculus with variant types, suggesting some similarity between the expressiveness of Baillot and Ghyselen and session types. Variant types type variant values, which are values containing a label allowing the value to be of different types depending on the label \cite{sangiorgiVariantTypes}.\\
+
+Like the type system given by Kobayashi, the type system given by Baillot et al. in Section \ref{subsec:sizedwithusages} is based around usages, and the typing rules primarily focus on ensuring proper correspondence between the obligation and capacity of usages and the complexity of a process. By allowing usages to have an obligation $\kinterval{0}{\infty}$ and a capacity $\infty$, usages are trivially reliable, and the typing rule for subtyping allows them to be instantiated as needed. Crucial here is the fact that subtyping allows for such general types, that they can frequently be instantiated to any desired type, essentially allowing for types with "wildcard" usages, $\inusagepref{\kinterval{0}{\infty}}{\kinterval{0}{0}}$ and $\outusagepref{\kinterval{0}{\infty}}{\kinterval{0}{0}}$. This again appears to boil down to a variant of the simply typed $\pi$-calculus using these usages.\\
+
+Das et al. do not say anything concrete about their type system regarding expressiveness, however, a paper by Dardha and Pérez formally relates different type systems \cite{DardhaPerezComparison}. Specifically, they focus on two classes of deadlock-free processes which they call $\mathcal{L}$ and $\mathcal{K}$. The class $\mathcal{L}$ is based on processes from Curry-Howard interpretations of classical linear logic propositions, and the class $\mathcal{K}$ is based on certain processes typable under Kobayashi's type system presented in Section \ref{sec:lockfreedomts}. Dardha and Pérez prove that $\mathcal{L}$ is strictly included in $\mathcal{K}$. From this, we assume that programs well typed in the type system of Das et al. fall into $\mathcal{L}$, and is thus able to type fewer processes than the type system of Kobayashi. Worth noting is the distinct programming style imposed by the type system of Das et al. and similar type systems resulting from Curry-Howard interpretations of classical linear logic. This style is a result of the "composition plus hiding" principle \cite{DardhaPerezComparison} that restricts processes to communicate using only a single name, which can make it more cumbersome to express certain algorithms.\\
+
+Furthermore, much like the three other type systems, the type system of Das et al. also introduces subtyping rules that enable more programs to be typed. However, as the type system of Das et al. is based around session types and their subtyping rules only consider temporal modalities, Das et al. is still restricted by the restrictions of session types.
+
+
+\subsection{Precision}
+As in the section for the expressiveness of the type systems, we begin by considering the type system given by Kobayashi from Section \ref{sec:lockfreedomts}. The type system can capture precise bounds for many simple non-recursive programs. However, any replicated channel exhibiting recursion quickly loses any meaningful bound on the span of the program. More specifically, any channels with usage of the form $\repinusagepref{}{}.\outusagepref{}{} \mid \outusagepref{}{}$ require the capacity of the replicated $\inusagepref{}{}$ and its continuation to be $\infty$ for the usage to be reliable, assuming a $\texttt{tick}$ appears inside the replicated process. The premises of the typing rules $\runa{U-Bout}$ and $\runa{U-Bin}$ prescribes that the time tag must be less than or equal to the capacity of the usage, which is $\infty$, and the time tag is thus also forced to be $\infty$. Furthermore, the type system is not parametric, and can therefore not capture any bounds based on the size of some input.\\
+
+Contrary to the type system of Kobayashi, the type system by Baillot and Ghyselen uses sized types, allowing the span given by the type system to be parametric in some input size. This is part of what allows the type system to give precise bounds on the span of many programs that the type system of Kobayashi does not. Additionally, the constraints on index variables in their type judgments allow them to reason more precisely about the termination of recursive calls. This results in a type system capable of providing precise bounds on procedures such as bitonic sort as shown in \cite{BaillotGhyselen2021} and the Fibonacci sequence as shown in Section \ref{sec:b&gexample}.\\
+
+As discussed earlier in this paper, the type system by Baillot et al. is more expressive than the type system by Baillot and Ghyselen in that it is able to express, among other things, semaphores. However, from our experience in Section \ref{sec:sizedwithusagesexample}, we could not obtain any precise bounds as we were forced to give the usage of the semaphore a capacity of $\infty$ for it to be reliable, resulting in a complexity of $\kinterval{0}{\infty}$. In addition, Baillot et al. present an example where they obtain worse bounds than the type system by Baillot and Ghyselen. This imprecision also stems from an imprecise capacity of a usage, required to make the usage reliable. However, Baillot et al. conjecture that, in the general case of processes with linear use of channels, this new type system is at least as precise as that of Baillot and Ghyselen.\\
+
+As mentioned in Section \ref{sec:dassoundness}, there seems to be a similarity between the delay operator in Baillot et al. and temporal modalities in Das et al. in that $\ocircle$ corresponds to $\withdelay{\kinterval{1}{1}}{}\;$ and that $\Box$ and $\lozenge$ roughly map to usage $\inusagepref{\kinterval{0}{\infty}}{\kinterval{0}{\infty}}$ and $\outusagepref{\kinterval{0}{\infty}}{\kinterval{0}{\infty}}$. Thus, the type system of Baillot et al. seems to be more flexible with the way processes are typed. This presumably relates to the fact that Das et al. do not include sized types in their type system, and can presumably not reason about anything more precise than constant or infinite bounds on the span, much like that of Kobayashi, as no bounds on recursion can be statically determined. % Noget med priorities?
+
+\subsection{Time reconstruction}\label{sec:inference}
+
+% \textit{\begin{itemize}
+%     \item Lock-freedom inference (Kobayashi)
+%     \item Can it be used for inference for complexity? (Maybe a conjecture on how to)
+% \end{itemize}}
+
+We again first consider the type system given by Kobayashi from Section \ref{sec:lockfreedomts}. Kobayashi does not go into detail regarding type reconstruction, however, he expects the issues to be similar to previous work of his, including a type reconstruction algorithm for a variant of the linear $\pi$-calculus, as well as a type reconstruction algorithm for a deadlock-free type system also utilizing usages \cite{Igarashi1997TypeBasedAO, KobayashiEtAl2000}. Construction of the former mentioned algorithm involves constructing a set of syntax-directed typing rules and reading those in a bottom-up manner to compute a principal typing.\\
+
+Baillot and Ghyselen do not present an algorithm for type reconstruction, however, they believe the problem can be reduced to satisfying a set of constraints. They plan to investigate how this can be done and explore the possibilities of using off-the-shelf solvers for solving these constraints \cite{BaillotGhyselen2021}. Avanzini and Dal Lago have automated type inference for sequential programs, supporting Baillot and Ghyselen's approach \cite{AvanziniLago2017}. Baillot et al. also plan to further explore the possibilities for type reconstruction for their type system, by looking at earlier work by Kobayashi, such as that mentioned earlier for the deadlock-free type system \cite{BaillotEtAl2021}.\\
+
+Das et al. argue that their temporal modalities can be reconstructed, given a process that is typed according to their basic typing rules without temporal modalities. This is due to the fact that the type in the premise of rules are always smaller than the conclusions, and the next rule to be applied can often be eagerly determined. Additionally, they introduce subtyping much like how Kobayashi and Baillot et al. introduce subusages. These subtyping rules allow time modalities to delay an excess amount of time and be subtyped into the correct type. For example, $\Box A \leq \ocircle A$ as a type that is ready "always" is also ready "next", and $\ocircle A \leq \lozenge A$ as a type that is ready "next" is also ready "eventually". As with the temporal rules, Das et al. state that their subtyping rules are decidable, and that the choice of which rule to use next during reconstruction can often be eagerly determined \cite{DasEtAl2018}.

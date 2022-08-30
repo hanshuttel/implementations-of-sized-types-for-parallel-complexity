@@ -1,0 +1,77 @@
+\subsection{Verifying constraint judgements}
+We now show how we use normalized constraints to determine if a constraint $C$ on $\varphi$ is \textit{covered} by a set of constraints $\Phi$. That is, we want to answer the question \textit{Given the constraints in $\Phi$, does the constraint $C$ impose further restrictions on index valuations on $\varphi$?}. This question can sometimes be answered in linear time with respect to the number of monomials in the normalized equivalent of constraint $C$. That is if all coefficients in the normalized constraint are non-positive, we can guarantee that the constraint is always satisfied, as stated in Lemma \ref{lemma:tautology}, recalling that only naturals substitute for index variables.
+%
+\begin{lemma}\label{lemma:tautology}
+Let $I \leq 0$ be a normalized constraint in index variables $i_1,\dots,i_n$ such that $I = \sum_{\alpha\in\mathcal{E}(I)} I_\alpha i^\alpha$. Then $I \leq 0$ is satisfied for any interpretation $[\![I]\!]_\rho$ of $I$ with $\rho : \{i_1,\dots,i_n\} \longrightarrow \mathbb{N}$ if $I_\alpha \leq 0$ for $\alpha\in\mathcal{E}(I)$.
+\begin{proof}
+The result is obtained directly from the fact that index variables are non-negative, such that each term of $I$ is non-positive for any interpretation of $I$.
+\end{proof}
+\end{lemma}
+%
+%
+\begin{examp}\label{example:baillotghyssimple}
+Baillot and Ghyselen \cite{BaillotGhyselen2021} provide an example of how their type system for parallel complexity of message-passing processes can be used to bound the time complexity of a linear, a polynomial and an exponential time replicated input process. We show that we can verify all judgements on constraints in the typings of the first two processes using normalized constraints. We first define the processes $P_1$ and $P_2$
+\begin{align*}
+    P_i \defeq\; !\inputch{a}{n,r}{}{\tick\match{n}{\asyncoutputch{r}{}{}}{m}{\newvar{r'}{\newvar{r''}{Q_i}}}}
+\end{align*}
+for the corresponding definitions of $Q_1$ and $Q_2$
+\begin{align*}
+    Q_1 \defeq&\; \asyncoutputch{a}{m,r'}{} \mid \asyncoutputch{a}{m,r''}{} \mid \inputch{r'}{}{}{\inputch{r''}{}{}{\asyncoutputch{r}{}{}}}\\
+    Q_2 \defeq&\; \asyncoutputch{a}{m,r'}{} \mid \inputch{r'}{}{}{(\asyncoutputch{a}{m,r''}{} \mid \asyncoutputch{r}{}{})} \mid \asyncinputch{r''}{}{}
+\end{align*}
+We type $Q_1$ and $Q_2$ under the respective contexts $\Gamma_1$ and $\Gamma_2$
+\begin{align*}
+    \Gamma_1 \defeq&\; a : \forall_0 i.\texttt{oserv}^{i+1}(\texttt{Nat}[0,i],\texttt{ch}_{i+1}()), n : \texttt{Nat}[0,i], m : \texttt{Nat}[0,i-1],\\ &\; r : \texttt{ch}_{i}(),
+     r' : \texttt{ch}_{i}(), r'' : \texttt{ch}_i()\\
+    %
+    \Gamma_2 \defeq&\; a : \forall_0 i.\texttt{oserv}^{i^2+3i+2}(\texttt{Nat}[0,i],\texttt{ch}_{i+1}()), n : \texttt{Nat}[0,i], m : \texttt{Nat}[0,i-1],\\ &\; r : \texttt{ch}_{i}(),
+     r' : \texttt{ch}_i(), r'' : \texttt{ch}_{2i-1}()
+\end{align*}
+Note that in the original work, the bound on the complexity of server $a$ in context $\Gamma_2$ is $(i^2+3i+2)/2$. However, we are forced to use a less precise bound, as the multiplicative inverse is not always defined for our view of indices. Upon typing process $P_1$, we amass the judgements on the left-hand side, with corresponding judgements with normalized constraints on the right-hand side
+%
+\begin{align*}
+    &\{i\};\emptyset\vDash i + 1 \geq 1\kern7.5em\Longleftrightarrow &  \{i\};\emptyset\vDash -i \leq 0\\
+   % &\{i\};\{i \geq 1\} \vDash i-1 \leq i \kern6em\Longleftrightarrow & \{i\};\{1-i \leq 0\} \vDash -1 \leq 0\\
+    &\{i\};\{i \geq 1\} \vDash i \leq i + 1\kern5em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash -1 \leq 0\\
+    %
+    &\{i\};\{i \geq 1\} \vDash i \geq i\kern6.7em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash 0 \leq 0\\
+    &\{i\};\{i \geq 1\} \vDash 0 \geq 0\kern6.45em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash 0 \leq 0
+\end{align*}
+%
+As all coefficients in the normalized constraints are non-positive, each judgement is trivially satisfied, and we can verify the bound $i + 1$ on server $a$. For process $P_2$ we correspondingly have the trivially satisfied judgements
+\begin{align*}
+    &\{i\};\emptyset\vDash i + 1 \geq 1\kern10.3em\Longleftrightarrow &  \{i\};\emptyset\vDash -i \leq 0\\
+    &\{i\};\{0 \leq 0\}\vDash i \leq i^2 + 3i + 2\kern5.2em\Longleftrightarrow &  \{i\};\{0\leq 0\}\vDash -i^2-2i-2 \leq 0\\
+    %
+    &\{i\};\{i \geq 1\} \vDash i \leq i + 1\kern7.9em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash -1 \leq 0\\
+    %
+    &\{i\};\{i \geq 1\} \vDash 2i-1 \leq i^2 + 3i + 2\kern3.2em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash -i^2-i-3 \leq 0\\
+    &\{i\};\{i \geq 1\} \vDash i \geq i\kern9.7em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash 0 \leq 0\\
+    %
+    &\{i\};\{i \geq 1\} \vDash 0 \geq i^2+i\kern7.5em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash -i^2-i \leq 0\\
+    %
+    &\{i\};\{i \geq 1\} \vDash i^2+2i \geq i^2+3i+2\kern2.9em\Longleftrightarrow &  \{i\};\{1-i \leq 0\} \vDash -i-2 \leq 0
+\end{align*}
+
+\end{examp}
+%
+In practice, it turns out that for many processes, it is sufficient to verify that constraints impose no restrictions on interpretations. In Example \ref{example:baillotghyssimple}, we show how all constraint judgements in the typings of both a linear and a polynomial time replicated input can be verified using this approach. In the general sense, however, verifying whether judgements on polynomial constraints are satisfied is a difficult problem, as it amounts to verifying that a constraint is satisfied under all interpretations that satisfy our set of known constraints. In Example \ref{example:needconic}, we show how a constraint that is not satisfied for all interpretations can be shown to be covered by a set of two constraints, by utilizing the transitive, multiplicative and additive properties of inequalities to combine the two constraints. More specifically, we can exploit the fact that we can generate new constraints from any set of normalized constraints by taking a \textit{conical} combination of their left-hand side indices, as we shall formalize in the following section.
+%
+\begin{examp}\label{example:needconic}
+    Given the judgement
+    \begin{align*}
+        \{i\};\{i \leq 3, 5 \leq i^2\} \vDash 5i \leq 3i^2
+    \end{align*}
+    we want to verify that constraint $5i \leq 3i^2$ is covered by the set of constraints $\{i\leq 3, 5 \leq i^2\}$. This constraint is not satisfied by all interpretations, as substituting $1$ for $i$ yields $5 \not\leq 3$. However, we can rearrange and scale the constraints $i\leq 3$ and $5\leq i^2$ as follows
+    \begin{align*}
+        i \leq 3 \iff i-3\leq 0 \implies 5i - 15 \leq 0\\
+        %
+        5\leq i^2 \iff 0 \leq i^2-5 \implies 0 \leq 3i^2-15
+    \end{align*}
+    Then it follows that
+    \begin{align*}
+        5i-15 \leq 3i^2-15 \iff 5i \leq 3i^2
+    \end{align*}
+    %More generally, we can use the transitive, multiplicative and additive properties of the inequality relation to construct new constraints from a set of known constraints, thereby verifying that some constraint does not impose new restrictions on interpretations. 
+\end{examp}
+%

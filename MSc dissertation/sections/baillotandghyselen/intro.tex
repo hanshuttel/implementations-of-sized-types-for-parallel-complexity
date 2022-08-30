@@ -1,0 +1,12 @@
+\chapter{Sized types for parallel complexity}\label{ch:bgts}
+In this chapter, we briefly discuss the type system for parallel complexity of message-passing processes introduced in Baillot and Ghyselen \cite{BaillotGhyselen2021}. This type system builds on the foundations of indices and constraint judgements and formalizes parallel complexity analysis of $\pi$-calculus processes. Due to extensive use of subtyping and the challenges involved in verifying and satisfying constraint judgements, substantial modifications must be made to enable type checking and type inference of processes. We address these topics in Chapter \ref{ch:typecheck} and \ref{ch:timeinference}, respectively.\\
+
+The type system for parallel complexity of message-passing processes introduced by Baillot and Ghyselen uses sized types to express parametric complexity of replicated input invocation, and thereby achieves precise bounds on primitively recursive processes: A class of processes behaving as primitively recursive functions. This requires a notion of polymorphism in the message types of replicated inputs. Baillot and Ghyselen introduce size polymorphism by bounding sizes of algebraic terms and synchronizations on channels with indices that may contain index variables representing unknown sizes. We may interpret an index with an index valuation that maps its index variables to naturals, such that the index may be evaluated to a natural number.\\
+
+We first formally define indices and constraints on the valuations of indices. We give both a predicate logic and a model-theoretic interpretation of judgements on such constraints, referring to these as \textit{constraint judgements}. We then define sized types, the subtyping relation and introduce non-algorithmic type rules.
+
+\input{sections/baillotandghyselen/indices}
+\input{sections/baillotandghyselen/indices_alternative_formulations}
+\input{sections/baillotandghyselen/types}
+\input{sections/baillotandghyselen/typerules}
+\input{sections/baillotandghyselen/examples}

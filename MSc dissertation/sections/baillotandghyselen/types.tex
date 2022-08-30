@@ -1,0 +1,47 @@
+\section{Types and subtyping}\label{sec:typesandsubs}
+We now introduce the types from the type system of Baillot and Ghyselen. The types include a base type describing naturals as algebraic terms with sizes bounded by an interval consisting of two indices. This enables us to statically reason about how sizes of data structures change throughout reduction of processes, providing us termination guarantees for some forms of recursion. The type system of Baillot and Ghyselen contains lists as an additional base type, however for conciseness of the type system, we only consider naturals.
+%
+\begin{align*}
+    T,S ::=&\; \texttt{Nat}[I,J] \mid \texttt{ch}_I^\sigma(\widetilde{T}) \mid \forall_I\widetilde{i}.\texttt{serv}_K^\sigma(\widetilde{T})
+\end{align*}
+%
+We use input/output types for channels, and we further distinguish between channels that have replicated inputs, i.e. channels that have recursive behavior, and those that do not. We refer to the former as \textit{servers}, and we more specifically require all inputs on such channels to be replicated for technical convenience. Both servers and normal channels are annotated with an index $I$ that for a normal channel represents the number of time steps remaining before the channel synchronizes, and for a server the remaining time before it becomes available. Note that this imposes a temporal linearity constraint onto normal channels, as such channels can synchronize at exactly one time step. For servers we have an additional index $K$ that represents the parametric complexity of invoking the continuation of a replicated input on the server. Finally, the set $\sigma \subseteq \{\texttt{in},\texttt{out}\}$ is a subset of use-capabilities. Since types consist partly of indices, we define index substitution on types in Definition \ref{def:typeindexsubstitution}.\\
+
+\begin{defi}\label{def:typeindexsubstitution}
+    We define index substitution on types by the following rules
+    \begin{align*}
+        \natinterval{I}{J}\substi{K}{i} &= \natinterval{I\substi{K}{i}}{J\substi{K}{i}}\\
+        \chant{\sigma}{I}{\widetilde{T}}\substi{J}{i} &= \chant{\sigma}{I\substi{J}{i}}{\widetilde{T}\substi{J}{i}}\\
+        \servt{I}{\widetilde{i}}{\sigma}{K}{\widetilde{T}}\substi{J}{j} &= \servt{I\substi{J}{j}}{\widetilde{i}}{\sigma}{K}{\widetilde{T}} \text{ if } j \in \widetilde{i}\\
+        \servt{I}{\widetilde{i}}{\sigma}{K}{\widetilde{T}}\substi{J}{j} &= \servt{I\substi{J}{j}}{\widetilde{i}}{\sigma}{K\substi{J}{j}}{\widetilde{T}\substi{J}{j}} \text{ if } j \not\in \widetilde{i}
+    \end{align*}
+\end{defi}
+
+
+Subtyping for base types and types is the least reflexive relation $\sqsubseteq$ that satisfies the subtyping rules in Table \ref{tab:subtypeSized}. As the type system should provide upper bounds on the parallel complexity of processes, it is safe to weaken the bounds on the sizes of natural types. That is, we may decrease the lower bound and increase the upper bound on the sizes of such terms. For server and channel types, we may relax use-capabilities and use the subtyping relation on parameter types as well as modify the complexity bounds on servers, depending on the use-capabilities. Servers and channels of input/output capability are invariant, those of input capability are covariant and those of output capability are contravariant. That is, if a server or channel that inputs a value of type $T$ is required, then we can safely use a server or channel that inputs a subtype of $T$, respectively. Conversely, when a server or channel of output capability is required, we can safely use a channel or server that outputs a supertype of the required parameter type \cite{PierceSangiorgi1996}. This becomes apparent when we assume types $\texttt{Integer}$ and $\texttt{Real}$ such that $\texttt{Integer} \sqsubseteq \texttt{Real}$, as any process that receives reals can also safely receive integers, and any process that output reals can also safely output integers. Unlike Baillot and Ghyselen \cite{BaillotGhyselen2021}, we do not discard associations from our type contexts, rather we discard use-capabilities from channels and servers. Thus, to ensure the type checker is sound, we introduce rules $\runa{BGS-cempty}$ and $\runa{BGS-sempty}$ such that channel and server types are super types of ones with no use-capabilities.
+
+%
+\begin{table*}[h!]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern0em\runa{BGS-nweak}\;\infrule{\varphi;\Phi\vDash I' \leq I\quad\quad \varphi;\Phi\vDash J \leq J'}{
+        \varphi;\Phi\vdash \texttt{Nat}[I,J] \sqsubseteq \texttt{Nat}[I',J']}
+        %
+        \kern3em\runa{BGS-cinvar}\;\infrule{\varphi;\Phi\vdash \widetilde{T}\sqsubseteq\widetilde{S}\quad\quad \varphi;\Phi\vdash \widetilde{S}\sqsubseteq\widetilde{T}}{\varphi;\Phi\vdash\texttt{ch}_I^{\{\texttt{in},\texttt{out}\}}(\widetilde{T}) \sqsubseteq \texttt{ch}_I^{\{\texttt{in},\texttt{out}\}}(\widetilde{S})}\kern7em\\[-1em]
+        %
+        \vspace{-0.5em}
+        &\kern-0em\runa{BGS-ccovar}\;\infrule{\{\texttt{in}\}\subseteq\sigma\quad\varphi;\Phi\vdash \widetilde{T}\sqsubseteq\widetilde{S}}{\varphi;\Phi\vdash \texttt{ch}_I^{\sigma}(\widetilde{T})\sqsubseteq\texttt{ch}_I^{\{\texttt{in}\}}(\widetilde{S})}\quad\quad\runa{BGS-ccontra}\;\infrule{\{\texttt{out}\}\subseteq\sigma\quad\varphi;\Phi\vdash \widetilde{S}\sqsubseteq\widetilde{T}}{\varphi;\Phi\vdash \texttt{ch}_I^{\sigma}(\widetilde{T})\sqsubseteq \texttt{ch}_I^{\{\texttt{out}\}}(\widetilde{S})}\\[-1em]
+        %
+        &\kern4em\runa{BGS-sinvar}\;\infrule{(\varphi,\widetilde{i});\Phi\vdash \widetilde{T}\sqsubseteq\widetilde{S}\quad\quad (\varphi,\widetilde{i});\Phi\vdash \widetilde{S}\sqsubseteq\widetilde{T}\quad\quad (\varphi,\widetilde{i});\Phi\vDash K = K'}{\varphi;\Phi\vdash
+        \forall_I\widetilde{i}.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_K(\widetilde{T})
+        \sqsubseteq \forall_I\widetilde{i}.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_{K'}(\widetilde{S})}\\[-1em]
+        %
+        \vspace{-0.5em}
+        &\kern5em\runa{BGS-scovar}\;\infrule{\{\texttt{in}\}\subseteq\sigma\quad(\varphi,\widetilde{i});\Phi\vdash \widetilde{T}\sqsubseteq\widetilde{S}\quad (\varphi,\widetilde{i});\Phi\vDash K' \leq K}{\varphi;\Phi\vdash \forall_I\widetilde{i}.\texttt{serv}^{\sigma}_K(\widetilde{T})\sqsubseteq\forall_I\widetilde{i}.\texttt{serv}^{\{\texttt{in}\}}_{K'}(\widetilde{S})}\\[-1em]
+        &\kern4.5em\runa{BGS-scontra}\;\infrule{\{\texttt{out}\}\subseteq\sigma\quad(\varphi,\widetilde{i});\Phi\vdash \widetilde{S}\sqsubseteq\widetilde{T}\quad (\varphi,\widetilde{i});\Phi\vDash K \leq K'}{\varphi;\Phi\vdash \forall_I\widetilde{i}.\texttt{serv}^{\sigma}_K(\widetilde{T})\sqsubseteq \forall_I\widetilde{i}.\texttt{serv}^{\{\texttt{out}\}}_{K'}(\widetilde{S})}\\[-1em]
+        %
+        &\kern0em\runa{BGS-cempty}\;\infrule{}{\varphi;\Phi\vdash \texttt{ch}^\sigma_I(\widetilde{S}) \sqsubseteq \texttt{ch}^\emptyset_I(\widetilde{T})}\quad\runa{BGS-sempty}\;\infrule{}{\varphi;\Phi\vdash \forall_I\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{S}) \sqsubseteq \forall_I\widetilde{i}.\texttt{serv}^\emptyset_{K'}(\widetilde{T})}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Rules for subtyping of base types and types.}
+    \label{tab:subtypeSized}
+\end{table*}

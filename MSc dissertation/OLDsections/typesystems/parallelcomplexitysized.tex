@@ -1,0 +1,290 @@
+\section{Sized Types for Parallel Complexity}\label{sec:b&gts}
+%
+%\textit{\begin{itemize}
+%    \item Intro/motivation
+%    \item Input output types
+%    \item Type rules
+%    \item Limitations (Linearity of parallel composition)
+%\end{itemize}}
+%
+Most interesting programs with regards to static complexity analysis are based on data structures, such as sorting algorithms for lists, shortest path algorithms for graphs, and operations on tree-based priority queues. Such programs evidently have complexities that are parametric in some notion of size with regards to a data structure. In the calculus we consider, we can construct programs with complexities that are parametric in the sizes of naturals. Consider for instance the process
+\begin{align*}
+    &\kern0em\bang\inputch{a}{v}{}{\match{v}{\nil}{x}{\tick{\asyncoutputch{a}{x}{}}}}
+\end{align*}
+Clearly, the cost in time complexity of invoking the subprocess guarded by replicated input is parametric in the size of the value bound to name $v$. In fact, given a natural $n$ the parallel complexity is exactly $n$. Baillot and Ghyselen \cite{BaillotGhyselen2021} introduce a type system for bounding the parallel complexity of such processes that uses sized types to track the sizes of algebraic terms (in our case naturals). This enables precise bounds on the parallel complexity of processes such as the one above.\\
+
+We present the types of this type system in Definition \ref{def:sizedcomptypes}. $\texttt{Nat}[I,J]$ is a sized type that represents a natural, bound to values within the interval $[I,J]$. We type channels with input/output types, such that $\channeltypeS{I}{\widetilde{T}}$ represents a channel that can be used for input and output, transmitting a sequence of values with types $\widetilde{T}$, whereas $\inchanneltypeS{I}{\widetilde{T}}$ only allows inputs on a channel and so forth. Thus, these types represent different sets of capabilities. The annotation $I$ is an index representing the \textit{time} of the channel, denoting that it shall synchronize within $I$ units of time complexity, hence enabling us to provide bounds on the parallel complexity of synchronizing processes. Note that the tick constructor forces constraints onto these indices. That is, if some input or output is prefixed by a tick, as in process $\tick{\asyncoutputch{a}{}{}}$, then in the type of the corresponding channel $\channeltypeS{I}{\widetilde{T}}$, we have that $I \geq 1$.
+
+\begin{defi}[Types] Types for naturals and channels are given by
+\begin{align*}
+    \kern0em T,S ::= \texttt{Nat}[I,J] \mid \channeltypeS{I}{\widetilde{T}} \mid \inchanneltypeS{I}{\widetilde{T}} \mid \outchanneltypeS{I}{\widetilde{T}} \mid \servS{I}{\widetilde{i}}{K}{\widetilde{T}} \mid \iservS{I}{\widetilde{i}}{K}{\widetilde{T}} \mid \oservS{I}{\widetilde{i}}{K}{\widetilde{T}}
+\end{align*}
+where $I,J,K$ are indices, $\widetilde{T}$ is a sequence of types $T_1,T_2,\dots,T_n$, and $\widetilde{i}$ is a sequence of index variables $i_1,i_2,\dots,i_n$.
+\label{def:sizedcomptypes}
+\end{defi}
+
+We distinguish channels that are used with replicated input, referring to these as \textit{servers}, such that a simple channel cannot be used with replication and all inputs on a server must be replicated. Servers are typed as $\servS{I}{\widetilde{i}}{K}{\widetilde{T}}$, $\iservS{I}{\widetilde{i}}{K}{\widetilde{T}}$ or $\oservS{I}{\widetilde{i}}{K}{\widetilde{T}}$, with the same notion of input/output hierarchy as for simple channel types, but extended with a sequence of index variables $\widetilde{i}$ and an index $K$. Here, the time $I$ denotes that the server shall be ready to receive for any time $J$ such that $J \geq I$. The index $K$ represents the cost in parallel complexity of \textit{invoking} the replicated process. We include it in the types of servers, as we cannot statically determine how many times a replicated input will be used during run-time, and so we include this cost when typing outputs of servers. The index variables are integral, in that we may receive values of varying sizes on a replicated input, and so we require a notion of polymorphism in sizes. This is achieved by including index variables in the complexity $K$ and in the types of values transmitted $\widetilde{T}$.\\
+
+The channel and server types naturally lead to a subtyping relation that allows us to \textit{relax} capabilities of channels and servers, and the types they transmit may be subtyped. It is also safe to decrease the bounds on the complexity of servers with only input capability, and to increase it for servers with only output capability, as long as we adhere to the constraints on indices $\Phi$. Additionally, we enable subtyping of sized naturals, such that bounds may be \textit{weakened}. This is useful for typing the match constructor, as we want both branches to have the same complexity. The rules defining the subtyping relation are shown in Table \ref{tab:subtypeSized}. The transitivity rule is simply used to enable lowering of capability and modification of complexity bounds simultaneously. We do not show the subtyping rules of channel types, as they can be deduced from those of servers, by omitting complexity bounds and index variables. Channels with Input/Output capability are invariant, Input channels are covariant and Output channels are contravariant \cite{PierceSangiorgi1996}. That is, if an Input channel that transmits some type $T$ is required, then it is safe to use an Input channel that transmits a subtype of $T$. Conversely, if an Output channel transmitting some type $T$ is required, then it is safe to instead use an Output channel for which $T$ is a subtype of the type it transmits. This becomes apparent, if we assume types \texttt{Int} and \texttt{Real} exist such that $\texttt{Int} \sqsubseteq \texttt{Real}$. If we substitute $T$ for \texttt{Real} in the former case, it is clear that an integer can be received wherever a real number is required. In the latter case, substituting $T$ for \texttt{Int}, it is therefore evident that an integer can also safely be transmitted to wherever a real number is required. Also, note that the time of channels and servers are invariant to subtyping.\\
+
+\begin{table*}[h!]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern-0em\runa{SS-weak}\;\infrule{\varphi;\Phi\vDash I' \leq I\quad\quad \varphi;\Phi\vDash J \leq J'}{
+            \varphi;\Phi\vdash \texttt{Nat}[I,J] \sqsubseteq \texttt{Nat}[I',J']}\kern5em
+            \runa{SS-trans}\;\infrule{\varphi;\Phi\vdash T \sqsubseteq T'\quad\quad \varphi;\Phi\vdash T' \sqsubseteq T''}{\varphi;\Phi\vdash T \sqsubseteq T''}\kern3em\\[-1em]
+            %
+            &\kern4em\runa{SS-invar}\;\infrule{(\varphi,\widetilde{i});\Phi\vdash \widetilde{T}\sqsubseteq\widetilde{S}\quad\quad (\varphi,\widetilde{i});\Phi\vdash \widetilde{S}\sqsubseteq\widetilde{T}\quad\quad (\varphi,\widetilde{i});\Phi\vDash K = K'}{\varphi;\Phi\vdash \servS{I}{\widetilde{i}}{K}{\widetilde{T}}\sqsubseteq \servS{I}{\widetilde{i}}{K'}{\widetilde{S}}}\vspace{-1em}\\[-1em]
+            %
+            \vspace{-0.5em}
+            &\kern4em\runa{SS-relaxI}\;\infrule{}{\varphi;\Phi\vdash \servS{I}{\widetilde{i}}{K}{\widetilde{T}}\sqsubseteq \iservS{I}{\widetilde{i}}{K}{\widetilde{T}}}\\[-1em]
+            &\kern4em \runa{SS-relaxO}\;\infrule{}{\varphi;\Phi\vdash \servS{I}{\widetilde{i}}{K}{\widetilde{T}}\sqsubseteq \oservS{I}{\widetilde{i}}{K}{\widetilde{T}}}\\[-1em]
+            %
+            &\kern5em\runa{SS-covar}\;\infrule{(\varphi,\widetilde{i});\Phi\vdash \widetilde{T}\sqsubseteq\widetilde{S}\quad (\varphi,\widetilde{i});\Phi\vDash K' \leq K}{\varphi;\Phi\vdash \iservS{I}{\widetilde{i}}{K}{\widetilde{T}}\sqsubseteq\iservS{I}{\widetilde{i}}{K'}{\widetilde{S}}}\\[-1em]
+            &\kern5em
+            \runa{SS-contra}\;\infrule{(\varphi,\widetilde{i});\Phi\vdash \widetilde{S}\sqsubseteq\widetilde{T}\quad (\varphi,\widetilde{i});\Phi\vDash K \leq K'}{\varphi;\Phi\vdash \oservS{I}{\widetilde{i}}{K}{\widetilde{T}}\sqsubseteq \oservS{I}{\widetilde{i}}{K'}{\widetilde{S}}}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Subtyping rules for sized input output types.}
+    \label{tab:subtypeSized}
+\end{table*}
+%
+% \subsection{Sized types}
+% In static complexity analysis, the complexities of algorithms are often parameterized in the sizes of their inputs. To enable parameterization of complexities, Baillot and Ghyselen \cite{BaillotGhyselen2021} use a variant of sized types to track the sizes of algebraic terms, in our case the naturals. We first define a set of indices representing integers in $\mathbb{N}_\infty = \mathbb{N} \cup \{\infty\}$ structurally by
+% \begin{align*}
+%     \kern10em I,J ::= I_\mathbb{N} \mid \infty\quad\quad I_\mathbb{N} := i \mid f(I_{\mathbb{N}_1},I_{\mathbb{N}_2},\dots,I_{\mathbb{N}_n})
+% \end{align*}
+% where $i,j,k \in \mathcal{V}$ range over a countable set of index variables, and $f$ belongs to a given set of function symbols, containing integer constants represented as nullary function symbols and arithmetic operations such as addition and subtraction. For each function symbol $f$ we have an arity $\texttt{ar}(f)$ and an \textit{interpretation} $\encoding{f} : \mathbb{N}^{\texttt{ar}(f)} \rightarrow \mathbb{N}$ defining its semantics. We assume the interpretation of subtraction conforms to $n-m = 0$ when $n \leq m$. As finite indices may contain index variables, we assume some index valuation $\rho : \mathcal{V} \rightarrow \mathbb{N}$ and extend the interpretations of function symbols to indices denoted $\encoding{I}_\rho$, such that $i \in \mathcal{V}$ is replaced by $\rho(i)$ in $I$. Similarly, $I\substi{J_\mathbb{N}}{i}$ denotes index $I$ with $J_\mathbb{N}$ substituted for occurrences of $i$ and intuitively, $\infty\substi{J_\mathbb{N}}{i} = \infty$.
+
+% \begin{defi}[Index constraints]
+% Given a finite set of index variables $\varphi \subset \mathcal{V}$, we define a constraint $C$ on $\varphi$ to be an expression on indices $I$ and $J$ with free variables in $\varphi$ of shape $I \bowtie J$, where $\bowtie$ is a binary relation on $\mathbb{N}_\infty$ (typically $\bowtie\;\in\{\leq,<,=,\neq\}$). A finite set of constraints is denoted $\Phi$.
+% \end{defi}
+% We say that a constraint $I \bowtie J$ on a finite set of index variables $\varphi \subset \mathcal{V}$ is \textit{satisfied} by an index valuation $\rho : \varphi \rightarrow \mathbb{N}$ denoted $\rho \vDash I \bowtie J$ if $\encoding{I}_\rho \bowtie \encoding{J}_\rho$ holds. We extend this notation to sets of constraints by $\rho \vDash \Phi$ when $\rho \vDash C$ for all $C \in \Phi$. Finally, given a finite set of index variables $\varphi \subset \mathcal{V}$ and a set of constraints $\Phi$, we write $\varphi;\Phi\vDash C$ for some constraint $C$, when for all valuations $\rho$ on $\varphi$ such that $\rho \vDash \Phi$ holds, we have that $\rho \vDash C$ also holds.
+
+% \begin{defi}
+% The set of base types corresponds to the powerset of $\mathbb{N}$, defined by intervals of indices $[I,J]$ bounding the sizes of naturals
+% \begin{align*}
+%     \kern18em \mathcal{B} ::= \texttt{Nat}[I,J]
+% \end{align*}
+% where for some natural $n$ with type $\texttt{Nat}[I,J]$ it must be that $I \leq n \leq J$.
+% \begin{exmp}
+% The expression $\succc{\succc{\succc{0}}}$ has size $4$ and is compatible with types $\texttt{Nat}[4,4]$, $\texttt{Nat}[0,4]$ and $\texttt{Nat}[0,10]$.
+% \end{exmp}
+% The above example naturally leads to a notion of subtyping of bounded naturals, to make the type system more flexible. Specifically, the precision of bounds on naturals may be \textit{weakened} by decreasing the lower bound or increasing the upper bound as follows
+% \begin{align*}
+%     \kern15em\infrule{\varphi;\Phi\vDash I' \leq I\quad\quad \varphi;\Phi\vDash J \leq J'}{\varphi;\Phi \vdash \texttt{Nat}[I,J] \sqsubseteq \texttt{Nat}[I',J']}
+% \end{align*}
+% \end{defi}
+%
+%
+Before we show the type rules, we introduce an operation that given a set of index variables $\varphi$, a set of constraints on indices $\Phi$, an input/output type $T$ and an index $I$ advances the time of $T$ by $I$ units of time complexity, denoted $\susume{T}{\varphi}{\Phi}{I}$. Note that for usage types, which are a generalization of input/output types, we delay the time rather than advancing it. Although the former is more convenient, we are forced to use the latter here, as servers may lose capabilities upon advancement of time. That is, the time of a server defines an upper bound within which it becomes active, and so when its time advances to 0, the replicated input must become active, and so we cannot advance its time any further. However, outputs to servers are not replicated, and so these may become available at any time after the corresponding input has become active. Thus, we always enable advancement of the time of output servers, and so a server with both input and output capability simply loses its input capability upon being advanced into time 0. The rules defining $\susume{T}{\varphi}{\Phi}{I}$ are shown in Definition \ref{def:delaysized}.
+\begin{defi}[Advancement of Time]
+Let $\varphi$ be a set of index variables, $\Phi$ a set of constraints on indices, $T$ an input/output type and $J$ an index. We define $T$ after $J$ units of time complexity $\susume{T}{\varphi}{\Phi}{I}$ by
+\begin{align*}
+    \susume{\texttt{Nat}[J,K]}{\varphi}{\Phi}{I} =&\; \texttt{Nat}[J,K]\\
+    %
+    \susume{\channeltypeS{J}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; \left\{ \begin{matrix} 
+     \channeltypeS{J-I}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    \textit{undefined}           & \text{otherwise}
+\end{matrix} \right.\\
+    %
+    \susume{\inchanneltypeS{J}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; \left\{ \begin{matrix} 
+     \inchanneltypeS{J-I}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    \textit{undefined}           & \text{otherwise}
+\end{matrix} \right.\\
+    %
+    \susume{\outchanneltypeS{J}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; \left\{ \begin{matrix} 
+     \outchanneltypeS{J-I}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    \textit{undefined}           & \text{otherwise}
+\end{matrix} \right.\\
+    %
+    \susume{\servS{J}{\widetilde{i}}{K}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; \left\{ \begin{matrix} 
+     \servS{J - I}{\widetilde{i}}{K}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    \oservS{J - I}{\widetilde{i}}{K}{\widetilde{T}}           & \text{otherwise}
+\end{matrix} \right.\\
+    %
+    \susume{\iservS{J}{\widetilde{i}}{K}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; \left\{ \begin{matrix} 
+     \iservS{J - I}{\widetilde{i}}{K}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    \textit{undefined}           & \text{otherwise}
+\end{matrix} \right.\\
+    %
+    \susume{\oservS{J}{\widetilde{i}}{K}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; \oservS{J - I}{\widetilde{i}}{K}{\widetilde{T}}
+\end{align*}
+\label{def:delaysized}
+\end{defi}
+Recall that we have defined $[\![I]\!]_\rho - [\![J]\!]_\rho = 0$ when $[\![J]\!]_\rho \geq [\![I]\!]_\rho$ for indices $I$ and $J$ and index valuation $\rho$. In the clause where a server loses its input capability, we set the time of the server to be $J - I$ although $\varphi;\Phi\not\vDash J \geq I$. This is because $\geq$ is not a total order, and so $J - I$ may be nonzero in some cases. For instance, we have that $\{i,j\};\cdot \not\vDash i \geq ij$ and $\{i,j\};\cdot\not\vDash ij \geq i$, as valuations $\rho_1$ and $\rho_2$ are valid index valuations, where $\rho_1(i) = 1$, $\rho_1(j)=2$, $\rho_2(i)=1$ and $\rho_2(j)=0$.\\
+
+%We introduce type contexts with metavariable $\Gamma$ as functions defined by sequences of pairs $\Gamma = v_1 : T_1,v_2 : T_n,\dots,v_n : T_n$ where $v_1,v_2,\dots,v_n \in \mathbf{Var}$ are variables and $T_1,T_2,\dots,T_n$ are types, such that $\text{dom}(\Gamma) = \{v_1,v_2,\dots,v_n\}$ and $\Gamma(v_i) = T_i$. 
+We extend the definition of subtyping to type contexts, such that $\Gamma \sqsubseteq \Delta$ when $\Gamma$ and $\Delta$ have the same domain and for all $v \in \textit{dom}(\Gamma)$ we have that $\Gamma(v) \sqsubseteq \Delta(v)$. Similarly, we extend advancement of time to contexts, such that $\susume{v : T, \Gamma}{\varphi}{\Phi}{I} = v :\; \susume{T}{\varphi}{\Phi}{I},\susume{\Gamma}{\varphi}{\Phi}{I}$ when $\susume{T}{\varphi}{\Phi}{I}$ is defined and $\susume{v : T, \Gamma}{\varphi}{\Phi}{I} = \susume{\Gamma}{\varphi}{\Phi}{I}$ otherwise. We say that a context $\Gamma$ is invariant to advancement of time, when $\susume{\Gamma}{\varphi}{\Phi}{I} = \Gamma$, as formalized in Definition \ref{def:timeinvarc}.
+%
+\begin{defi}[Time Invariant Context]
+Given a set of index variables $\varphi$ and a set of constraints on indices $\Phi$, a context $\Gamma$ is called \textit{time invariant} when it only contains bounded naturals and output server types $\oservS{I}{\widetilde{i}}{K}{\widetilde{T}}$ where $\varphi;\Phi\vDash I = 0$ holds.
+\label{def:timeinvarc}
+\end{defi}
+%
+\subsection{Sized type rules}
+We now present the sized type rules for expressions. Judgements are of the form $\varphi;\Phi;\Gamma\vdash e : T$ meaning that expression $e$ is given type $T$ in context $\Gamma$ using index variables $\varphi$ under constraints $\Phi$. We use the notation $\varphi;\Phi;\Gamma\vdash \widetilde{e} : \widetilde{T}$ for sequences of judgements under the same environment. The rules are shown in Table \ref{tab:sizedtypedexpressiontypes}. As compared to the type system for lock-freedom, naturals are now granted sized types and we may use the subtyping relation on contexts and types.\\
+
+%
+\begin{table*}[ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern2em
+        \runa{S-nzero}\;\infrule{}{\varphi;\Phi;\Gamma\vdash\withtype{0}{\typenat[0,0]}}\kern0em
+        \runa{S-nsucc}\;\infrule{\varphi;\Phi;\Gamma \vdash \withtype{e}{\typenat[I, J]}}{\varphi;\Phi;\Gamma \vdash \withtype{\succc{e}}{\typenat[I + 1, J + 1]}}\\[-1em]
+        %
+        &\kern1em\runa{S-sub}\;\infrule{\varphi;\Phi;\Delta\vdash e : S\quad\quad \varphi;\Phi\vdash \Gamma\sqsubseteq \Delta\quad\quad \varphi;\Phi\vdash S \sqsubseteq T}{\varphi;\Phi;\Gamma\vdash e : T}\kern11em\runa{S-var}\;\infrule{}{\varphi;\Phi;\Gamma, \withtype{v}{T} \vdash \withtype{v}{T}}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Expression typing rules for sized types.}
+    \label{tab:sizedtypedexpressiontypes}
+\end{table*}
+%
+We next consider the sized type rules for parallel complexity of processes. Judgements are of the form $\varphi;\Phi;\Gamma\vdash P : K$ meaning that the parallel complexity of process $P$ is bounded by index $K$ in context $\Gamma$ given index variables $\varphi$ under constraints $\Phi$. When advancing the time in a judgement, we may omit the set of index variables $\varphi$ and the set of constraints $\Phi$, such that $\varphi;\Phi;\susume{\Gamma}{\varphi}{\Phi}{I}\vdash P : K$ and $\varphi;\Phi;\susumesim{\Gamma}{I}\vdash P : K$ are equivalent. The rules are shown in Table \ref{tab:sizedprocesstypingrules}. Recall that we perform a context split for parallel composition in the lock-freedom type system, whereas we simply use subtyping here to type parallel inputs and outputs. In rule \runa{S-tick}, we advance the time for all channels and servers in our context when typing the continuation $P$, as the tick constructor imposes a cost of one in time complexity. In \runa{S-match} we induce constraints on the indices bounding the expression we match, as we can guarantee the lower bound is zero when typing the branch corresponding to the zero pattern. Similarly, we know that the upper bound must be at least one, when the successor pattern is matched.\\
+
+The type rules for channels and servers are the most interesting. Rule \runa{S-iserv} defines when replicated input can be typed. We require that the channel has input server capability, and we advance the time by $I$ when typing the continuation $P$. Note that we here require the context to be time invariant. This is because the replicated input may be used indefinitely after $I$ units of time complexity, and so only naturals and servers of only output capability are safe, as these are invariant to advancement of time. As values received on a replicated input may be polymorphic in size, we consider index variables $\widetilde{i}$ when typing its continuation. Also note that we do not include the complexity of the continuation $P$ when typing replicated input. This is again because we cannot statically determine how many times this subprocess will be invoked during run-time, and so we include the cost of $P$ when typing outputs to servers. Rule \runa{S-ich} is similar, but here we type non-replicated input, and so we require the channel to be of channel type with input capability, and we do not require the context to be time invariant. Finally, \runa{S-oserv} shows when it is safe to type outputs as servers with output capability. Of importance is the use of polymorphism in the index variables of the server type $\widetilde{i}$. We instantiate the complexity of the server $K$ based on the instantiations of types $\widetilde{T}$.
+%
+\begin{table*}[!ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern46em\\[-2em] % Stretch frame
+        &\kern0em\runa{S-zero}\infrule{}{\varphi;\Phi;\Gamma \vdash \withcomplex{\nil}{0}}\!\!
+        \runa{S-subtype}\;\infrule{\varphi;\Phi;\Delta \vdash \withcomplex{P}{K} \quad \varphi;\Phi \vdash \Gamma \sqsubseteq \Delta \quad \varphi; \Phi \vDash K \leq K'}{\varphi;\Phi;\Gamma \vdash \withcomplex{P}{K'}}
+        \\[-1em]
+        %
+        &\kern-0em\runa{S-match}\;\infrule{\varphi;\Phi;\Gamma \vdash \withtype{e}{\natinterval{I}{J}} \quad \varphi;\Phi, I \leq 0;\Gamma \vdash \withcomplex{P}{K} \quad \varphi;\Phi, J \geq 1;\Gamma, \withtype{x}{\natinterval{I-1}{J-1}} \vdash \withcomplex{Q}{K}}{\varphi;\Phi;\Gamma \vdash \withcomplex{\match{e}{P}{x}{Q}}{K}}\\[-1em]
+        %
+        &\kern4em\runa{S-par}\;\infrule{\varphi;\Phi;\Gamma\vdash P \triangleleft K\quad \varphi;\Phi;\Gamma\vdash Q \triangleleft K}{\varphi;\Phi;\Gamma\vdash \parcomp{P}{Q} \triangleleft K}\quad\quad\quad\quad\quad\quad \runa{S-tick}\;\infrule{\varphi;\Phi;\susumesim{\Gamma}{1}\vdash P \triangleleft K}{\varphi;\Phi;\Gamma\vdash \tick P \triangleleft K + 1}\\[-1em]
+        %
+        &\kern-0em\runa{S-iserv}\;\infrule{\varphi;\Phi;\Gamma,\Delta\vdash a : \iservS{I}{\widetilde{i}}{K}{\widetilde{T}}\quad \varphi;\Phi\vdash\;\susumesim{\Gamma}{I} \sqsubseteq \Gamma'\;\text{and}\; \Gamma'\;\text{time invariant}\quad \varphi,\widetilde{i};\Phi;\Gamma',\widetilde{v} : \widetilde{T}\vdash P \triangleleft K}{\varphi;\Phi;\Gamma,\Delta\vdash\; \bang\inputch{a}{\widetilde{v}}{}{P}\triangleleft I}\\[-1em]
+        %
+        &\kern-0em\runa{S-ich}\;\infrule{\varphi;\Phi;\Gamma\vdash a : \inchanneltypeS{I}{\widetilde{T}}\quad \varphi;\Phi;\susumesim{\Gamma}{I},\widetilde{v} : \widetilde{T}\vdash P \triangleleft K}{\varphi;\Phi;\Gamma\vdash \inputch{a}{\widetilde{v}}{}{P}\triangleleft K + I}\kern8.5em \runa{S-och}\;\infrule{\varphi;\Phi;\Gamma\vdash a : \outchanneltypeS{I}{\widetilde{T}}\quad \varphi;\Phi;\susumesim{\Gamma}{I}\vdash \widetilde{e} : \widetilde{T}}{\varphi;\Phi;\Gamma\vdash \asyncoutputch{a}{\widetilde{e}}{} \triangleleft I}\\[-1em]
+        %
+        &\kern2em\runa{S-oserv}\;\infrule{\varphi;\Phi;\Gamma\vdash a : \oservS{I}{\widetilde{i}}{K}{\widetilde{T}}\quad \varphi;\Phi;\susumesim{\Gamma}{I}\vdash \widetilde{e} : \widetilde{T}\substi{\widetilde{J}}{\widetilde{i}}}{\varphi;\Phi;\Gamma\vdash \asyncoutputch{a}{\widetilde{e}}{} \triangleleft K\!\substi{\widetilde{J}}{\widetilde{i}} + I}\kern12em \runa{S-nu}\;\infrule{\varphi;\Phi;\Gamma,\withtype{a}{T} \vdash \withcomplex{P}{K}}{\varphi;\Phi;\Gamma \vdash \newvar{a}{\withcomplex{P}{K}}}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Sized typing rules for parallel complexity of processes.}
+    \label{tab:sizedprocesstypingrules}
+\end{table*}
+%
+\subsection{Soundness}
+Baillot and Ghyselen \cite{BaillotGhyselen2021} prove that the type system is sound by proving the usual subject reduction property of the reduction relation for annotated processes $\Rightarrow$ (i.e. $\Rightarrow$ is type preserving), and a safety property with regards to time complexity, such that the type of a well-typed process is an upper bound on the parallel complexity of the process. The subject reduction property is proved by induction on the rules defining $\Rightarrow$, and the safety property is proved by induction on the size of the span.
+\begin{theorem}[Subject reduction]
+If $\varphi;\Phi;\Gamma\vdash P \triangleleft K$ and $P \Rightarrow Q$ then $\varphi;\Phi;\Gamma\vdash Q \triangleleft K$.
+\begin{proof}
+By induction on the reduction rules defining $\longrightarrow$ \cite{BaillotGhyselen2021}.
+\end{proof}
+\end{theorem}
+%
+
+%
+\begin{theorem}
+Let $P$ be an annotated process and $m$ be its parallel complexity. Then, for a typing $\varphi;\Phi;\Gamma\vdash P \triangleleft K$ we have that $\varphi;\Phi\vDash K \geq m$.
+\begin{proof}
+By induction on the size of $m$ \cite{BaillotGhyselen2021}. 
+\end{proof}
+\end{theorem}
+%
+Notice that the notion of parallel complexity we consider (Refer to Definition \ref{def:paracomp}) does not behave well with regards to \textit{open} processes, i.e. processes that contain free variables. For instance, a process of the form $\match{x}{P}{y}{Q}$ does not reduce, and so its parallel complexity is zero. Thus, this definition of parallel complexity is ill-suited for parameterized complexity. However, Baillot and Ghyselen additionally prove that for a typing $\varphi;\Phi;\Gamma,\widetilde{v}:\widetilde{T}\vdash P \triangleleft K$, $K$ is an upper bound on the complexity of $P[\widetilde{v}\mapsto\widetilde{e}]$ where $\widetilde{e}$ is any sequence of expressions such that $\varphi;\Phi;\Gamma\vdash \widetilde{e} : \widetilde{T}$ \cite{BaillotGhyselen2021}.
+%
+\subsection{An example: The Fibonacci sequence}\label{sec:b&gexample}
+As an example of the type system of Baillot and Ghyselen \cite{BaillotGhyselen2021}, we show how a precise bound on the span of the common parallel algorithm for the $n$th Fibonacci number can be obtained. We first encode the addition operator as a server in the $\pi$-calculus as follows
+\begin{align*}
+    P_\text{add}\defeq&\;\bang\inputch{\text{add}}{x,y,r}{}{
+        \texttt{match}\; x\; \{
+             0 \mapsto \asyncoutputch{r}{y}{};
+            \succc{z} \mapsto \asyncoutputch{\text{add}}{z,\succc{y},r}{}\}}
+    %
+\end{align*}
+where $x$ and $y$ represent the integers to be added and $r$ is the channel on which the result is output. Note that we count additions as our model of complexity, and so we assume constant time on additions. Thus, we do not include ticks in the encoding of addition. We have that $x : \texttt{Nat}[0,i]$ and $y : \texttt{Nat}[j,k]$ for some index variables $i$, $j$ and $k$. By the encoding of addition, we know that $x$ eventually reaches 0, and so we have a more precise bound on its size. It follows that return channel $r$ transmits an integer bounded by $[j,i+k]$. As the encoding of addition contains no ticks, the time of $r$ is entirely dependent on external inputs, and so it is bounded by a type variable $l$, yielding type $r : \channeltypeS{l}{\texttt{Nat}[j,i+k]}$. We can now type \textit{add} as a server that transmits values of the types of $x$, $y$ and $r$ $\text{add} : \servS{0}{i,j,k,l}{l}{\texttt{Nat}[0,i],\texttt{Nat}[j,k],\channeltypeS{l}{\texttt{Nat}[j,i+k]}}$. Note that the time of \textit{add} is 0, as the replicated input is active immediately, the complexity is $l$, as it entirely depends on the time of the return channel. We can then type the encoding of addition using rule $\runa{S-iserv}$ yielding a complexity bound 0.\\
+
+We now encode the parallel Fibonacci algorithm as a server, as seen below. We assume unique index variables between the encodings of addition and the Fibonacci sequence. $n$ is a non-negative integer and $n_1$ and $n_2$ represent $n-1$ and $n-2$, respectively. As for addition, $r$ represents the return channel. Essentially, we simulate recursive calls on $n_1$ and $n_2$ by outputs to the \textit{fib} server with new return channels. As we parameterize the complexity in the number of additions, we prefix the output to \textit{add} with a tick, advancing the time by one unit of complexity. A pen-and-paper analysis of this algorithm can be conducted for the work and span. The work can be described by the recurrence $T(n) = T(n-1) + T(n-2) + \Theta(1)$, yielding exponential time. For the span, we need only consider the largest subproblem, as the subproblems can be computed in parallel, and so we have the recurrence $T_\infty(n)=\textit{max}(T_\infty(n-1),T_\infty(n-2))+\Theta(1) = T_\infty(n-1)+\Theta(1)$, yielding a linear complexity bound $\Theta(n)$.
+%
+\begin{align*}
+    P_\text{fib}\defeq&\; \bang\inputch{\text{fib}}{n,r}{}{
+         \texttt{match}\; n\; \{ 0 \mapsto \asyncoutputch{r}{0}{}\!;\;
+              \succc{n_1} \mapsto\\ 
+              &\kern3em\texttt{match}\; n_1\; \{
+                    0 \mapsto \asyncoutputch{r}{\succc{0}}{}\!;\;
+                    \succc{n_2} \mapsto B_\text{fib}(n_1, n_2, r)\}\}
+    }\\
+    \\
+    %
+    B_\text{fib}(n_1, n_2, r) \defeq&\; \newvar{r_1,r_2,r_3}{(\asyncoutputch{\text{fib}}{n_1,r_1}{}\mid\asyncoutputch{\text{fib}}{n_2,r_2}{}\\
+    &\mid\inputch{r_2}{m_2}{}{\inputch{r_1}{m_1}{}{\tick{\asyncoutputch{\text{add}}{m_1,m_2,r_3}{}}}\mid \inputch{r_3}{m_3}{}{\asyncoutputch{r}{m_3}{}}})}
+\end{align*}
+%
+%Assuming constant time on additions, the work of this algorithm can be described by the recurrence $T(n) = T(n-1) + T(n-2) + \Theta(1)$, yielding exponential time. For the span, we need only consider the largest subproblem, as the subproblems can be computed in parallel, and so we have the recurrence $T_\infty(n)=\textit{max}(T_\infty(n-1),T_\infty(n-2))+\Theta(1) = T\infty(n-1)+\Theta(1)$, yielding a linear complexity bound $\Theta(n)$.
+%
+We now show that we can type the encoding to yield a comparably precise linear bound on the span. We do not show the full derivation tree. Instead, we only consider the interesting match branch, and we omit premises for expressions. Additionally, we may use multiple type rules at once. We use the following contexts to type the encoding.
+\begin{align*}
+    \Gamma \defeq&\; \text{add} : \servS{0}{i,j,k,l}{l}{\texttt{Nat}[0,i],\texttt{Nat}[j,k],\channeltypeS{l}{\texttt{Nat}[j,i+k]}},\\
+    &\;\text{fib} : \servS{0}{m}{f(m)}{\texttt{Nat}[0,m],\channeltypeS{g(m)}{\texttt{Nat}[0,\textit{fib}(m)]}}\\
+    \Gamma' \defeq&\; \text{add} : \oservS{0}{i,j,k,l}{l}{\texttt{Nat}[0,i],\texttt{Nat}[j,k],\channeltypeS{l}{\texttt{Nat}[j,i+k]}},\\
+    &\;\text{fib} : \oservS{0}{m}{f(m)}{\texttt{Nat}[0,m],\channeltypeS{g(m)}{\texttt{Nat}[0,\textit{fib}(m)]}},\\
+    &\; n : \texttt{Nat}[0,m],r : \channeltypeS{g(i)}{\texttt{Nat}[0,\textit{fib}(m)]}
+    \\
+    \Delta \defeq&\; \Gamma', n_1 : \texttt{Nat}[0,m-1], n_2 : \texttt{Nat}[0,m-2], r_1 : \channeltypeS{g'(m)}{\texttt{Nat}[0,\textit{fib}(m-1)]},\\ 
+    &\;r_2 : \channeltypeS{g''(m)}{\texttt{Nat}[0,\textit{fib}(m-2)]}, r_3 : \channeltypeS{g'''(m)}{\texttt{Nat}[0,\textit{fib}(m-1) + \textit{fib}(m-2)]}
+\end{align*}
+where $f(m)$ is the parameterized complexity of the encoding, $g(m)$ is the parameterized time of the return channel $r$, $g'(m)$ is the parametized time of channel $r_1$ and so forth. We use the type rules to establish a set of constraints on these functions to find a valid bound on the parallel complexity.\\
+
+\begin{align*}
+\kern-3em\begin{prooftree}
+\Infer0[]{m;m-1\geq 1;\Delta \vdash B_\text{fib} \triangleleft f(m)}
+%
+\Infer1[]{m;m-1\geq 1;\Gamma',n_1 : \texttt{Nat}[0,m-1], n_2 : \texttt{Nat}[0,m-2] \vdash \newvar{r_1,r_2,r_3}{B_\text{fib}} \triangleleft f(m)}
+%
+\Infer1[]{m;m\geq 1;\Gamma',n_1 : \texttt{Nat}[0,m-1]\vdash \texttt{match}\; n_1\; \{
+                    0 \mapsto \asyncoutputch{r}{\succc{0}}{}\!;\;
+                    \succc{n_2} \mapsto \newvar{r_1,r_2,r_3}{B_\text{fib}}\} \triangleleft f(m)}
+%
+\Infer1[]{m;\cdot;\Gamma'\vdash \texttt{match}\; n\; \{ 0 \mapsto \asyncoutputch{r}{0}{}\!;\;
+              \succc{n_1} \mapsto\texttt{match}\; n_1\; \{
+                    0 \mapsto \asyncoutputch{r}{\succc{0}}{}\!;\;
+                    \succc{n_2} \mapsto \newvar{r_1,r_2,r_3}{B_\text{fib}}\}\} \triangleleft f(m)}
+%
+\Infer1[]{\cdot;\cdot;\Gamma\vdash P_\text{fib} \triangleleft 0}
+\end{prooftree}\end{align*}
+\vspace{1em}
+
+By type rule $\runa{S-par}$ we have that all subprocesses of $B_\text{fib}$ must be capable of receiving bound $f(m)$ in context $\Delta$ given index variable $m$ under constraint $m-1\geq 1$. As the final reduction of the Fibonacci encoding is a synchronization on the provided return channel, it must be that $f(m) = g(m)$. That is, the cost of invoking the Fibonacci server is exactly the time of channel $r$. For the recursive calls, $\asyncoutputch{\text{fib}}{n_1,r_1}{}$ and $\asyncoutputch{\text{fib}}{n_2,r_2}{}$, to satisfy this, it must be that $g'(m) = g(m-1)$ and $g''(m) = g(m-2)$, respectively. The third subprocess $\inputch{r_2}{m_2}{}{\inputch{r_1}{m_1}{}{\tick{\asyncoutputch{\text{add}}{m_1,m_2,r_3}{}}}}$ enforces the constraint $g'(m) \geq g''(m)$ as the input on $r_2$ is a prefix for the input on $r_1$. Then, as $g'(m) = g(m-1)$ and $f(m)=g(m)$ it follows from the tick that $f(m) - 1 \geq f(m-1)$, as seen in the following.
+%
+\begin{align*}
+\kern-3em\begin{prooftree}
+\Infer0[]{m;m-1\geq 1;\susumesim{\Delta}{g'(m)+1}, m_2 : \texttt{Nat}[0,\textit{fib}(m-2)],  m_1 : \texttt{Nat}[0,\textit{fib}(m-1)] \vdash\asyncoutputch{\text{add}}{m_1,m_2,r_3}{} \triangleleft f(m)-1}
+%
+\Infer1[]{m;m-1\geq 1;\susumesim{\Delta}{g'(m)}, m_2 : \texttt{Nat}[0,\textit{fib}(m-2)],  m_1 : \texttt{Nat}[0,\textit{fib}(m-1)] \vdash\tick{\asyncoutputch{\text{add}}{m_1,m_2,r_3}{}} \triangleleft f(m)}
+%
+\Infer1[]{m;m-1\geq 1;\susumesim{\Delta}{g''(m)}, m_2 : \texttt{Nat}[0,\textit{fib}(m-2)] \vdash \inputch{r_1}{m_1}{}{\tick{\asyncoutputch{\text{add}}{m_1,m_2,r_3}{}}} \triangleleft f(m)}
+%
+\Infer1[]{m;m-1\geq 1;\Delta \vdash \inputch{r_2}{m_2}{}{\inputch{r_1}{m_1}{}{\tick{\asyncoutputch{\text{add}}{m_1,m_2,r_3}{}}}} \triangleleft f(m)}
+\end{prooftree}\end{align*}
+\vspace{1em}
+%
+
+It follows from the complexity analysis of the addition server and from the last subprocess $\inputch{r_3}{m_3}{}{\asyncoutputch{r}{m_3}{}}$ that $f(m) - 1 \geq g'''(m)$. We can now find an instantiation of functions $f(m)$, $g(m)$, $g'(m)$, $g''(m)$ and $g'''(m)$ that satisfies the constraints imposed by the type system. One such instantiation is as below, and so we get a precise linear bound on the parallel complexity of invoking the Fibonacci server.
+\begin{align*}
+    \kern-2.5em f(m) = m\kern3em g(m) = m\kern3em g'(m) = m - 1\kern3em g''(m) = m - 2\kern3em g'''(m) = m - 1
+\end{align*}
+
+%We have that $n : \texttt{Nat}[0,i]$, for some index variable $i$. As we pattern match on $n$, its lower bound must be 0. It follows that $n_1 : \texttt{Nat}[0, i - 1]$ and $n_2 : \texttt{Nat}[0, i - 2]$. As for addition, $r$ is of channel type with externally dictated time that transmits an integer. However, the bounds on this integer 
+
+%
+%
+%\begin{align*}
+%    &\kern-1em\bang\inputch{\text{fib}}{x,r}{}{
+%         \texttt{match}\; x\; \{\\
+%              &\kern1em 0 \mapsto \asyncoutputch{r}{0}{};\\
+%              &\kern1em\succc{y} \mapsto \texttt{match}\; y\; \{\\
+%                    &\kern3em 0 \mapsto \asyncoutputch{r}{\succc{0}}{};\\
+%                    &\kern3em\succc{z} \mapsto %\newvar{r_1}{\newvar{r_2}{\newvar{r_3}{(\asyncoutputch{\text{fib}}{y,r_1}{}\mid\asyncoutput%ch{\text{fib}}{z,r_2}{}\mid\inputch{r_1}{v_1}{}{\inputch{r_2}{v_2}{}{\tick{\asyncoutputch{\%text{add}}{v_1,v_2,r_3}{}}}\mid \inputch{r_3}{v_3}{}{\asyncoutputch{r}{v_3}{}}})}}}\}\}
+ %   }%
+%\end{align*}\\
+%
+%
+
+%\begin{prooftree}
+%\Infer0{\cdot;\cdot\vdash \susumesim{\Gamma}{0} \sqsubseteq \Gamma'\;\text{and}\; \Gamma'\;\text{time %invariant}}
+%%
+%\Infer0{\cdot,x,y,r;\cdot;\Gamma',x : \texttt{Nat}[0,i],y : \texttt{Nat}[j,k],r : %\channeltypeS{J}{\texttt{Nat[j,i+k]}}\vdash \text{body}_{\text{add}} \triangleleft 0}
+%%
+%\Infer3[\runa{S-iserv}]{\cdot;\cdot;\Gamma \vdash\; %\bang\inputch{\text{add}}{x,y,r}{}{\text{body}_{\text{add}}} \triangleleft 0}
+%\end{prooftree}\\

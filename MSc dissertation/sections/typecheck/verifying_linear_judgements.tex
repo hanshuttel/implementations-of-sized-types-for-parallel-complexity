@@ -1,0 +1,448 @@
+\section{Verification of constraint judgements}\label{sec:verifyinglinearjudgements}
+Until now we have not considered how we can verify constraint judgements in the type rules. The expressiveness of implementations of the type system by Baillot and Ghyselen \cite{BaillotGhyselen2021} depends on both the expressiveness of indices and whether judgements on the corresponding constraints are decidable. Naturally, we are interested in both of these properties, and so in this section, we show how judgements on linear constraints can be verified using algorithms. Later, we show how this can be extended to certain groups of polynomial constraints. We first make some needed changes to how the type checker uses subtraction.
+%
+\subsection{Subtraction of naturals}
+The constraint judgements rely on a special minus operator ($\monus$) for indices such that $n \monus m=0$ when $m \geq n$, which we refer to as the \textit{monus} operator. This is apparent in the pattern match constructor type rule from Chapter \ref{ch:bgts}. Without this behavior, we may encounter problems when checking subtype premises in match processes. This has the consequence that equations such as $2\monus 3+3=3$ hold, such that indices form a semiring rather than a ring, as we are no longer guaranteed an additive inverse. In general, semirings lack many properties of rings that are desirable. For example, given two seemingly equivalent constraints $i \leq 5$ and $i \monus 5 \leq 0$, we see that by adding any constant to their left-hand sides, the constraints are no longer equivalent. Adding the constant 2 to their left-hand sides, we obtain $i + 2 \leq 5$ and $i \monus 5 + 2 \leq 0$, however, we see that the first constraint is satisfied given the valuation $i = 3$ but the second is not. In general the associative property of $+$ is lost.\\
+
+Unfortunately, this is not an easy problem to solve implementation-wise, as indices are not actually evaluated but rather represent whole feasible regions. Thus, instead of trying to implement this operator exactly, we limit the number of processes typable by the type system. Removing the operator entirely is not an option as it us used by the type rules themselves. Instead, we ensure that one cannot \textit{exploit} the special behavior of monus by introducing additional conditions to the type rules of the type system. More precisely, any time the type system uses the monus operator such as $I \monus J$, we require the premise $\varphi;\Phi \vDash I \geq J$, in which case the monus operator is safe to treat as a regular minus. This, however, puts severe restrictions on the number of processes typable, and so we relax the restriction a bit by also checking the judgement $\varphi;\Phi \vDash I \leq J$, in which case we can conclude that the result is definitely $0$. If neither $\varphi;\Phi\vDash I \geq J$ nor $\varphi;\Phi\vDash I \leq 0$ hold, which is possible as $\leq$ and $\geq$ do not form a total order on indices, the result is undefined. We refer to this variant of monus as the \textit{partial} monus operator, as formalized in Definition \ref{def:partialmonus}. Note that this definition of monus allows us to obtain identical behavior to minus on a constraint $I \bowtie J$ by moving terms between the LHS and RHS, i.e. $I - K \bowtie J \Rightarrow I \bowtie J + K$, and so we can assume we have a standard minus operator when verifying judgements on constraints. For the remainder of this section, we assume this definition is used in the type rules instead of the usual monus. We may omit $\varphi;\Phi$ if it is clear from the context.%\\
+%
+%Definition \ref{def:partialmonus} defines the \textit{partial} monus operator that is undefined if we cannot determine if the result is either always positive or always zero. For the remainder of this thesis, we assume this definition is used in the type rules instead of the usual monus. We may omit $\varphi;\Phi$ if it is clear from the context.
+%
+\begin{defi}[Partial monus]\label{def:partialmonus}
+Let $\Phi$ be a set of constraints in index variables $\varphi$. The partial monus operator is defined for two indices $I$ and $J$ as
+\begin{equation*}
+    I \monusE J = \begin{cases}
+    I - J &\text{if $\varphi;\Phi \vDash J \leq I$}\\
+    0 &\text{if $\varphi;\Phi \vDash I \leq J$}\\
+    \textit{undefined} & \textit{otherwise}
+    \end{cases}
+\end{equation*}
+\end{defi}
+
+To ensure soundness of the algorithmic type rules after switching to the partial monus operator, we must make some changes to advancement of time. Consider the typing
+\begin{align*}
+    (\cdot,i);(\cdot,i\leq 3);\Gamma\vdash\; !\inputch{a}{}{}{\nil}  \mid 5 : \asyncoutputch{a}{}{} \triangleleft \{5\}
+\end{align*}
+where $\Gamma = \cdot,a : \forall_{3-i}\epsilon.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_0()$. Upon typing the time annotation, we advance the time of the server type by $5$ yielding the type $\forall_{3-i-5}\epsilon.\texttt{serv}^{\{\texttt{out}\}}_0()$ as $(\cdot,i);(\cdot,i\leq 3)\nvDash 3-i \geq 5$, which is defined as $(\cdot,i);(\cdot,i\leq 3)\vDash 3-i \leq 5$. However, if we apply the congruence rule $\runa{SC-sum}$ from right to left we obtain
+\begin{align*}
+    !\inputch{a}{}{}{\nil}  \mid 2 : 3 : \asyncoutputch{a}{}{}\equiv\;!\inputch{a}{}{}{\nil}  \mid 5 : \asyncoutputch{a}{}{}
+\end{align*}
+Then, we get a problem upon typing the first annotation. That is, as $(\cdot,i);(\cdot,i\leq 3)\nvDash 3-i \leq 2$ (i.e. when for some valuation $\rho$ we have $\rho(i) = 0$) the operation $(3-i) \monusE[(\cdot,i);(\cdot,i\leq 3)] 2$ is undefined. Thus, the type system loses its subject congruence property, and subsequently its subject reduction property. There are, however, several ways to address this. One option is to modify the type rules to perform a single advancement of time for a sequence of annotations. A more contained option is to remove monus from the definition of advancement of time, by enriching the formation rules of types with the constructor $\forall_{I}\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})^{-J}$ and by augmenting the definition of advancement as so
+\begin{align*}
+    \downarrow_I^{\varphi;\Phi}\!\!(\forall_J\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})) =&\; \left\{
+\begin{matrix}
+\forall_{J-I}\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T}) & \text{ if } \varphi;\Phi\vDash I \leq J \\
+\forall_0\widetilde{i}.\texttt{serv}^{\sigma\cap\{\texttt{out}\}}_K(\widetilde{T}) & \text{ if } \varphi;\Phi\vDash J \leq I \\
+\forall_{J}\widetilde{i}.\texttt{serv}^{\sigma\cap\{\texttt{out}\}}_K(\widetilde{T})^{-I} & \text{ if } \varphi;\Phi\nvDash I \leq J \text{ and } \varphi;\Phi\nvDash J \leq I
+\end{matrix}
+\right.\\
+%
+\downarrow_I^{\varphi;\Phi}\!\!(\forall_{J}\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})^{-L}) =&\; \left\{
+\begin{matrix}
+\forall_{0}\widetilde{i}.\texttt{serv}^{\sigma\cap\{\texttt{out}\}}_K(\widetilde{T}) & \text{ if } \varphi;\Phi\vDash J \leq L+I \\
+\forall_{J}\widetilde{i}.\texttt{serv}^{\sigma\cap\{\texttt{out}\}}_K(\widetilde{T})^{-(L+I)} & \text{ if } \varphi;\Phi\nvDash J \leq L+I
+\end{matrix}
+\right.
+%
+\end{align*}
+This in essence introduces a form of \textit{lazy} time advancement, where time is not advanced until partial monus allows us to do so. Then, as the type rules for servers require a server type of the form $\forall_J\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})$, the summed advancement of time must always be less than or equal, or always greater than or equal to the time of the server, and so typing is invariant to the use of congruence rule $\runa{SC-sum}$. Revisiting the above example, we have that $\susume{\forall_{3-i}\epsilon.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_0()}{(\cdot,i)}{(\cdot,i\leq 3)}{5} =\; \susume{\susume{\forall_{3-i}\epsilon.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_0()}{(\cdot,i)}{(\cdot,i\leq 3)}{2}}{(\cdot,i)}{(\cdot,i\leq 3)}{3}$, and so we obtain the original typing
+\begin{align*}
+    (\cdot,i);(\cdot,i\leq 3);\Gamma\vdash\; !\inputch{a}{}{}{\nil}  \mid 2 : 3 : \asyncoutputch{a}{}{} \triangleleft \{5\}
+\end{align*}
+
+
+
+% \begin{remark}
+
+%     Baillot and Ghyselen \cite{BaillotGhyselen2021} assume that the minus operator ($-$) for indices is defined such that $n-m=0$ when $m \geq n$. This has the consequence that expressions such as $2-3+3=3$ apply, such that indices form a semiring instead of a ring as we no longer have an additive inverse. In this work we lift this assumption by arguing that any index $I$ using a ring-centric definition for $-$ such that $I \leq 0$, can be simulated using another index $J$ using a semiring-centric definition for $-$ such that $J \leq 0$. For $I$, the order of summation of terms does not matter, and so we can freely change this. By moving any terms with a negative coefficient to the end of the summation, we obtain an expression of the form $c_1 i_1 + \cdots + c_n i_n - c_{n+1} i_{n+1} - \cdots - c_m i_m$ where $c_j$ are positive numbers and $i_j$ are index variables for $j = 0\dots m$. When evaluating this expression from left to right, the result will be increasing until $c_{n + 1} i_{n+1}$, as both the coefficients and index variables are positive, after which it will be decreasing. This results in an expression that is indifferent to the two definitions of $-$ when considering constraints of the form $I \leq 0$. Thus, a normalized constraint using a ring-centric definition of $-$ can be simulated using a normalized constraint using a semiring-centric definition of $-$.
+
+% \end{remark}
+
+\input{sections/typecheck/indices_undecidability_polynomial}
+
+\subsection{Normalization of linear indices}
+
+To make checking of judgements on constraints tractable, we reduce the set of function symbols on which indices are defined, such that indices may only contain integers and index variables, as well as addition, subtraction and scalar multiplication operators, such that we restrict ourselves to linear functions.
+\begin{align*}
+        I,J ::= n \mid i \mid I + J \mid I - J \mid n I
+    \end{align*}
+% \begin{defi}[Indices]
+%     \begin{align*}
+%         I,J ::= n \mid i \mid I + J \mid I - J \mid I \cdot J
+%     \end{align*}
+% \end{defi}
+
+
+Such indices can be written in a \textit{normal} form, presented in Definition \ref{def:normlinindex}.
+
+\begin{defi}[Normalized linear index]\label{def:normlinindex}
+    Let $I$ be an index in index variables $\varphi = i_1,\dots,i_n$. We say that $I$ is a \textit{normalized} index when it is a linear combination of index variables $i_1, ..., i_n$. Let $m$ be an integer constant and $I_\alpha\in\mathbb{Z}$ the coefficient of variable $i_\alpha$, we then define normalized indices as
+    %
+    \begin{align*}
+        I = \normlinearindex{m}{I}
+    \end{align*}
+    
+    
+    We use the notation $\mathcal{B}(I)$ and $\mathcal{E}(I)$ to refer to the constant and unique identifiers of index variables of $I$, respectively.
+\end{defi}
+
+Any index can be transformed to an equivalent normalized index (i.e. it is a normal form) through expansion with the distributive law, reordering by the commutative and associative laws and then by regrouping terms that share variables. Therefore, the set of normalized indices in index variables $i_1,\dots,i_n$ and with coefficients in $\mathbb{Z}$, denoted $\mathbb{Z}[i_1,\dots,i_n]$, is a free module with the variables as basis, as the variables are linearly independent. In Definition \ref{def:operationsmodule}, we show how scalar multiplication, addition and multiplication of normalized indices (i.e. linear combinations of monomials) can be defined. Definition \ref{def:normalizationindex} shows how an equivalent normalized index can be computed from an arbitrary linear index using these operations.
+%
+\begin{defi}[Operations in $\freemodule$]\label{def:operationsmodule}
+Let $I = \normlinearindex[\varphi_1]{n}{I}$ and $J = \normlinearindex[\varphi_2]{m}{J}$ be normalized indices in index variables $i_1,\dots,i_n$. We define addition and scalar addition of such indices. Given a scalar $n\in\mathbb{Z}$, the scalar multiplication $n I$ is
+%
+\begin{align*}
+    n I = \normlinearindex[\mathcal{E}(I)]{n \cdot m}{n I}
+\end{align*}
+When $d$ is a common divisor of all coefficients in $I$, i.e. $I_\alpha / n \in \mathbb{Z}$ for all $\alpha\in\varphi$, the inverse operation is defined
+\begin{align*}
+    \frac{I}{d} = \frac{n}{d} + \sum_{\alpha\in \mathcal{E}(I)} \frac{I_\alpha}{d} i_\alpha\quad\text{if}\;\frac{I_\alpha}{d} \in \mathbb{Z}\;\text{for all}\;\alpha\in\mathcal{E}(I)
+\end{align*}
+
+The addition of $I$ and $J$ is the sum of constants plus the sum of scaled variables where coefficients $I_\alpha$ and $J_\alpha$ are summed when $\alpha\in\varphi_1 \cap \varphi_2$
+\begin{align*}
+    I + J = n + m + \sum_{\alpha \in \mathcal{E}(I) \cup \mathcal{E}(J)}(I_\alpha + J_\alpha)i_\alpha
+\end{align*}
+
+where for any $\alpha\in \varphi_1 \cup \varphi_2$ such that $I_\alpha + J_\alpha = 0$ we omit the corresponding zero term. The inverse of addition is always defined for elements of a polynomial ring
+%
+\begin{align*}
+    I - J = n - m + \sum_{\alpha \in \mathcal{E}(I) \cup \mathcal{E}(J)}(I_\alpha - J_\alpha)i^\alpha
+\end{align*}
+\end{defi}
+%
+%We now formalize the transformation of an index $I$ to an equivalent normalized index in Definition \ref{def:normalizationindex}. An integer constant $n$ corresponds to scaling the monomial identified by the exponent vector of all zeroes by $n$. An index variable $i$ represents the monomial consisting of exactly one $i$ scaled by $1$. For addition, subtraction and multiplication we simply normalize the two subindices and and use the corresponding operators for normalized indices.
+\begin{defi}[Index normalization]\label{def:normalizationindex}
+The normalization of some index $I$ in index variables $i_1,\dots,i_n$ into an equivalent normalized index $\mathcal{N}(I)\in \mathbb{Z}[i_1,\dots,i_n]$ is a homomorphism defined inductively
+    \begin{align*}
+        \mathcal{N}(n) =&\; n i_1^0\cdots i_n^0\\
+        \mathcal{N}(i_j) =&\; 1 i_1^0 \cdots i_j^1 \cdots i_n^0\\
+        \mathcal{N}(I + J) =&\; \mathcal{N}(I) + \mathcal{N}(J)\\
+        \mathcal{N}(I - J) =&\; \mathcal{N}(I) - \mathcal{N}(J)\\
+        \mathcal{N}(n I) =&\; n \mathcal{N}(I)
+    \end{align*}
+\end{defi}
+
+% \subsubsection{Normalization of constraints}
+% A constraint may provide stronger or weaker restrictions on index variables compared to another constraint, or it may provide entirely different restrictions that are neither stronger nor weaker. For example, assuming some index $J$, if we have the constraint $3 \cdot i \leq J$, the constraint $2 \cdot i \leq J$ is redundant as index variables can only be assigned natural numbers, and thus $3 \cdot i \leq J$ implies $n \cdot i \leq J$ for any $n \leq 3$. Similarly, $I \leq n \cdot j$ implies $I \leq m \cdot j$ for any $n \leq m$. We thus define the subconstraint relation $\sqsubseteq$, and by extension the subindex relation $\sqsubseteq_\text{Index}$, in Definition \ref{def:subconstraint}. If $C_1 \sqsubseteq C_2$ we say that $C_2$ is a subconstraint of $C_1$.
+
+
+% \begin{defi}[Subindices and subconstraints] \label{def:subconstraint}
+%     We define the subindex relation $\sqsubseteq_\text{Index}$ by the following rule
+%     \begin{align*}
+%         &I \sqsubseteq_\text{Index} J \quad \text{ if} \\
+%         &\quad (\mathcal{B}(I) \leq \mathcal{B}(J)) \land\\
+%         &\quad (\forall \alpha \in \mathcal{E}(I) \cap \mathcal{E}(J) : I_\alpha \leq J_\alpha)\land\\
+%         &\quad (\forall \alpha \in \mathcal{E}(J) \setminus \mathcal{E}(I) : J_\alpha \geq 0)\land\\
+%         &\quad (\forall \alpha \in \mathcal{E}(I) \setminus \mathcal{E}(J) : I_\alpha \leq 0)
+%     \end{align*}
+%     % \begin{align*}
+%     %     &(\varphi, F) \sqsubseteq_\text{Index} (\varphi', F') \text{ if} \\
+%     %     &\quad (\forall V \in \varphi \cap \varphi' : F(V) \leq F'(V)) \land\\
+%     %     &\quad (\forall V \in \varphi' \setminus \varphi : F'(V) \geq 0) \land\\
+%     %     &\quad (\forall V \in \varphi \setminus \varphi' : F'(V) \leq 0)
+%     % \end{align*}
+    
+%     We define the subconstraint relation $\sqsubseteq$ by the following rule
+%     \begin{align*}
+%       &\infrule{I' \sqsubseteq_\text{Index} I \quad J \sqsubseteq_\text{Index} J'}{I \leq J \sqsubseteq I' \leq J'}
+%       %
+%       %
+%       %&\infrule{I \leq J \sqsubseteq I' \leq J' \quad I' \leq J' \sqsubseteq I'' \leq J''}{I \leq J \sqsubseteq I'' \leq J''}
+%     \end{align*}
+% \end{defi}
+
+We extend normalization to constraints. We first note that an equality constraint $I = J$ is satisfied if and only if $I \leq J$ and $J \leq I$ are both satisfied. Thus, it suffices to only consider inequality constraints. A normalized constraint is of the form $I \leq 0$ for some normalized index $I$, as formalized in Definition \ref{def:normconst}.
+%
+\begin{defi}[Normalized constraints]\label{def:normconst}
+    Let $C = I \leq J$ be an inequality constraint such that $I$ and $J$ are normalized indices. We say that $I-J \leq 0$ is the normalization of $C$ denoted $\mathcal{N}(C)$, and we refer to constraints in this form as \textit{normalized} constraints.
+    %We represent normalized constraints $C$ using a single normalized constraint $I$, such that $C$ is of the form
+    %\begin{align*}
+    %    C = I \leq 0
+    %\end{align*}
+%
+\end{defi}
+%
+% We now show how any constraint $J \bowtie K$ can be represented using a set of normalized constraints of the form $I \leq 0$ where $I$ is a normalized index. To do this, we first represent the constraint $J \bowtie K$ using a set of constraints of the form $J \leq K$ using the function $\mathcal{N_R}$. We then finalize the normalization using the function $\mathcal{N}$ by first moving all indices to the left-hand side of the constraint.
+%
+% \begin{defi}
+%     Given a constraint $I \bowtie J$ $(\bowtie\; \in \{\leq, \geq, =\})$, the function $\mathcal{N_R}$ converts $I \bowtie J$ to a set of constraints of the form $I \leq J$
+%     %
+%     \begin{align*}
+%         \mathcal{N_R}(I \leq J) &= \{I \leq J\}\\
+%         \mathcal{N_R}(I \geq J) &= \{J \leq I\}\\
+%         %\mathcal{N_R}(I < J) &= \{I+1 \leq J\}\\
+%         %\mathcal{N_R}(I > J) &= \{J+1 \leq I\}\\
+%         \mathcal{N_R}(I = J) &= \{I \leq J, J \leq I\}
+%     \end{align*}
+% \end{defi}
+%
+% \begin{defi}
+%     Given a constraint $C$, the function $\mathcal{N}$ converts $C$ into a set of normalized constraints of the form $I \leq 0$
+%     %
+%     \begin{align*}
+%         \mathcal{N}(C) &= \left\{I-J \leq 0 \mid (I \leq J) \in \mathcal{N}_R(C)\right\}
+%     \end{align*}
+% \end{defi}
+%
+%Normalized constraints have the key property that, given any two constraints $I \leq 0$ and $J \leq 0$, we can combine these to obtain a new constraint $J + I \leq 0$. This is possible as we know that both $I$ and $J$ are both non-positive, and so their sum must also be non-positive. In general, given $n$ normalized constraints $I_1 \leq 0, ..., I_n \leq 0$, we can infer any linear combination $a_1 \cdot I_1 \leq 0 + ... + a_n \cdot I_n \leq 0$ where $a_i \geq 0$ for $i = 1..n$ as new constraints that can be inferred based on the constraints $I_1 \leq 0, ..., I_n \leq 0$. Linear combinations where all coefficients are non-negative are also called \textit{conical combinations}.
+Normalizing constraints has a number of benefits. First of all, it ensures that equivalent constraints are always expressed the same way. Secondly, having all constraints in a common form where variables only appear once means we can easily reason about individual variables of a constraint, which will be useful later when we verify constraint judgements.
+%
+\subsection{Checking for emptiness of model space}
+As explained in Section \ref{sec:cjalternativeform}, we can verify a constraint judgement $\varphi;\Phi \vDash C_0$ by letting $C_0'$ be the inverse of $C_0$ and checking if $\mathcal{M}_\varphi(\Phi \cup \{C_0'\}) = \emptyset$ holds. Being able to check for non-emptiness of a model space is therefore paramount for verifying constraint judgements. For convenience, given a finite ordered set of index variables $\varphi = \{i_1, i_2, \dots, i_n\}$, we represent a normalized constraint $I \leq 0$ as a vector $\left( \mathcal{B}(I), I_1\; I_2\; \cdots\; I_n \right)_{\varphi}$. As such, the constraint $-5i + -2j + -4k \leq 0$ can be represented by the vector $\cvect[\varphi_1]{0 {-5} {-2} {-4}}$ where $\varphi_1=\left\{i, j, k\right\}$. Another way to represent that same constraint is with the vector $\cvect[\varphi_2]{0 {-5} {-2} 0 {-4}}$ where $\varphi_2 = \left\{i,j,l,k\right\}$. We denote the vector representation of a constraint $C$ over a finite ordered set of index variables $\varphi$ by $\mathbf{C}_{\varphi}$. We extend this notation to sets of constraints, such that $\Phi_{\varphi}$ denotes the set of vector representations over $\varphi$ of normalized constraints in $\Phi$\\
+
+Recall that the model space of any set of constraints $\Phi$ is the set of all valuations satisfying all constraints in $\Phi$. Thus, to show that $\mathcal{M}_\varphi(\Phi)$ is empty, we must show that no valuation $\rho$ exists satisfying all constraints in $\Phi$. This is a linear constraint satisfaction problem (CSP) with an infinite domain. One method for solving such is by optimization using the simplex algorithm. If the linear program of the CSP has a feasible solution, the model space is non-empty and if it does not have a feasible solution, the model space is empty.\\
+
+As is usual for linear constraints, our linear constraints can be thought of as hyper-planes dividing some n-dimensional space in two, with one side constituting the feasible region and the other side the non-feasible region. By extension, for a set of constraints their shared feasible region is the intersection of all of their individual feasible regions. Since the feasible region of a set of constraints is defined by a set of hyper-planes, the feasible region consists of a convex polytope. This fact is used by the simplex algorithm when performing optimization.\\
+
+The simplex algorithm has some requirements to the form of the linear program it is presented, i.e. that it must be in \textit{standard} form. The standard form is a linear program expressed as 
+\begin{align*}
+    \text{minimize}&\quad \mathbf{c}^T\mathbf{a}\\
+    \text{subject to}&\quad M\mathbf{a} = \mathbf{b}\\
+    &\quad\mathbf{a} \geq \mathbf{0}
+\end{align*}
+where $M$ is a matrix representing constraints, $\mathbf{a}$ is a vector of scalars, and $\mathbf{b}$ is a vector of constants. As such, we first need all our constraints to be of the form $a_0 \cdot i_0 + ... + a_n \cdot i_n \leq b$, after which we must convert them into equality constraints by introducing \textit{slack} variables that allow the equality to also take on lower values. Since all of our constraints are normalized and of the form $I \leq 0$, all of our slack variables will have negative coefficients. In our specific case, we let row $i$ of $M$ consist of $(\mathbf{C}^i_\varphi)_{-1}$, where $(\cdot)_{-1}$ removes the first element of the vector (the constant term here). We must also include our slack variables, and so we augment row $i$ of $M$ with the n-vector with all zeroes except at position $i$ where it is $-1$. We let $\mathbf{a}$ be a column vector containing our variables in $\varphi$ as well as our slack variables, and finally we let $\mathbf{b}_i = -(\mathbf{C}^i_\varphi)_1$. $\mathbf{c}$ may be an arbitrary vector.\\
+
+Checking feasibility of the above linear program can itself be formulated as a linear program that is guaranteed to be feasible, enabling us to use efficient polynomial time linear programming algorithms, such as interior point methods, to check whether constraints are covered. Let $\mathbf{s}$ be a new vector, then we have the linear program
+%
+\begin{align*}
+    \text{minimize}&\quad \mathbf{1}^T\mathbf{s}\\
+    \text{subject to}&\quad M\mathbf{a} + \mathbf{s} = \mathbf{b}\\
+    &\quad\mathbf{a},\mathbf{s} \geq \mathbf{0}
+\end{align*}
+where $\mathbf{1}$ is the vector of all ones. We can verify the feasibility of this problem with the certificate $(\mathbf{a},\mathbf{s})=(\mathbf{0},\mathbf{b})$. Then the original linear program is feasible if and only if the augmented problem has an optimal solution $(\mathbf{x}^*,\mathbf{s}^*)$ such that $\mathbf{s}^* = \mathbf{0}$.\\
+
+Given a constraint judgement $\varphi;\Phi \vDash C_0$, it should be noted that while the simplex algorithm can be used to check if a solution exists to the constraints $\Phi \cup \{C_0'\}$, there is no guarantee that the solution is an integer solution nor that an integer solution exists at all. Thus, in the case that a non-integer solution exists but no integer solution, this method will over-approximate. An example of such is the two constraints $3i - 1 \leq 0$ and $-2i + 1 \leq 0$ yielding the feasible region where $\frac{1}{3} \leq i \leq \frac{1}{2}$, containing no integers. For an exact solution, we may use integer programming.
+
+% \subsubsection{Conical combinations of constraints}
+% We now show how constraints can be conically combined. For convenience, given a finite ordered set of index variables $\varphi = \{i_1, i_2, \dots, i_n\}$, we represent a normalized constraint $I \leq 0$ as a vector $\left( \mathcal{B}(I), I_1\; I_2\; \cdots\; I_n \right)_{\varphi}$. As such, the constraint $-5i + -2j + -4k \leq 0$ can be represented by the vector $\cvect[\varphi_1]{0 {-5} {-2} {-4}}$ where $\varphi_1=\left\{i, j, k\right\}$. Another way to represent that same constraint is with the vector $\cvect[\varphi_2]{0 {-5} {-2} 0 {-4}}$ where $\varphi_2 = \left\{i,j,l,k\right\}$. We denote the vector representation of a constraint $C$ over a finite ordered set of index variables $\varphi$ by $\mathbf{C}_{\varphi}$. We extend this notation to sets of constraints, such that $\Phi_{\varphi}$ denotes the set of vector representations over $\varphi$ of normalized constraints in $\Phi$. Then for a finite ordered set of exponent vectors $\varphi$ and a set of normalized constraints $\Phi$, we can infer any constraint $C$ represented by a vector $\mathbf{C}_\varphi\in \text{coni}(\Phi_\varphi)$ where $\text{coni}(\Phi_\varphi)$ is the \textit{conical hull} of $\Phi_\varphi$. That is, $\text{coni}(\Phi_\varphi)$ is the set of conical combinations with non-negative integer coefficients of vectors in $\Phi_\varphi$
+% %
+% \begin{align*}
+%   \text{coni}(\Phi_\varphi) = \left\{\sum^k_{i=1} a_i {\mathbf{C}^i_\varphi} : {\mathbf{C}^i_\varphi} \in \Phi_\varphi,\; a_i,k \in \mathbb{N}\right\}  
+% \end{align*}
+% %
+% Then, to check if a constraint $C^{new}$ is covered by the set of normalized constraints $\Phi = \{C_1,C_2,\dots, C_n\}$, we can test if $\mathbf{C}^{new}_\varphi$ is a member of the conical hull $\text{coni}(\Phi_\varphi)$. However, by itself, this does not take into account subconstraints of constraints in $\Phi$, as these may not necessarily be written as conical combinations of $\Phi_\varphi$. To account for these, we can include $m=|\varphi|$ vectors of size $m$ of the form $\cvect{-1 0 $\cdots$ 0}, \cvect{0 {-1} 0 $\cdots$ 0}, \dots, \cvect{0 $\cdots$ 0 {-1})}$ in $\Phi_\varphi$. As the conical hull $\text{coni}(\Phi_\varphi)$ is infinite when there exists $\mathbf{C}_\varphi \in \Phi_\varphi$ such that $\mathbf{C}_\varphi \neq \mathbf{0}$ where $\mathbf{0}$ is the vector of all zeroes, when checking for the existence of a conical combination of vectors in $\Phi_\varphi$ equal to $\mathbf{C}^\textit{new}_\varphi$, we can instead solve the following system of linear equations
+% %
+% \begin{align*}
+%     a_1 {\mathbf{C}^1_\varphi}_1 + a_2 {\mathbf{C}^2_\varphi}_1 + \cdots + a_n {\mathbf{C}^n_\varphi}_1 =&\; {\mathbf{C}^{new}_\varphi}_1\\
+%     a_1 {\mathbf{C}^1_\varphi}_2 + a_2 {\mathbf{C}^2_\varphi}_2 + \cdots + a_n {\mathbf{C}^n_\varphi}_2 =&\; {\mathbf{C}^{new}_\varphi}_2\\
+%     &\!\!\!\vdots\\
+%     a_1 {\mathbf{C}^1_\varphi}_m + a_2 {\mathbf{C}^2_\varphi}_m + \cdots + a_n {\mathbf{C}^n_\varphi}_m =&\; {\mathbf{C}^{new}_\varphi}_m
+% \end{align*}
+% %
+% where $a_1,a_2,\dots,a_m\in\mathbb{Z}_{\geq 0}$ are non-negative integer numbers. However, this is an integer programming problem, and so it is NP-hard. We can relax the requirement for $a_1,a_2,\dots,a_m$ to be integers, as the equality relation is preserved under multiplication by any positive real number. We can then view the above system as a linear program, with additional constraints $a_i \geq 0$ for $1 \geq i \geq n$. That is, let $M = \vect{$\mathbf{C}^1_\varphi$ $\mathbf{C}^2_\varphi$ $\cdots$ $\mathbf{C}^n_\varphi$}$ be a matrix with column vectors representing constraints and $\mathbf{a} = \vect{$a_1$ $a_2$ $\cdots$ $a_n$}$ be a row vector of scalars, then checking whether $\mathbf{C}^{new}_\varphi\in\text{coni}(\Phi_\varphi)$ amounts to determining if the following linear program is feasible
+% %
+% \begin{align*}
+%     \text{minimize}&\quad \mathbf{c}^T\mathbf{a}\\
+%     \text{subject to}&\quad M\mathbf{a} = \mathbf{C}^{new}_\varphi\\
+%     &\quad\mathbf{a} \geq \mathbf{0}
+% \end{align*}
+% %
+% where $\mathbf{c}$ is an arbitrary vector of length $n$ and $\mathbf{0}$ is the vector of all zeroes of length $n$. Checking feasibility of the above linear program can itself be formulated as a linear program that is guaranteed to be feasible, enabling us to use efficient polynomial time linear programming algorithms, such as interior point methods, to check whether constraints are covered. Let $\mathbf{s}$ be a new vector of length $m$, then we have the linear program
+% %
+% \begin{align*}
+%     \text{minimize}&\quad \mathbf{1}^T\mathbf{s}\\
+%     \text{subject to}&\quad M\mathbf{a} + \mathbf{s} = \mathbf{C}^{new}_\varphi\\
+%     &\quad\mathbf{a},\mathbf{s} \geq \mathbf{0}
+% \end{align*}
+% where $\mathbf{1}$ is the vector of all ones of length $m$. We can verify the feasibility of this problem with the certificate $(\mathbf{a},\mathbf{s})=(\mathbf{0},\mathbf{C}^{new}_\varphi)$. Then the original linear program is feasible if and only if the augmented problem has an optimal solution $(\mathbf{x}^*,\mathbf{s}^*)$ such that $\mathbf{s}^* = \mathbf{0}$.
+% %
+
+\begin{examp}
+    Given the constraints
+    \begin{align*}
+        C^1 &= 3i - 3 \leq 0\\
+        C^2 &= j + 2k - 2 \leq 0\\
+        C^3 &= -k \leq 0\\
+        C^{new} &= i + j - 3 \leq 0
+    \end{align*}
+    
+    we want to check if the constraint judgement $\{i, j, k\};\{C^1, C^2, C^3\} \vDash C^{new}$ is satisfied\\
+    
+    
+    We first let $C^{newinv}$ be the inversion of constraint $C^{new}$.
+    \begin{align*}
+        C^{newinv} &= 1i + 1j - 2 \geq 0
+    \end{align*}
+    
+    We now want to check if the feasible region $\mathcal{M}_\varphi(\{C^1, C^2, C^3, C^{newinv}\})$ is nonempty. To do so, we construct a linear program with the four constraints. To convert all inequality constraints into equality constraints, we add the slack variables $s_1, s_2, s_3, s_4$ 
+    
+    \begin{align*}
+        \text{minimize}&\quad i + j + k\\
+        \text{subject to}&\quad 3i + 0j + 0k + s_1 = 3\\
+        &\quad 0i + 1j + 2k + s_2 = 2\\
+        &\quad 0i + 0j - 1k + s_3 = 0\\
+        &\quad 1i + 1j + 0k - s_4 = 2\\
+        &\quad i, j, k, s_1, s_2, s_3, s_4 \geq 0
+    \end{align*}
+    
+    Using an algorithm such as the simplex algorithm, we see that there is no feasible solution, and so we conclude that the constraint judgement $\{i, j, k\};\{C^1, C^2, C^3\} \vDash C^{new}$ is satisfied.
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%
+    
+    % We first represent the four constraints as vectors in terms of some ordered set $\varphi$ of index variables and some ordered set $\varphi$ of exponent vectors.\\
+    
+    % Let $\varphi = \{i, j, k\}$ and $\varphi = \{\evect{1 0 0}, \evect{0 1 0}, \evect{0 0 1}, \evect{0 0 0}\}$. The constraints $C^1, C^2, C^3, C^{new}$ can now be written as the following vectors
+    % %
+    % \begin{align*}
+    %     \mathbf{C}^1_\varphi &= \cvect{1 0 0 -3}\\
+    %     \mathbf{C}^2_\varphi &= \cvect{0 1 1 -2}\\
+    %     \mathbf{C}^3_\varphi &= \cvect{0 0 -1 0}\\
+    %     \mathbf{C}^{new}_\varphi &= \cvect{2 3 2 -15}
+    % \end{align*}
+    
+    % With the constraints now represented as vectors, we can prepare the equation $M\mathbf{a} = \mathbf{b}$ representing the conical combination, for which we wish to check if a solution exists given given the requirement that $\mathbf{a} \geq \mathbf{0}$. We first prepare the matrix $M$, where we represent the constraint vectors as column vectors
+    % %
+    % \begin{align*}
+    %     &M = \vect{$\mathbf{C}^1_\varphi$ $\mathbf{C}^2_\varphi$ $\mathbf{C}^3_\varphi$ $\bm{\beta}_1$ $\bm{\beta}_2$ $\bm{\beta}_3$ $\bm{\beta}_4$}\\
+    %     &\quad \text{where } \bm{\beta}_1 = \cvect{-1 0 0 0}, \bm{\beta}_2 = \cvect{0 {-1} 0 0}, \bm{\beta}_3 = \cvect{0 0 {-1} 0}, \bm{\beta}_4 = \cvect{0 0 0 {-1}}
+    % \end{align*}
+    % %
+    % We include vectors $\bm{\beta}_i, i \in \{1, 2, 3, 4\}$ to ensure we can also use subconstraints of $\mathbf{C}^i, i \in \{1, 2, 3\}$ when checking if we can construct $\mathbf{C}^{new}_\varphi$. To check if a solution exists to the aforementioned equation, we solve the following linear program to check if $\mathbf{s} = \mathbf{0}$
+    % \begin{align*}
+    %     \text{minimize}&\quad \mathbf{1}^T\mathbf{s}\\
+    %     \text{subject to}&\quad M\mathbf{a} + \mathbf{s} = \mathbf{C}^{new}_\varphi\\
+    %     &\quad\mathbf{a},\mathbf{s} \geq \mathbf{0}
+    % \end{align*}
+    
+    % This is possible given $\mathbf{a} = \vect{2 3 1 0 0 0 3}$, and so a solution exists to the canonical combination. Notice that we had to use the additional $\bm{\beta}$ vectors when constructing the conical combination. This shows the importance of subconstraints when checking type judgements.
+\end{examp}
+%
+% \section{Soundness}
+% %
+
+
+% \begin{theorem}[Subject reduction]\label{theorem:srbg}
+% If $\varphi;\Phi;\Gamma\vdash P \triangleleft K$ and $P \leadsto Q$ then $\varphi;\Phi;\Gamma\vdash Q \triangleleft K'$ with $\varphi;\Phi\vDash k' \leq K$.
+% \begin{proof} by induction on the rules defining $\leadsto$.
+%     \begin{description}
+%     \item[$\runa{R-rep}$]
+%     %
+%     \item[$\runa{R-comm}$]
+%     %
+%     \item[$\runa{R-zero}$]
+%     %
+%     \item[$\runa{R-par}$]
+%     %
+%     \item[$\runa{R-succ}$]
+%     %
+%     \item[$\runa{R-empty}$]
+%     %
+%     \item[$\runa{R-res}$]
+%     %
+%     \item[$\runa{R-cons}$]
+%     %
+%     \item[$\runa{R-struct}$]
+%     %
+%     %\item[$\runa{R-tick}$] We have that $P = \tick{P'}$ and $Q=P'$. Then by $\runa{S-tick}$ we have $\varphi;\Phi;\Gamma\vdash $
+%     \end{description}
+% \end{proof}
+% \end{theorem}
+
+% \begin{lemma}\label{lemma:timeredtype}
+% If $\varphi;\Phi;\Gamma\vdash P \triangleleft K$ with $P\!\not\!\leadsto$ and $P \Longrightarrow^{-1} Q$ then $\varphi;\Phi;\downarrow_1\!\Gamma\vdash Q \triangleleft K'$ with $\varphi;\Phi\vDash K' \leq K + 1$.
+% \begin{proof}
+    
+% \end{proof}
+% \end{lemma}
+
+% \begin{theorem}\label{theorem:ubbg}
+% If $\varphi;\Phi;\Gamma\vdash P \triangleleft K$ and $P \hookrightarrow^n Q$ then $\varphi;\Phi\vDash n \leq K$.
+% \begin{proof} by induction on the number of time reductions $n$ in the sequence $P \hookrightarrow^n Q$.
+    
+% \end{proof}
+% \end{theorem}
+
+
+% % \begin{description}
+% %     \item[$\runa{S-nil}$]
+% %     %
+% %     \item[$\runa{S-tick}$]
+% %     %
+% %     \item[$\runa{S-nu}$]
+% %     %
+% %     \item[$\runa{S-nmatch}$]
+% %     %
+% %     \item[$\runa{S-lmatch}$]
+% %     %
+% %     \item[$\runa{S-par}$]
+% %     %
+% %     \item[$\runa{S-iserv}$]
+% %     %
+% %     \item[$\runa{S-ich}$]
+% %     %
+% %     \item[$\runa{S-och}$]
+% %     %
+% %     \item[$\runa{S-oserv}$]
+% %     \end{description}
+
+
+% %
+% It is worth noting that the Simplex algorithm does not guarantee an integer solution, and so we may get indices in constraints where the coefficients may be non-integer values. However, we can use the fact that any feasible linear programming problem with rational coefficients also has an (optimal) solution with rational values \cite{keller2016applied}. We use this fact and Lemma \ref{lemma:constraintcommonden} and \ref{lemma:constraintscaling} to show that we need not to worry about the solution given by the Simplex algorithm, given a rational linear programming problem. Definition \ref{def:constraintequivalence} defines what it means for constraints to be equivalent.
+
+% \begin{defi}[Conditional constraint equivalence]\label{def:constraintequivalence}
+%     Let $C_1$, $C_2$ and $C\in\Phi$ be linear constraints with integer coefficients and unknowns in $\varphi$. We say that $C_1$ and $C_2$ are equivalent with respect to $\varphi$ and $\Phi$, denoted $C_1 =_{\varphi;\Phi} C_2$, if we have that
+%     \begin{equation*}
+%     \mathcal{M}_\varphi(\{C_1\} \cup \Phi) = \mathcal{M}_\varphi(\{C_2\} \cup \Phi) %\mathcal{M}_\varphi(\{C_0\})
+% \end{equation*}
+% where $\mathcal{M}_{\varphi'}(\Phi')=\{\rho : \varphi' \rightarrow \mathbb{N} \mid \rho \vDash C\;\text{for}\; C \in \Phi'\}$ is the model space of a set of constraints $\Phi'$ over a set of index variables $\varphi'$.
+%     %
+%     %
+%     %$\varphi;\Phi\vDash C_1$ if and only if $\varphi;\Phi\vDash C_2$.
+%     %Two normalized constraints $C_1$ and $C_2$ are said to be \textit{equivalent} if for any index valuation $\rho$, we have that $\rho \vDash C_1$ if and only if $\rho \vDash C_2$.
+% \end{defi}
+
+% \begin{lemma}\label{lemma:constraintscaling}
+% Let $I \leq 0$ be a linear constraint with unknowns in $\varphi$. Then $I \leq 0 =_{\varphi;\Phi} n I \leq 0$ for any $n>0$ and set of constraints $\Phi$.
+% \begin{proof}
+%     This follows from the fact that if $I \leq 0$ is satisfied, then the sign of $I$ must be non-positive, and so the sign of $n I$ must also be non-positive as $n > 0$. Conversely, if $I \leq 0$ is not satisfied, then the sign of $I$, must be positive and so the sign of $n I$ must also be positive.
+% \end{proof}
+% \end{lemma}
+
+% \begin{lemma}\label{lemma:constraintcommonden}
+% Let $I \leq 0$ be a normalized linear constraint with rational coefficients and unknowns in $\varphi$. Then there exists a normalized linear constraint $I' \leq 0$ with integer coefficients and unknowns in $\varphi$ such that $I \leq 0 =_{\varphi;\Phi} I' \leq 0$ for any set of constraints $\Phi$.% there exists an equivalent constraint $I' = \normlinearindex{n'}{I'}$ where $n', I'_{\alpha_1}, \dots,I'_{\alpha_{m}}$ are integers.
+% \begin{proof}
+%     It is well known that any set of rationals has a common denominator, whose multiplication with any rational in the set yields an integer. One is found by multiplying the denominators of all rationals in the set. As the coefficients of $I$ are non-negative, this common denominator must be positive. By Lemma \ref{lemma:constraintscaling}, we have that $I\leq 0 =_{\varphi;\Phi} n I \leq 0$ where $n$ is a positive number and $\Phi$ is any set of constraints.% the constraint $I \leq 0$ is equivalent to $d I \leq 0$.
+% \end{proof}
+% \end{lemma}
+
+% %%
+% % \begin{lemma}
+% % Let $I \leq J$ and $C\in\Phi$ be a linear constraints with integer coefficients and unknowns in $\varphi$. Then $I \leq J =_{\varphi;\Phi} \mathcal{N}(I\leq J)$ if for any subtraction $K - L$ in $I$ or $J$, we have $\varphi;\Phi\vDash L \leq K$. 
+% % \begin{proof}
+    
+% % \end{proof}
+% % \end{lemma}
+% % %
+
+% % % \begin{lemma}
+% % % Let $C$ and $C'\in\Phi$ be normalized linear constraints with integer coefficients and unknowns in $\varphi$. Then $\varphi;\Phi\nvDash C$ if there does not exist $\mathbf{C}^{new}_\varphi\in\text{coni}(\Phi_\varphi \cup \{\mathbf{0}\})$ with $\mathbf{C}_\varphi\leq \mathbf{C}^{new}_\varphi$.
+% % % \begin{proof}
+    
+% % % \end{proof}
+% % % \end{lemma}
+
+
+% % %
+% % \begin{theorem}
+% % Let $C$ and $C'\in\Phi$ be normalized linear constraints with integer coefficients and unknowns in $\varphi$. Then $\varphi;\Phi\vDash_{\mathbb{R}^{\geq 0}} C$ if and only if there exists $\textbf{C}^{new}_\varphi\in\text{coni}(\Phi_\varphi \cup \{\mathbf{0}\})$ with $\textbf{C}_\varphi\leq \textbf{C}^{new}_\varphi$.
+% % \begin{proof}
+% %     We consider the implications separately
+% %     \begin{enumerate}
+% %         \item Assume that $\varphi;\Phi\vDash_{\mathbb{R}^{\geq 0}} C$. Then for all valuations $\rho : \varphi \longrightarrow \mathbb{R}^{\geq 0}$ such that $\rho\vDash \Phi$ we also have $\rho\vDash C$, or equivalently $([\![I_1]\!]_\rho \leq 0) \land \cdots \land ([\![I_n]\!]_\rho \leq 0) \implies [\![I]\!]_\rho \leq 0$, where $C = I_0 \leq 0$ and $C_i = I_i \leq 0$ for $C_i\in \Phi$. We show by contradiction that this implies there exists $\textbf{C}^{new}_\varphi\in\text{coni}(\Phi_\varphi \cup \{\mathbf{0}\})$ with $\textbf{C}_\varphi\leq \textbf{C}^{new}_\varphi$. Assume that such a conical combination does not exist. Then for all $\mathbf{C}'_\varphi\in\text{coni}(\Phi_\varphi \cup \{\mathbf{0}\})$ there is at least one coefficient ${\mathbf{C}'_\varphi}_k$ for some $0\leq k \leq |\varphi|$ such that ${\mathbf{C}'_\varphi}_k < {\mathbf{C}_\varphi}_k$. We show that this implies there exists $\rho\in\mathcal{M}_\varphi(\Phi)$ such that $\rho\nvDash C$.\\ 
+        
+        
+% %         and so there must exist $\rho : \varphi \longrightarrow \mathbb{R}^{\geq 0}$ such that $\rho\vDash C'$ and $\rho\nvDash C$. However, as $\varphi;\Phi\vDash_{\mathbb{R}^{\geq 0}} C$ holds there must be some constraint $C''\in\Phi$ such that $\rho\nvDash C''$.\\
+        
+        
+% %         Assume that there does not exist a conical combination $\textbf{C}^{new}_\varphi\in\text{coni}(\Phi_\varphi \cup \{\mathbf{0}\})$ with $\textbf{C}_\varphi\leq \textbf{C}^{new}_\varphi$. \\
+        
+        
+        
+% %         We have that $C = n + \sum_{\alpha\in\mathcal{E}(I)} I_\alpha i_\alpha$, and so for $\rho\vDash n + \sum_{\alpha\in\mathcal{E}(I)} I_\alpha i_\alpha$ to hold, it must be that $[\![\sum_{\alpha\in\mathcal{E}(I)} I_\alpha i_\alpha]\!]_\rho \leq -n$. This implies that $\Phi$ contains constraints that collectively bound the sizes of index variables that appear in $\sum_{\alpha\in\mathcal{E}(I)} I_\alpha i_\alpha$, such that $\sum_{\alpha\in\mathcal{E}(I)} I_\alpha i_\alpha$ cannot exceed $-n$. We now show by contradiction that there must then exist $\textbf{C}^{new}_\varphi\in\text{coni}(\Phi_\varphi \cup \{\mathbf{0}\})$ such that $\textbf{C}_\varphi\leq \textbf{C}^{new}_\varphi$. Assume that such a conical combination does not exist. Then it must be that for any $C'_\varphi\in\text{coni}(\Phi \cup \{\mathbf{0}\})$, at least one coefficient in $C'_\varphi$ is smaller than the corresponding coefficient in $C_\varphi$, implying that $C$ imposes a new restriction on valuations. Thus, there must exist a valuation $\rho$ such that $\rho\vDash\Phi$ but $\rho\nvDash C$, but then we have that $\varphi;\Phi\nvDash C$, and so we have a contradiction.
+        
+% %         \item Assume that there exists $\mathbf{C}^{new}_\varphi\in\text{coni}(\Phi_\varphi \cup \{\mathbf{0}\})$ with $\mathbf{C}_\varphi \leq \mathbf{C}^{new}_\varphi$. Then by Lemma \ref{TODO}, we have that $\varphi;\phi\vDash C^{new}$ and by Lemma \ref{TODO} it follows from $\mathbf{C}_\varphi \leq \mathbf{C}^{new}_\varphi$ that also $\varphi;\Phi\vDash C$.
+% %     \end{enumerate}
+% % \end{proof}
+% % \end{theorem}

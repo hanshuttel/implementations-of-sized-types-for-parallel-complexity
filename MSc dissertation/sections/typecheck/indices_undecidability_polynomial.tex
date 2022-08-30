@@ -1,0 +1,44 @@
+\subsection{Undecidability of polynomial constraint judgements}
+As we have seen, verifying that a constraint imposes no further restrictions onto index valuations amounts to checking whether all possible index valuations that satisfy a set of known constraints are also contained in the model space of our new constraint. It also amounts to checking whether the feasible region of the constraint contains the feasible region of a known system of inequality constraints, or checking whether the feasible region of the inverse constraint does not intersect the feasible region of a known system of inequality constraints. This turns out to be a difficult problem, and we can in fact prove it undecidable for diophantine constraints, i.e. multivariate polynomial inequalities with integer coefficients, when index variables must have natural (or integer) interpretations. The main idea is to reduce Hilbert's tenth problem \cite{Hilbert1902} to that of verification of judgements on constraints, as this problem has been proven undecidable \cite{Davis1973}. That is, we show that assuming some complete algorithm that verifies judgements on constraints, we can verify whether an arbitrary diophantine equation has a solution with all unknowns taking integer values. We show this result in Lemma \ref{lemma:judgementUndecidable}.
+%
+\begin{lemma}\label{lemma:judgementUndecidable}
+Let $C$ and $C'\in \Phi$ be diophantine inequalities with unknowns in $\varphi$ and coefficients in $\mathbb{N}$. Then the judgement $\varphi;\Phi\vDash C$ is undecidable.
+\begin{proof}
+By reduction from Hilbert's tenth problem. Let $p=0$ be an arbitrary diophantine equation. We show that assuming some algorithm that can verify a judgement of the form $\varphi;\Phi\vDash C$, we can determine whether $p=0$ has an integer solution. We must pay special attention to the non-standard definition of subtraction in the type system by Baillot and Ghyselen \cite{BaillotGhyselen2021} and to the fact that only non-negative integers substitute for index variables. We first replace each integer variable $x$ in $p$ with two non-negative variables $i_x - j_x$, referring to the modified polynomial as $p'$. We can quickly verify that $p'=0$ has a non-negative integer solution if and only if $p=0$ has an integer solution
+\begin{enumerate}
+    \item Assume that $p'=0$ has a non-negative integer solution. Then for each variable $x$ in $p$ we assign $x = i_x - j_x$ reaching an integer solution to $p$.
+    
+    \item Assume that $p=0$ has an integer solution. Then for each pair $i_x$ and $j_x$ in $p'$ we assign $i_x = x$ and $j_x = 0$ when $x \geq 0$ and $i_x = 0$ and $j_x = |x|$ when $x < 0$ reaching a non-negative integer solution to $p'$.
+\end{enumerate}
+%
+Then, by the distributive property of integer multiplication and the associative property of integer addition, we can utilize that $p'$ has an equivalent expanded form 
+\begin{align*}
+p' = n_1 t_1 + \cdots + n_k t_k + n_{k+1} t_{k+1} + \cdots + n_{k+l} t_{k+l}    
+\end{align*}
+such that $n_1,\dots,n_k\in\mathbb{N}$, $n_{k+1},\dots,n_{k+l} \in \mathbb{Z}^{\leq 0}$ and $t_1,\dots,t_k,t_{k+1},\dots,t_{k+l}$ are power products over the set of all index variables in $p'$ denoted $\varphi_{p'}$. We can then factor the negative coefficients
+\begin{align*}
+    p' \;&= n_1 t_1 + \cdots + n_k t_k + n_{k+1} t_{k+1} + \cdots + n_{k+l} t_{k+l}\\ 
+    \;&= (n_1 t_1 + \cdots + n_k t_k) + (-1)(|n_{k+1}| t_{k+1} + \cdots + |n_{k+l}| t_{k+l})\\
+    \;&= (n_1 t_1 + \cdots + n_k t_k) - (|n_{k+1}| t_{k+1} + \cdots + |n_{k+l}| t_{k+l})
+\end{align*}
+We use this to show that $p'=0$ has a non-negative integer solution if and only if the following judgement does not hold 
+{\small
+\begin{align*}
+    \varphi_{p'};\{|n_{k+1}| t_{k+1} + \cdots + |n_{k+l}| t_{k+l} \leq n_1 t_1 + \cdots + n_k t_k\}\vDash 1 \leq (n_1 t_1 + \cdots + n_k t_k) - (|n_{k+1}| t_{k+1} + \cdots + |n_{k+l}| t_{k+l}) 
+\end{align*}}
+We consider the implications separately
+\begin{enumerate}
+    \item Assume that $p'=0$ has a non-negative integer solution. Then we have that $n_1 t_1 + \cdots + n_k t_k = |n_{k+1}| t_{k+1} + \cdots + |n_{k+l}| t_{k+l}$, and so there must exist a valuation $\rho : \varphi_{p'} \longrightarrow \mathbb{N}$ such that $[\![n_1 t_1 + \cdots + n_k t_k]\!]_\rho = [\![|n_{k+1}| t_{k+1} + \cdots + |n_{k+l}| t_{k+l}]\!]_\rho$. We trivially have that $\rho$ satisfies $[\![|n_{k+1}| t_{k+1} + \cdots + |n_{k+l}| t_{k+l}]\!]_\rho \leq [\![n_1 t_1 + \cdots + n_k t_k]\!]_\rho$. But $\rho$ is not in the model space of the constraint $1 \leq (n_1 t_1 + \cdots + n_k t_k) - (|n_{k+1}| t_{k+1} + \cdots + |n_{k+l}| t_{k+l})$, and so the judgement does not hold.
+    
+    \item Assume that the judgement does not hold. Then there must exist a valuation $\rho : \varphi_{p'} \longrightarrow \mathbb{N}$ that satisfies $[\![|n_{k+1}| t_{k+1} + \cdots + |n_{k+l}| t_{k+l}]\!]_\rho \leq [\![n_1 t_1 + \cdots + n_k t_k]\!]_\rho$, but that is not in the model space of the constraint $1 \leq (n_1 t_1 + \cdots + n_k t_k) - (|n_{k+1}| t_{k+1} + \cdots + |n_{k+l}| t_{k+l})$. This implies that $[\![n_1 t_1 + \cdots + n_k t_k]\!]_\rho = [\![|n_{k+1}| t_{k+1} + \cdots + |n_{k+l}| t_{k+l}]\!]_\rho$, and so $p'$ has a non-negative integer solution.
+\end{enumerate}
+% Then the subtraction operator in Baillot and Ghyselen $\cite{BaillotGhyselen2021}$ only has non-standard behavior when $[\![n_{k+1} t_{k+1} + \cdots + n_{k+l} t_{k+l}]\!]_\rho > [\![n_1 t_1 + \cdots + n_k t_k]\!]_\rho$ for some interpretation $\rho : \varphi_{p'} \longrightarrow \mathbb{N}$ where $\varphi_{p'}$ is the set of all index variables in $p'$. Thus, we have that the judgement
+% \begin{align*}
+%     \varphi_{p'};\{n_{k+1} t_{k+1} + \cdots + n_{k+l} t_{k+l} \leq n_1 t_1 + \cdots + n_k t_k\}\vDash 1 \leq (n_1 t_1 + \cdots + n_k t_k) - (n_{k+1} t_{k+1} + \cdots + n_{k+l} t_{k+l}) 
+% \end{align*}
+% holds exactly when there exists no index valuation $\rho$ over $\varphi_{p'}$ that simultaneously satisfies $[\![n_{k+1} t_{k+1} + \cdots + n_{k+l} t_{k+l}]\!]_\rho \leq [\![n_1 t_1 + \cdots + n_k t_k]\!]_\rho$ and $[\![p']\!]_\rho = 0$. 
+As such, we can verify that the above judgement does not hold if and only if $p'$ has a non-negative integer solution, and by extension if and only if $p$ has an integer solution. Thus, we would have a solution to Hilbert's tenth problem, which is undecidable.
+\end{proof}
+\end{lemma}
+
+As an unfortunate consequence of Lemma \ref{lemma:judgementUndecidable}, we are forced into considering approximate algorithms for verification of judgements over polynomial constraints (in general). However, this result does not imply that type checking is undecidable. It may well be that problematic judgements are not required to type check any process, as computational complexity has certain properties, such as monotonicity. Note that the freedom of type checking, i.e. we can specify an arbitrary type context as well as type annotations, enables us to select indices that lead to undecidable judgements. To prove that type checking is undedidable, however, a more reasonable result would be that there exists a process that is typable if and only if an undecidable judgement is satisfied. This is out of the scope of this thesis, and so we leave it as future work. % Remark that Baillot and Ghyselen \cite{BaillotGhyselen2021} introduce a notion of type inference in their technical report, where the set of constraints $\Phi$ is empty for any judgement on constraints, and so they are able to bypass some of the problems associated with checking such judgements. However, this comes at the price of expressiveness, as natural types are forced to have lower bounds of $0$ and upper bounds with exactly one index variable and constant. Such indices are arguably sufficient for describing the sizes of simple terms when all operations on these terms in a program can be correspondingly described with a single index variable and constant. However, this quickly becomes too restrictive, as we are unable to type servers that implement simple arithmetic operations such as addition and subtraction.

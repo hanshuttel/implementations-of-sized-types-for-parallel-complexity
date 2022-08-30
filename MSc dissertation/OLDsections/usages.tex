@@ -1,0 +1,218 @@
+\chapter{Usages}\label{sec:usages}
+% \textit{\begin{itemize}
+%     \item Introduction / motivation
+%     \item Usage syntax
+%     \item Usage congruence
+%     \item Usage reduction
+%     \item Usage reliability
+%     \item Subusage
+%     \item Delaying
+% \end{itemize}}
+
+As the parallelism of a $\pi$-calculus process is largely dependent on synchronizations, parallel complexity analysis of such programs requires resource awareness with respect to the use of channels. Specifically, we must be able to statically describe the possible communication patterns of a channel, to establish the worst-case parallelism. This can be accomplished by annotating channel types with \textit{usages}. Usages are generalizations of input/output types that specify how a specific channel must be used. Usages were originally presented by Sumii and Kobayashi to introduce a type system that can guarantee the absence of deadlocks in a given program written in the $\pi$-calculus \cite{SumiiKobayashi1998}. The notion of usages was later extended by Kobayashi to introduce a type system which guarantees the absence of both dead- and livelocks \cite{Kobayashi2000}.\\
+
+More specifically, usages prescribe how channels may communicate by specifying how channels can be used as input or output at any point during reduction. They also specify \textit{when} a channel must be ready to communicate and when communication must have taken place. The syntax of usages is defined as follows.
+
+\begin{defi}[Usages]
+Usages $U$ are defined by the following syntax.
+%
+\begin{align*}
+    U,V ::=&\; \nil \mid \usagepref{\alpha}{t_o}{t_c}.U \mid (\uparcomp{U}{V}) \mid \;\bang{U} \quad\quad \alpha ::= \inusagesym \mid \outusagesym
+\end{align*}
+\label{def:lockfreedomusages}
+\end{defi}
+%
+Here, the usage $\nil$ specifies that the corresponding channel is not valid to use. $\inusagepref{t_o}{t_c}.U$ specifies that the corresponding channel can receive values, and afterwards it is used according to $U$. The channel must be ready to receive values within $t_o$ time (called the obligation) and within $t_c$ time (called the capacity) \textit{after} being ready, the communication must have taken place. $\outusagepref{t_o}{t_c}.U$ works the same way, but the channel must send values. We say that the usage prefixes $\inusagesym$ and $\outusagesym$ are \textit{dual}. The usage $\uparcomp{U}{V}$ specifies that the corresponding channel must be used  according to $U$ or $V$, possibly in parallel. Finally the usage $\bang{U}$ specifies that the corresponding channel can be used according to $U$ an arbitrary number of times.\\
+
+When describing usages, it is often convenient to be able to express some specific usage delayed by some amount of time. That is, if we have usage $\usagepref{\alpha}{t_o}{t_c}.U$, we want to be able to extend the $t_o$ time limit by $t$ such that it becomes $\usagepref{\alpha}{t_o + t}{t_c}.U$. Therefore, we introduce the delay operation $\withdelay{t}{U}$ as follows.
+
+\begin{defi}[Delay]
+The delay operation $\withdelay{t}{U}$ is defined by
+\begin{align*}
+    \withdelay{t}\nil = \nil\kern2em \withdelay{t}{\usagepref{\alpha}{t_o}{t_c}.U} = \usagepref{\alpha}{t_o + t}{t_c}.U\kern2em \withdelay{t}{(\uparcomp{U}{V})} =\; \uparcomp{\withdelay{t}{U}}{\;\withdelay{t}{V}}\kern2em \withdelay{t}{\;\bang{U}} = \;\bang{(\withdelay{t}{U})}
+\end{align*}
+%\begin{tabular}{ll}
+%     $\withdelay{t}\nil = \nil$ 
+%     $\withdelay{t}{\usagepref{\alpha}{t_o}{t_c}.U} = \usagepref{\alpha}{t_o + t}{t_c}.U$\\
+%     
+%     $\withdelay{t}{(\uparcomp{U}{V})} =\; \uparcomp{\withdelay{t}{U}}{\;\withdelay{t}{V}}$ &
+%     $\withdelay{t}{\;\bang{U}} = \;\bang{(\withdelay{t}{U})}$
+%\end{tabular}
+\label{def:lockfreedomdelaying}
+\end{defi}
+%
+\section{Reliability}
+A major advantage of usages is that we can be statically check if any channel attempting a communication operation always has another process eventually attempting the dual operation. Using obligations and capacities of usages we can also ensure that this happens within a certain amount of time. This is especially useful for deadlock detection and complexity analysis of programs written in the $\pi$-calculus. We call this property of usages \textit{reliability}. Before formally defining reliability, we first define a congruence relation for usages.
+
+\begin{defi}[Usage congruence]
+    The congruence relation $\equiv$ is defined as the least congruence relation satisfying the rules
+    %
+    $$
+        U \equiv \uparcomp{U}{\nil}\kern2em \uparcomp{U}{V} \equiv \uparcomp{V}{U}\kern2em\uparcomp{(\uparcomp{U}{V})}{W} \equiv \uparcomp{U}{(\uparcomp{V}{W})}
+    $$
+    \vspace{-1em}
+    $$
+        \bang{U} \equiv \uparcomp{\;\bang{U}}{U}\kern2em\;\bang{\nil} \equiv \nil\kern2em \bang{(\uparcomp{U}{V})} \equiv \uparcomp{\;\bang{U}}{\;\bang{V}}\kern2em \bang{\bang{U}} \equiv \;\bang{U}
+    $$
+    
+    %\begin{tabular}{cc}
+    %    \kern4em $U \equiv \uparcomp{U}{\nil}$ \kern-4em & \\
+    %    
+    %    $\uparcomp{U_1}{U_2} \equiv \uparcomp{U_2}{U_1}$ &
+    %    $\uparcomp{(\uparcomp{U_1}{U_2})}{U_3} \equiv \uparcomp{U_1}{(\uparcomp{U_2}{U_3})}$ \\
+    %    
+    %    $\bang{\nil} \equiv \nil$ &
+    %    $\bang{U} \equiv \uparcomp{\;\bang{U}}{U}$ \\
+    %    
+    %    $\bang{(\uparcomp{U_1}{U_2})} \equiv \uparcomp{\;\bang{U_1}}{\;\bang{U_2}}$ &
+    %    $\bang{\bang{U}} \equiv \;\bang{U}$
+    %\end{tabular}
+    \label{def:lockfreedomsubusagecongruence}
+\end{defi}
+
+With the congruence rules defined, we now introduce a reduction relation on usages in Definition \ref{def:lockfreedomsubusagereduction}. The first two rules show how usages ensure that processes attempting to perform a communication operation have another process attempting to perform the dual operation. To ensure that the time limits specified by the usages are satisfied, in the premises we must ensure that the obligations on both processes are less than the capacity of the other process. Note that these rules are derived not from Kobayashi's original work, but from an extended definition of usages defined in Baillot et al. which Kobayashi is also a co-author of \cite{BaillotEtAl2021}. Reliability has been shown to be decidable by Kobayashi et al., as the problem can be reduced to the reachability problem of Petri nets \cite{KobayashiEtAl2000}.
+
+% \begin{defi}[Usage reduction]
+%     The reduction relation $\longrightarrow$ is defined as the least relation satisfying the rules
+%     \begin{align*}
+%         \infrule{}{\parcomp{\parcomp{\inusagepref{t_o}{t_c}.U}{\outusagepref{t_o'}{t_c'}.V}}{W} \longrightarrow \uparcomp{U}{\uparcomp{V}{W}}}
+%         %
+%         \kern7em \infrule{U \equiv U' \quad U' \longrightarrow V' \quad V' \equiv V}{U \longrightarrow V}
+%     \end{align*}
+%     \label{def:lockfreedomsubusagereduction}
+% \end{defi}
+
+\begin{defi}[Usage reduction]
+    The reduction relation $\longrightarrow$ is defined as the least relation satisfying the rules
+    \begin{align*}
+        &\infrule{t_o' \leq t_c \quad\quad\quad t_o \leq t_c'}{\parcomp{\parcomp{\inusagepref{t_o}{t_c}.U}{\outusagepref{t_o'}{t_c'}.V}}{W} \longrightarrow\; \uparcomp{\withdelay{max(t_o, t_o')}{(\uparcomp{U}{V})}}{W}}
+        %
+        \kern10em
+        \infrule{\neg(t_o' \leq t_c \land t_o \leq t_c')}{\parcomp{\parcomp{\inusagepref{t_o}{t_c}.U}{\outusagepref{t_o'}{t_c'}.V}}{W} \longrightarrow \errres}\\
+        %
+        &\kern11em\infrule{U \equiv U' \quad U' \longrightarrow V' \quad V' \equiv V}{U \longrightarrow V}
+    \end{align*}
+    \label{def:lockfreedomsubusagereduction}
+\end{defi}
+
+As mentioned, we can use usages to statically determine if any channel attempting synchronization eventually succeeds. As can be seen in the reduction rules for usages, if an input/output pair of prefixes ever appear in parallel, we must ensure their obligations and capacities are consistent with each other and if not, we reduce the entire usage to $\errres$. We call this property \textit{reliability}.
+
+\begin{defi}[Reliability]
+    A usage $U$ is reliable if $U \not\!\!\longrightarrow^* \errres$
+    
+    \label{def:lockfreedomreliability}
+\end{defi}
+
+\section{Subusages}
+
+The obligation and capacity of usage prefixes introduce a notion of \textit{precision}. That is, some usages are less restrictive, i.e. cover a greater time interval, than others. Take for instance the usages $\inusagepref{0}{5}$ and $\inusagepref{0}{3}$. It is clear that if a channel has capacity to communicate within 3 time units, then it must also have capacity to communicate within 5 time units. Therefore, we say that $\inusagepref{0}{3}$ is a subusage of $\inusagepref{0}{5}$ and write $\inusagepref{0}{3} \sqsubseteq \inusagepref{0}{5}$. Similarly, take the usages $\inusagepref{3}{2}$ and $\inusagepref{2}{3}$. Both usages ensure that a process communicates within 5 time units, but the bound on $\inusagepref{3}{2}$ is tighter and thus $\inusagepref{3}{2} \sqsubseteq \inusagepref{2}{3}$. This leads to the definition of subusages.
+
+\begin{defi}[Subusage]
+    The subusage relation $\sqsubseteq$ is defined as the least reflexive and transitive relation satisfying the rules
+    \begin{align*}
+        &\kern-2.5em\infrule{U \equiv U'}{U \sqsubseteq U'}\kern1em\infrule{}{\usagepref{\alpha}{\infty}{t_c}.U \sqsubseteq \nil}\kern2em \infrule{}{\parcomp{\usagepref{\alpha}{t_o}{t_c}.U}{\;\withdelay{t_o+t_c}{V}} \sqsubseteq \usagepref{\alpha}{t_o}{t_c}.(\parcomp{U}{V})}\\
+        %
+        &\kern-2em\infrule{U \sqsubseteq U'}{\uparcomp{U}{V} \sqsubseteq \uparcomp{U'}{V}}\kern1em\infrule{U \sqsubseteq U'}{\bang{U} \sqsubseteq\; \bang{U'}}\kern2em \infrule{U \sqsubseteq U' \quad t_o' \leq t_o \quad t_c \leq t_c'}{\usagepref{\alpha}{t_o}{t_c}.U \sqsubseteq \usagepref{\alpha}{t_o'}{t_c'}.U'}
+    \end{align*}
+    %
+    %\\
+    %\begin{tabular}{p{15em}p{10em}}
+    %    \infrule{U \equiv U'}{U \sqsubseteq U'} & 
+    %        
+    %    \infrule{}{\usagepref{\alpha}{\infty}{t_c}.U \sqsubseteq \nil}\\
+    %    
+    %    \infrule{U \sqsubseteq U'}{\uparcomp{U}{V} \sqsubseteq \uparcomp{U'}{V}} &
+    %        
+    %    \infrule{U \sqsubseteq U'}{\bang{U} \sqsubseteq\; \bang{U'}}\\
+    %        
+    %    \infrule{}{\parcomp{\usagepref{\alpha}{t_o}{t_c}.U}{\;\withdelay{t_o+t_c}{V}} \sqsubseteq %\usagepref{\alpha}{t_o}{t_c}.(\parcomp{U}{V})} &
+    %        
+    %    \infrule{U \sqsubseteq U' \quad t_o' \leq t_o \quad t_c \leq t_c'}{\usagepref{\alpha}{t_o}{t_c}.U %\sqsubseteq \usagepref{\alpha}{t_o'}{t_c'}.U'}
+    %    \end{tabular}
+\label{def:lockfreedomsubusage}
+\end{defi}
+
+The second rule in the top row says that any usage prefix with obligation $\infty$, i.e. is invariant to time, can simply be used according to $\nil$. The rule in top right enables a usage to be delayed until an input or output prefix it is parallel with has synchronized, by instead putting it in parallel with the continuation of this prefix. Note that we advance the time of the usage according to the upper bound of the imposed delay, which is exactly the obligation plus the capacity of the synchronizing prefix. The purpose of the rule in the bottom right is twofold. First, it ensures that the subusage relation is recursively defined though prefixes, and second it says that we can strengthen the obligation and weaken the capacity.
+
+% \subsubsection{Usages with sized types}
+% % Intro
+% %   Something about omitting nondeterministic choice
+% % Updated syntax
+% % Operations on usages with sized types (\oplus, \sqcup, +) Delaying operation?
+% % Same congruence rules
+% % Updated reduction rules
+% %   Environment from sized types
+% % Updated subusages
+% Baillot et al. introduces an extension of usages to sized types \cite{BaillotEtAl2021}. The syntax of the extension is similar to before, but instead of denoting obligations and capacities using naturals, we instead denote them using intervals specified by sized types. This has the obvious advantage that we can specify not just an upper bound but also a lower bound. Furthermore, because sized types allow for polymorphism using index variables, we can specify bounds relative to some input. The syntax for usages with sized types can be seen in Definition \ref{def:usagessized}.
+% %
+% \begin{defi}[Usages with sized types]
+% Usages $U$ with sized types are defined by the following syntax.
+% %
+% \begin{align*}
+%     \kern-2.5em U,V ::= \nil \mid \usagepref{\alpha}{A_o}{J_c}.U \mid (\uparcomp{U}{V}) \mid \;\bang{U} \quad\quad \alpha ::= \inusagesym \mid \outusagesym\quad\quad A_o, B_o ::= \kinterval{I}{J} \quad \quad J_c, I_c ::= J \mid \kinterval{I}{J}
+% \end{align*}
+% \label{def:usagessized}
+% \end{defi}
+% %
+% As can be seen, the only difference is the definition of obligations and capacities. The interval of a capacity may be denoted using a single index $J$, but really this is just a shorthand for the interval $\kinterval{-\infty}{J}$. The interval $\kinterval{-\infty}{J}$ is useful and commonly appears, as the capacity denotes the time before a dual process is ready \textit{after} the time specified in the obligation. However, oftentimes it is perfectly acceptable for the dual process to be ready before the original process is ready to execute, and so the lower bound becomes $-\infty$. A usage prefix $\usagepref{\alpha}{t_o}{t_c}$ using the original definition of usages can be simulated using the new definition as $\usagepref{\alpha}{\kinterval{0}{t_o}}{t_c} = \usagepref{\alpha}{\kinterval{0}{t_o}}{\kinterval{-\infty}{t_c}}$. This showcases how the interval $\kinterval{-\infty}{J}$ often appears useful in denoting capacities.\\
+
+% Note that in the original definition of usages with sized types in Baillot et al. a non-deterministic choice operator was also included. This allows for more freedom in typing pattern matching where channels may be used differently in the two branches. However, this leads to a more complex definition of usages, and so we have omitted this operator in this paper.\\
+
+% With a new denotation of obligations and capacities, we also find a need for more operations on usages when defining usage reductions. The three new operations $\oslash$, $\sqcup$, and $+$ are defined in Definition \ref{def:usagesoperationssized}. The definition for the delay operation $\withdelay{A_o}{}$\; remains the same as in Definition \ref{def:lockfreedomdelaying}, but we use the new $+$ operation on indices instead of the $+$ on naturals.
+
+% \begin{defi}[Operations on usages with sized types]
+% The operations $\oslash$, $\sqcup$, and $+$ are defined by
+% \begin{align*}
+%     A_o \oslash J = \kinterval{0}{Left(A_o) + J} \quad\quad A_o \oslash \kinterval{I}{J} = \kinterval{Right(A_o) + I}{Left(A_o) + J}\\
+%     \kinterval{I}{J} \sqcup \kinterval{I'}{J'} = \kinterval{max(I, I')}{max(J,J')} \quad\quad \kinterval{I}{J} + \kinterval{I'}{J'} = \kinterval{I + I'}{J + J'}
+% \end{align*}
+% \label{def:usagesoperationssized}
+% \end{defi}
+
+% The operation $\sqcup$ is the $max$ operation extended to intervals and $+$ is simply addition extended to intervals. The operation $\oslash$ takes an obligation $A_o$ and a capacity $J_c$ and computes $\bigcap_{t \in A_o} J_c + \kinterval{t}{t}$ i.e. the intersection of the capacity delayed by any value in the obligation. In the case where the capacity is a single index, we ignore the lower bound and set this to 0. This operation is useful when we want to check if the obligation of one prefix is consistent with another prefix.
+
+% \begin{defi}[Usage reduction with sized types]
+%     The reduction relation $\longrightarrow$ is defined as the least relation satisfying the rules
+%     \begin{align*}
+%         &\kern4em\infrule{\varphi; \Phi \vDash B_o \subseteq A_o \oslash I_c \quad \varphi; \Phi \vDash A_o \subseteq B_o\oslash J_c}{\varphi; \Phi \vdash \parcomp{\parcomp{\inusagepref{A_o}{I_c}.U}{\outusagepref{B_o}{J_c}.V}}{W} \longrightarrow\; \uparcomp{\withdelay{A_o \sqcup B_o}{(\uparcomp{U}{V})}}{W}}\\
+%         %
+%         &\kern-1em
+%         \infrule{\varphi; \Phi \not\vDash (B_o \subseteq A_o \oslash I_c \land A_o \subseteq B_o \oslash J_c)}{\varphi; \Phi \vdash \parcomp{\parcomp{\inusagepref{A_o}{I_c}.U}{\outusagepref{B_o}{J_c}.V}}{W} \longrightarrow \errres} \kern7em\infrule{U \equiv U' \quad \varphi; \Phi \vdash U' \longrightarrow V' \quad V' \equiv V}{\varphi; \Phi \vdash U \longrightarrow V}
+%     \end{align*}
+% \label{def:usagereductionsized}
+% \end{defi}
+
+% The new denotation of obligation and capacity also brings a need for modified reduction rules which can be seen in Definition \ref{def:usagereductionsized}. These modified rules are similar to the ones from before, and these are actually a generalization of the ones from before. The first thing we notice is that reductions are now given under a set of index variables $\varphi$ and a set of constraints $\Phi$ to interpret the sized types of the intervals. Otherwise, in the premise, instead of checking if the obligation of one prefix is less than the capacity of the other as earlier, we now use the $\oslash$ operation on the obligation and capacity of one prefix and check if the obligation of the other is a subset of this. The new definition of reliability is similar to that of before, but we must reduce a usage $U$ under $\varphi$ and $\Phi$.
+
+% \begin{defi}[Reliability with sized types]
+%     A usage $U$ is reliable if $\varphi; \Phi \vDash U \not\longrightarrow^* \errres$
+    
+%     \label{def:lockfreedomreliability}
+% \end{defi}
+
+% We also modify the definition of subusages with the new definition visible in Definition \ref{def:usagesubusagesized}. The most significant change here is the last rule. Again, this rule serves two purposes: to recur the subusage relation through prefixes, and to possibly strengthen the obligation and weaken the capacity. As we are now working with intervals, we must now use the subset relation instead of the less than or equal relation from before, when comparing two obligations or two capacities. Again, if a capacity of the last premise is a single index $J$, we assume the interval $\kinterval{-\infty}{J}$.
+
+% \begin{defi}[Subusage with sized types]
+%     The subusage relation $\sqsubseteq$ is defined as the least reflexive and transitive relation satisfying the rules
+%     \begin{align*}
+%         &\kern-3em\infrule{\varphi; \Phi \vdash U \equiv U'}{\varphi; \Phi \vdash U \sqsubseteq U'}\kern-2em\infrule{}{\varphi; \Phi \vdash U \sqsubseteq \nil}\kern-1em \infrule{}{\varphi; \Phi \vdash \parcomp{\usagepref{\alpha}{A_o}{J_c}.U}{\;\withdelay{A_o+J_c}{V}} \sqsubseteq \usagepref{\alpha}{A_o}{J_c}.(\parcomp{U}{V})}\\
+%         %
+%         &\kern-3.5em\infrule{\varphi; \Phi \vdash U \sqsubseteq U'}{\varphi; \Phi \vdash \uparcomp{U}{V} \sqsubseteq \uparcomp{U'}{V}}\kern-2em\infrule{\varphi; \Phi \vdash U \sqsubseteq U'}{\varphi; \Phi \vdash \bang{U} \sqsubseteq\; \bang{U'}}\kern-1em \infrule{\varphi; \Phi \vdash U \sqsubseteq U' \quad \varphi; \Phi \vDash B_o \subseteq A_o \quad \varphi; \Phi \vDash I_c \subseteq J_c}{\varphi; \Phi \vdash \usagepref{\alpha}{A_o}{I_c}.U \sqsubseteq \usagepref{\alpha}{B_o}{J_c}.U'}
+%     \end{align*}
+%     %
+%     %\\
+%     %\begin{tabular}{p{20em}p{15em}}
+%     %    \infrule{\varphi; \Phi \vdash U \equiv U'}{\varphi; \Phi \vdash U \sqsubseteq U'} & 
+%     %        
+%     %    \infrule{}{\varphi; \Phi \vdash U \sqsubseteq \nil}\\
+%     %    
+%     %    \infrule{\varphi; \Phi \vdash U \sqsubseteq U'}{\varphi; \Phi \vdash \uparcomp{U}{V} \sqsubseteq %\uparcomp{U'}{V}} &
+%     %        
+%     %    \infrule{\varphi; \Phi \vdash U \sqsubseteq U'}{\varphi; \Phi \vdash \bang{U} \sqsubseteq\; %\bang{U'}}\\
+%     %        
+%     %    \infrule{}{\varphi; \Phi \vdash \parcomp{\usagepref{\alpha}{A_o}{J_c}.U}{\;\withdelay{A_o+J_c}{V}} %\sqsubseteq \usagepref{\alpha}{A_o}{J_c}.(\parcomp{U}{V})} &
+%     %        
+%     %    \infrule{\varphi; \Phi \vdash U \sqsubseteq U' \quad \varphi; \Phi \vDash B_o \subseteq A_o \quad %\varphi; \Phi \vDash I_c \subseteq J_c}{\varphi; \Phi \vdash \usagepref{\alpha}{A_o}{I_c}.U \sqsubseteq %\usagepref{\alpha}{B_o}{J_c}.U'}
+%     %    \end{tabular}
+% \label{def:usagesubusagesized}
+% \end{defi}

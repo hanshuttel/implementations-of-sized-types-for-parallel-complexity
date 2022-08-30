@@ -1,0 +1,57 @@
+\section{Lemma and proof}
+
+
+\begin{lemma}{(Well-formedness preservation)} For any well-formed configuration $\conf{E,\; a}$ with a reduction $\conf{E,\; a} \xrightarrow{\alpha} \conf{E',\; a'}$ the configuration $\conf{E',\; a'}$ is also well-formed.
+
+\begin{proof} By induction on the reduction $\conf{E,\; a} \xrightarrow{\alpha} \conf{E',\; a'}$.
+%
+\begin{description}
+\item[\runa{cond-1}] We have the reduction $\conf{\phi \Rightarrow E,\; a} \xrightarrow{\epsilon} \conf{E,\; a}$ and so the AST trivially remains well-formed. For $\phi \Rightarrow E$ to be well-formed, $E$ must also be well-formed.
+%
+\item[\runa{cond-2}] We have the reduction $\conf{\phi \Rightarrow E,\; a} \xrightarrow{\epsilon} \conf{\mathbf{0},\; a}$ and so the editor expression and AST trivially remain well-formed. 
+%
+\item[\runa{eval}] We have the reduction $\conf{\texttt{eval}.E,\; a} \xrightarrow{v} \conf{E,\; a}$ and so the AST trivially remains well-formed. For $\texttt{eval}.E$ to be well-formed, $E$ must also be well-formed.
+%
+\item[\runa{seq}] We have the reduction $\conf{E_1 \ggg E_2,\; a} \xrightarrow{\alpha} \conf{E_1' \ggg E_2,\; a'}$ where $\conf{E_1,\; a} \xrightarrow{\alpha} \conf{E_1',\; a'}$ and so by virtue of the inductive hypothesis \conf{E_1',\; a'} is well-formed. As $E_1$ reduces to $E_1'$ it must be that $E_1$ and $E_1'$ end at the same path, and as $E_1 \ggg E_2$ is well-formed, it must be that $E_1'$ only affects the subtree at this path, such that $E_1' \ggg E_2$ is well-formed.
+%
+\item[\runa{struct}] We have the reduction $\conf{E_1,\; a} \xrightarrow{\alpha} \conf{E_1',\; a'}$ where $E_1 \equiv E_2$ and $\conf{E_2,\; a} \xrightarrow{\alpha} \conf{E_2',\; a'}$ and $E_2' \equiv E_1'$. We consider the cases of $\equiv$.
+%
+\begin{description}
+\item[\runa{sc-1}] $\mathbf{0} \ggg E_2 \equiv E_2$. For $\mathbf{0} \ggg E_2$ to be well-formed, $E_2$ must be well-formed.
+%
+\item[\runa{sc-2}] $\recursion{E_3}{x} \equiv E_3\!\left\{^{\recursion{E_3}{x}}\!/_x\right\}$. For $\recursion{E_3}{x}$ to be well-formed, $E_3$ must be well-formed and end at the path it starts on, which implies $\recursion{E_3}{x}$ ends on the path it starts on, and so any substitution from $x$ in $E_3\!\left\{^{\recursion{E_3}{x}}\!/_x\right\}$ is well-formed.
+%
+\item[\runa{sc-3}] $\phi \Rightarrow \mathbf{0}$. Trivially well-formed, as $\mathbf{0}$ is well-formed.
+%
+\item[\runa{sc-4}] $\phi_1 \Rightarrow \phi_2 \Rightarrow E_3 \equiv \phi_2 \Rightarrow \phi_1 \Rightarrow E_3$. As conditions do not affect the AST directly, $\phi_1 \Rightarrow \phi_2 \Rightarrow E_3$ is well-formed iff $E_3$ is well-formed and ends at the path it starts on, and so it trivially holds that $\phi_2 \Rightarrow \phi_1 \Rightarrow E_3$ is also well-formed.
+%
+\end{description}
+%
+Thus, $E_2$ must be well-formed. By virtue of the inductive hypothesis we have that $\conf{E_2',\; a'}$ is well-formed, and as $E_2' \equiv E_1'$ it must be that $E_1'$ is well-formed, such that $\conf{E_1',\; a}$ is also well-formed.
+%
+\item[\runa{context}] We have the reduction $\conf{\pi.E,\; \cursorctx{a}} \xrightarrow{\pi} \conf{E,\; \cursorctx{a'}}$ where $a \xrightarrow{\pi} a'$. For $\pi.E$ to be well-formed, $E$ must also be well-formed. What remains is to show that $\cursorctx{a'}$ is well-typed. We consider the cases of $\pi$.
+%
+\begin{description}
+\item[$\replace{\texttt{var}\; x}$] We have the reduction $\cursor{\hat{a}} \xrightarrow{\replace{\texttt{var}\; x}} \cursor{x}$, and $\cursorctx{\cursor{x}}$ is well-formed.
+%
+\item[$\replace{\hole : \tau}$] We have the reduction $\cursor{\hat{a}} \xrightarrow{\replace{\texttt{hole} : \tau}} \cursor{\hole : \tau}$, and $\cursorctx{\cursor{\hole : \tau}}$ is well-formed.
+%
+\item[$\replace{\texttt{const}\; c}$] We have the reduction $\cursor{\hat{a}} \xrightarrow{\replace{\texttt{const}\; c}} \cursor{c}$, and $\cursorctx{\cursor{c}}$ is well-formed.
+%
+\item[$\replace{\texttt{app} : \tau_1 \rightarrow \tau_2,\; \tau_1}$] We have the reduction $\cursor{\hat{a}} \xrightarrow{\replace{\texttt{app} : \tau_1 \rightarrow \tau_2,\; \tau_1}} \cursor{\hole : \tau_1 \rightarrow \tau_2\; \hole : \tau_1}$, and $\cursorctx{\cursor{\hole : \tau_1 \rightarrow \tau_2\; \hole : \tau_1}}$ is well-formed.
+%
+\item[$\replace{\texttt{lambda}\; x : \tau_1 \rightarrow \tau_2}$] We have the reduction $\cursor{\hat{a}} \xrightarrow{\replace{\texttt{lambda}\; x : \tau_1 \rightarrow \tau_2}} \cursor{\lambda x : \tau_1.\hole : \tau_2}$, and $\cursorctx{\cursor{\lambda x : \tau_1.\hole : \tau_2}}$ is well-formed.
+%
+\item[$\replace{\texttt{break}}$] We either have the reduction $\cursor{\hat{a}} \xrightarrow{\replace{\texttt{break}}} \cursor{\breakpoint{\hat{a}}}$ or $\cursor{\breakpoint{\hat{a}}} \xrightarrow{\replace{\texttt{break}}} \cursor{\hat{a}}$. We have that $\cursorctx{\cursor{\hat{a}}}$ and $\cursorctx{\cursor{\breakpoint{\hat{a}}}}$ are well-formed.
+%
+\item[$\texttt{child}\; 1$] By reduction rules \runa{appc-1}, \runa{lambdac} and \runa{breakc}, $a'$ has exactly one cursor, and so $\cursorctx{a'}$ must be well-formed.
+%
+\item[$\texttt{child}\; 2$] Same approach as for $\texttt{child}\; 1$.
+%
+\item[$\texttt{parent}$] By reduction rules \runa{appp-1}, \runa{appp-2}, \runa{lambdap} and \runa{breakp}, $a'$ has exactly one cursor, and so $\cursorctx{a'}$ must be well-formed.
+%
+\end{description}
+%
+\end{description}
+\end{proof}
+\end{lemma}

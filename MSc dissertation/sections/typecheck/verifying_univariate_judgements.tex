@@ -1,0 +1,109 @@
+% \subsection{An alternative method for verifying univariate polynomial constraints}
+% In this section we restrict ourselves to constraints whose left-hand side normalized indices are monotonic univariate polynomials. These constraints have a number of convenient properties we can take advantage of to greatly simplify the process of verifying whether a constraint judgement holds. Namely, these constraints perfectly divide the index variable $i$ of the polynomial into two intervals $[-\infty,n[$ and $[n, \infty]$ where for any value of $i$ in either the first or the second interval, the constraint is satisfied and for any $i$ in the other interval, it is not. The only exception to this is for constraints where its left-hand side index is constant, in which case $n = \pm\infty$. As such, we can describe the behavior of a monotonic univariate polynomial constraint using a single value as well as a sign denoting whether the polynomial is increasing or decreasing.\\
+
+% The point $n$ that divides the range that satisfies a constraint from the range that does not satisfy the constraint, corresponds to the root of the left-hand side of the normalized constraint. This is similar to the method described in Section \ref{sec:verifyingpolynomial}, except we now only store the range that satisfies the constraint. Here we take advantage of the fact that the polynomial is monotonic, to ensure that there is only a single root. Verifying whether a constraint $I \leq 0$ covers another constraint $J \leq 0$ then amounts to comparing the roots of $I$ and $J$. This method can be extended to non-monotonic polynomials by simply considering sequences of intervals satisfying constraints and comparing sequences of intervals satisfying a constraint.
+
+% \begin{examp}
+%     Given the three constraints
+%     %
+%     \begin{align*}
+%         C_1&: -i^2 + 10 \leq 0\\
+%         C_2&: -i + 2 \leq 0\\
+%         C_3&: -5 i^3 + 80 i^2 - 427 i + 758 \leq 0
+%     \end{align*}
+    
+%     we want to check if the judgement $\{i\};\{C_1, C_2, C_3\} \vDash -i + 4 \leq 0$ holds. We first find the non-negative roots $r_1$, $r_2$ and $r_3$ of $C_1$, $C_2$ and $C_3$. This can be done either numerically or analytically as all polynomials are of degree $\leq 4$. The roots are $r_1 = \sqrt{10} \approx 3.16$, $r_2 = 2$ and $r_3 \approx 4.59$. The root of $-i + 4$ is $4$, and so we must check if any of the roots $r_1$, $r_2$ and $r_3$ are greater than or equal $4$. In this case, $r_3 \geq 4$, and so the judgement $\{i\};\{C_1, C_2, C_3\} \vDash -i + 4 \leq 0$ holds.
+% \end{examp}
+
+%If our indices are univariate polynomials, we can express the feasible region of a constraint as a sequence of disjoint intervals. Then for a constraint $I \leq 0$ such that $I$ is in index variable $i$, the interpretation $I\{n/i\}$ with $n\in\mathbb{N}$ is satisfied when $n$ is within one of the intervals representing the feasible region of $I\leq 0$. We can utilize this to determine whether the feasible region of one constraint contains the feasible region of another by computing their intersection. This can be generalized to judgements on constraints, such that we can verify whether one constraint imposes new restrictions on possible interpretations. Then the question remains \textit{how do we find a sequence of disjoint intervals that corresponds to the feasible region of constraint $I \leq 0$?}\\ 
+
+%We can find such a sequence of intervals for a normalized constraint, by computing the roots of the corresponding index. For polynomials of degree $4$ or less, there exists exact analytical methods to compute the roots, and we can approximate them in the general case using numerical methods.
+
+% \begin{lstlisting}[escapeinside={(*}{*)}]
+% intersectIntervals(is1, is2):
+%     if is1 or is2 is empty:
+%         return empty list
+        
+%     i1 (*$\longleftarrow$*) head(is1)
+%     i2 (*$\longleftarrow$*) head(is2)
+%     ires (*$\longleftarrow$*) i1 (*$\cap$*) i2
+    
+%     if max(i1) > max(i2):
+%         is2' (*$\longleftarrow$*) tail(is2)
+%         intersectedIntervals (*$\longleftarrow$*) intersectIntervals(is1, is2')
+%     else:
+%         is1' (*$\longleftarrow$*) tail(is1)
+%         intersectedIntervals (*$\longleftarrow$*) intersectIntervals(is1', is2)
+    
+%     if ires is not the empty interval:
+%         add ires to intersectedIntervals as the head
+    
+%     return intersectedIntervals
+% \end{lstlisting}
+
+
+% \begin{lstlisting}[escapeinside={(*}{*)}]
+% containsIntervals(is1, is2):
+%     if is2 is empty:
+%         return true
+%     else if is1 is empty:
+%         return false
+    
+%     i1 (*$\longleftarrow$*) head(is1)
+%     i2 (*$\longleftarrow$*) head(is2)
+%     ires (*$\longleftarrow$*) i1 (*$\cap$*) i2
+    
+%     if ires = i2:
+%         is2' (*$\longleftarrow$*) tail(is2)
+%         return containsIntervals(is1, is2')
+%     else:
+%         is1' (*$\longleftarrow$*) tail(is1)
+%         return containsIntervals(is1', is2)
+% \end{lstlisting}
+
+
+% \begin{lstlisting}[escapeinside={(*}{*)}]
+% findIntervals((*$\{i\}$*), (*$I \leq 0$*)):
+%     roots (*$\longleftarrow$*) sorted list of all positive roots of (*$I$*)
+    
+%     if roots is empty:
+%         if (*$I\{0/i\}$*) (*$\leq$*) 0:
+%         return singleton list of [0, (*$\infty$*)]
+%     else:
+%         return empty list
+    
+%     low (*$\longleftarrow$*) 0
+%     satisfiedIntervals (*$\longleftarrow$*) empty list
+
+%     if head(roots) = 0:
+%         roots (*$\longleftarrow$*) tail(roots)
+
+%     while roots is not empty:
+%         high (*$\longleftarrow$*) head(roots)
+%         mid (*$\longleftarrow$*) (*$(\texttt{low} + \texttt{high})/2$*)
+        
+%         if (*$I\{\texttt{mid}/i\}$*) (*$\leq$*) 0:
+%             append [low,high] to satisfiedIntervals
+            
+%         low (*$\longleftarrow$*) high
+%         roots (*$\longleftarrow$*) tail(roots)
+    
+%     if (*$I\{(\texttt{low}+1)/i\}$*) (*$\leq$*) 0:
+%         append [low, (*$\infty$*)] to satisfiedIntervals
+    
+%     return satisfiedIntervals
+% \end{lstlisting}
+
+
+% \begin{lstlisting}[escapeinside={(*}{*)}]
+% checkJudgement((*$\{i\}$*), (*$\Phi$*), (*$I\leq 0$*)):
+%     satisfiedIntervals (*$\longleftarrow$*) singleton list of [0, (*$\infty$*)]
+    
+%     for (*$(J \leq 0) \in \Phi$*):
+%         isJ (*$\longleftarrow$*) findIntervals((*$\{i\}$*), (*$J\leq 0$*))
+%         satisfiedIntervals (*$\longleftarrow$*) intersectIntervals(satisfiedIntervals, isJ)
+        
+%     isI (*$\longleftarrow$*) findIntervals((*$\{i\}$*), (*$I \leq 0$*))
+        
+%     return containsInterval(isI, satisfiedIntervals)
+% \end{lstlisting}

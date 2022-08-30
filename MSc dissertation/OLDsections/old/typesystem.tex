@@ -1,0 +1,24 @@
+\section{Type system}
+In our editor-calculus, there are several constructs which are syntactically valid, but which can introduce certain run-time errors. A simple example of such is the expression $(\mathtt{child}\; 99).\mathbf{0}$, which is syntactically valid as $99 \in n$. Similarly, the editor prefix $\mathtt{parent}$ can produce a run-time error, as the root node contains no parent.\\
+
+Additionally, invalid ASTs can be constructed, which would lead to a run-time error during the evaluation of the program, and invalid recursive editor expression references can be made. \\
+
+To prevent these, we present a type system for our editor-calculus.\\
+
+In this section we define a type system for the AST-calculus that was introduced in section \ref{astcalculus}. We now present an annotated AST-calculus with types on holes and variables.
+
+\begin{align*}
+  a ::= \; &x \mid c \mid a_{1}\;a_{2} \mid \lambda x\!:\!\tau.a \mid \cursor{a} \mid \breakpoint{a} \mid \hole\\%^{m:\tau} \\
+  \tau ::= \; &\tau \rightarrow \tau \mid b \mid \hole %\mid var% T\; \texttt{where}\; T\in B \\
+  %B ::= \; &\texttt{Int} \mid \texttt{Bool}
+\end{align*}
+
+To define the set of well-typed terms we introduce a typing relation between terms and types $\Gamma \vdash a:\sigma$. Here $\Gamma$ is a type context and $a:\sigma$ is a type assumption. We now introduce a set of typing rules that provide validity of the typing relation through defining legitimate type derivations.\\
+
+\begin{table}[h]
+  \centering
+  \begin{tabular*}{\textwidth}{ll}
+    \hline\\
+    \runa{t-app} & \infrule{\Gamma \vdash a_1:\sigma \rightarrow \tau \quad \Gamma \vdash a_2:\sigma}{\Gamma \vdash a_1\;a_2:\tau} 
+  \end{tabular*}
+\end{table}

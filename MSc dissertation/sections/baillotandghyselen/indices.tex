@@ -1,0 +1,24 @@
+%\section{A type checker}\label{Sec:typesystembg}
+\section{Indices and constraint judgements}\label{sec:indicesandjudgements}
+In the type system by Baillot and Ghyselen, indices are used to keep track of sizes of inputs received on replicated inputs. As these sizes may be parametric, in that they may be dependent on the sizes of values received on replicated inputs, we view indices as algebraic expressions consisting of index variables $i,j,k\in\mathcal{V}$ ranging over a countable set, and function symbols, using meta-variable $f$, that may represent natural number constants as nullary functions as well as algebraic operators
+\begin{align*}
+    I,J ::= i \mid f(I_1,I_2,\dots,I_n)
+\end{align*}
+Each function symbol $f$ has an arity $\text{ar}(f)$ and an interpretation $[\![f]\!] : \mathbb{N}^{\text{ar}(f)} \rightarrow \mathbb{N}$. For the interpretation of binary difference, we assume that $[\![-]\!](n,m) = 0$ when $m \geq n$, which we refer to as the \textit{monus} operator. As indices may contain index variables, we assume some index valuation $\rho : \mathcal{V} \rightarrow \mathbb{N}$, and extend the definition of interpretations to indices, such that $[\![I]\!]_\rho$ is a natural number instance of index $I$, according to index valuation $\rho$, where for all $i$ in $I$, $\rho(i)$ substitutes for $i$ denoted $I\{\rho(i)/i\}$. Index substitution is defined in Definition \ref{def:indexsubstitution}. Based on the structure of the process that indices are used in the typing of, we may be able to establish relationships between the instances of these indices. For instance, a replicated input may receive values of sizes defined by an interval of two indices $[I,J]$. Then, we are only interested in index valuations $\rho$ that satisfy $[\![I]\!]_\rho \leq [\![J]\!]_\rho$. To express such relationships, we define binary constraints on indices in Definition \ref{def:indexconstr}.
+
+\begin{defi}\label{def:indexsubstitution}
+    We define index substitution by the following rules
+    \begin{align*}
+        i\substi{I}{j} &= j \text{ if } i = j\\
+        i\substi{I}{j} &= i \text{ if } i \not = j\\
+        f(I_1, I_2, \dots, I_n)\substi{J}{i} &= f(I_1\substi{J}{i}, I_2\substi{J}{i}, \dots, I_n\substi{J}{i})
+    \end{align*}
+\end{defi}
+
+\begin{defi}[Index constraints]\label{def:indexconstr}
+    Given a finite set of index variables $\varphi\subset \mathcal{V}$, we define a constraint $C$ on $\varphi$ to be an expression of the form $I \bowtie J$, where $I$ and $J$ are indices with all free index variables in $\varphi$ and $\bowtie\;\in\{\leq,=,\geq\}$ is a binary relation on $\mathbb{N}$. A finite set of constraints is represented by meta-variable $\Phi$.
+\end{defi}
+%
+A constraint $I \bowtie J$ on $\varphi$ is satisfied given an index valuation $\rho : \varphi \longrightarrow \mathbb{N}$ when $[\![I]\!]_\rho \bowtie [\![J]\!]_\rho$ is satisfied, denoted $\rho \vDash I \bowtie J$. For a finite set of constraints $\Phi$, we write $\rho\vDash \Phi$ when $\rho \vDash C$ holds for all $C \in \Phi$. Finally, $\varphi;\Phi\vDash C$ holds when for all index valuations $\rho$ such that $\rho\vDash \Phi$ holds, we also have $\rho\vDash C$. That is, $\varphi;\Phi\vDash C$ holds exactly when $C$ does not impose further restrictions on index valuations on $\varphi$. Such judgements are fundamental to the type system by Baillot and Ghyselen, especially ones of the form $\varphi;\Phi\vDash I \leq J$, as they impose a partial order on indices wrt. how indices may be interpreted. This enables a notion of subtyping for parametric complexities, such that only indices that are greater or equal may substitute, thus preserving upper bounds on the global parallel complexity, as we shall see in the following sections.
+%
+%\input{sections/typetjek_baillot_ghyselen/type_system}

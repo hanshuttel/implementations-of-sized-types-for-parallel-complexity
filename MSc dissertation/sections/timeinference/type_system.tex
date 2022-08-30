@@ -1,0 +1,54 @@
+\section{The typechecker}
+
+
+
+
+
+\begin{table*}[!ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        %
+        % S-nil
+        &\kern-0.5em\runa{U-nil}\infrule{}{\varphi;\Phi;\Gamma \vdash \nil \triangleleft \{0\}}
+        % S-nu
+        \kern-2em\runa{U-nu}\infrule{\varphi;\Phi;\Gamma, a:T \vdash P \triangleleft \kappa}{\varphi;\Phi;\Gamma \vdash \newvar{a:T}{P} \triangleleft \kappa}
+        % S-par
+        \kern-1em\runa{U-par}\infrule{\varphi;\Phi;\Gamma \vdash P \triangleleft \kappa \quad \varphi;\Phi;\Delta \vdash Q \triangleleft \kappa'}{\varphi;\Phi;\Gamma \mid \Delta \vdash P \mid Q \triangleleft \text{basis}(\varphi, \Phi,\kappa \cup \kappa')}\\
+        % S-match
+        &\kern-0.5em\runa{U-match}\infrule{
+        \begin{matrix}
+            \varphi;\Phi;\Gamma \vdash e:\natinterval{I}{J} \quad \varphi;\Phi, I \leq 0;\Gamma \vdash P \triangleleft \kappa\\
+            \varphi;\Phi, J \geq 1;\Gamma, x:\natinterval{I-1}{J-1} \vdash Q \triangleleft \kappa'
+        \end{matrix}}{\varphi;\Phi;\Gamma \vdash \match{e}{P}{x}{Q} \triangleleft \text{basis}(\varphi, \Phi, \kappa \cup \kappa')}
+        % S-tick
+        \kern16em\runa{S-tick}\infrule{\varphi;\Phi;\Gamma \vdash P \triangleleft \kappa}{\varphi;\Phi;\uparrow^1\!\!\Gamma \vdash \tick P \triangleleft \kappa + 1}\\
+        % S-iserv
+        &\runa{S-iserv}\infrule{\begin{matrix}
+            \texttt{in} \in \sigma\quad \varphi;\Phi;\Gamma\vdash a:\servt{I}{i}{\sigma}{K}{\widetilde{T}}\\
+            (\varphi, \widetilde{i}); \Phi; \text{ready}(\varphi,\Phi,\tforwardsim{\Gamma}{I}), \widetilde{v} : \widetilde{T} \vdash P \triangleleft \kappa \quad (\varphi,\widetilde{i});\Phi\vDash\kappa \leq K
+        \end{matrix}}
+        {\varphi;\Phi;\Gamma \vdash \;\bang\inputch{a}{\widetilde{v}}{}{P}\triangleleft \{I\}}
+         % S-ich
+        \kern15em\runa{S-ich}\infrule{\begin{matrix}
+            \texttt{in} \in \sigma\quad \varphi;\Phi;\Gamma \vdash a:\chant{\sigma}{I}{\widetilde{T}}\\
+            \varphi; \Phi; \tforwardsim{\Gamma}{I}, \widetilde{v}:\widetilde{T} \vdash P \triangleleft \kappa
+        \end{matrix}}
+        {\varphi;\Phi;\Gamma \vdash \inputch{a}{\widetilde{v}}{}{P} \triangleleft \kappa + I}\\
+        % S-oserv
+        &\runa{S-oserv}\infrule{\begin{matrix}
+            \texttt{out} \in \sigma\quad \varphi;\Phi;\Gamma\vdash a:\servt{I}{i}{\sigma}{K}{\widetilde{T}}\\
+            \varphi; \Phi;(\tforwardsim{\Gamma}{I}) \vdash \widetilde{e}:\widetilde{S} \quad \text{instantiate}(\widetilde{i}, \widetilde{S}) = \{\widetilde{J}/\widetilde{i}\} \quad \varphi;\Phi \vDash \widetilde{S} \sqsubseteq \widetilde{T}
+        \end{matrix}}
+        {\varphi;\Phi;\Gamma \vdash \asyncoutputch{a}{\widetilde{e}}{}\triangleleft \{K\{\widetilde{J}/\widetilde{i}\} + I\}}
+        % S-och
+        \kern15em\runa{S-och}\infrule{\begin{matrix}
+            \texttt{out} \in \sigma\quad \varphi;\Phi;\Gamma \vdash a:\chant{\sigma}{I}{\widetilde{T}}\\
+            \varphi; \Phi; \tforwardsim{\Gamma}{I} \vdash \widetilde{e}:\widetilde{S} \quad \varphi;\Phi \vDash \widetilde{S} \sqsubseteq \widetilde{T}
+        \end{matrix}}
+        {\varphi;\Phi;\Gamma \vdash \asyncoutputch{a}{\widetilde{e}}{} \triangleleft \{I\}}\\
+        % S-annot
+        &\runa{S-annot}\infrule{\varphi;\Phi;\tforwardsim{\Gamma}{n}\vdash P \triangleleft \kappa}{\varphi;\Phi;\Gamma\vdash n:P \triangleleft \kappa + n}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Usage typing rules for parallel complexity of processes.}
+    \label{tab:usageprocesstypingrules}
+\end{table*}
