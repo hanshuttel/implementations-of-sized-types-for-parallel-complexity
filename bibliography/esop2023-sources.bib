@@ -1,0 +1,981 @@
+@misc{Z3,
+  author = {{Microsoft Research}},
+  title = {Z3},
+  howpublished = {\url{https://github.com/Z3Prover/z3}},
+  note = {Accessed: June 11th 2022}
+}
+
+
+
+@article{Lhoussaine2004,
+author = {Lhoussaine, C\'{e}dric},
+title = {Type Inference for a Distributed $\pi$-Calculus},
+year = {2004},
+issue_date = {March 2004},
+publisher = {Elsevier North-Holland, Inc.},
+address = {USA},
+volume = {50},
+number = {1–3},
+issn = {0167-6423},
+url = {https://doi.org/10.1016/j.scico.2003.12.003},
+doi = {10.1016/j.scico.2003.12.003},
+abstract = {We study the type inference problem for a distributed $\pi$-calculus with explicit notions of locality and migration. Location types involve names that may be bound in terms. This requires an accurate new approach. We define a notion of principal typing. We provide a formal description of a sound and complete type inference algorithm.},
+journal = {Sci. Comput. Program.},
+month = {mar},
+pages = {225–251},
+numpages = {27},
+keywords = {dependent types, row, $\pi$-calculus, migration, type inference}
+}
+
+
+
+@article{IgarashiKobayashi2000,
+title = {Type Reconstruction for Linear $\pi$-Calculus with I/O Subtyping},
+journal = {Information and Computation},
+volume = {161},
+number = {1},
+pages = {1-44},
+year = {2000},
+issn = {0890-5401},
+doi = {https://doi.org/10.1006/inco.2000.2872},
+url = {https://www.sciencedirect.com/science/article/pii/S0890540100928724},
+author = {Atsushi Igarashi and Naoki Kobayashi},
+abstract = {Powerful concurrency primitives in recent concurrent languages and thread libraries provide great flexibility about implementation of high-level features like concurrent objects. However, they are so low-level that they often make it difficult to check global correctness of programs or to perform nontrivial code optimization, such as elimination of redundant communication. In order to overcome those problems, advanced type systems for input-only/output-only channels and linear (use-once) channels have been recently studied, but the type reconstruction problem for those type systems remained open, and therefore, their applications to concurrent programming languages have been limited. In this paper, we develop type reconstruction algorithms for variants of Kobayashi, Pierce, and Turner's linear channel type system with Pierce and Sangiorgi's subtyping based on input-only/output-only channel types and prove correctness of the algorithms. To our knowledge, no complete type reconstruction algorithm has been previously known for those type systems. We have implemented one of the algorithms and incorporated it into the compiler of the concurrent language HACL. This paper also shows some experimental results on the algorithm and its application to compile-time optimizations.}
+}
+
+
+
+
+
+
+@article{Kobayashi2005,
+author = {Kobayashi, Naoki},
+title = {Type-Based Information Flow Analysis for the $\pi$-Calculus},
+year = {2005},
+issue_date = {December 2005},
+publisher = {Springer-Verlag},
+address = {Berlin, Heidelberg},
+volume = {42},
+number = {4},
+issn = {0001-5903},
+abstract = {We propose a new type system for information flow analysis for the $\pi$-calculus. As demonstrated by recent studies, information about whether each communication succeeds is important for precise information flow analysis for concurrent programs. By collecting such information using ideas of our previous type systems for deadlock/livelock-freedom, our type system can perform more precise analysis for certain communication/synchronization patterns (like synchronization using locks) than previous type systems. Our type system treats a wide range of communication/synchronization primitives in a uniform manner, which enabled development of a clear proof of type soundness and a sound and complete type inference algorithm.},
+journal = {Acta Inf.},
+month = {dec},
+pages = {291–347},
+numpages = {57}
+}
+
+
+
+
+@article{Hilbert1902,
+author = {David Hilbert},
+title = {Mathematical problems},
+journal = {Bull. Amer. Math. Soc.},
+volume = {8},
+number = {10},
+pages = {437-479},
+year  = {1902},
+publisher = {Bulletin of the New York mathematical society},
+doi = {10.1090/S0002-9904-1902-00923-3},
+
+URL = { 
+        https://doi.org/10.1090/S0002-9904-1902-00923-3
+    
+},
+eprint = { 
+        https://doi.org/10.1090/S0002-9904-1902-00923-3
+    
+}
+
+}
+
+
+@article{Davis1973,
+author = {Martin Davis},
+title = {Hilbert's Tenth Problem is Unsolvable},
+journal = {The American Mathematical Monthly},
+volume = {80},
+number = {3},
+pages = {233-269},
+year  = {1973},
+publisher = {Taylor & Francis},
+doi = {10.1080/00029890.1973.11993265},
+
+URL = { 
+        https://doi.org/10.1080/00029890.1973.11993265
+    
+},
+eprint = { 
+        https://doi.org/10.1080/00029890.1973.11993265
+    
+}
+
+}
+
+@InProceedings{Padovani2017,
+author="Padovani, Luca",
+editor="Yang, Hongseok",
+title="Context-Free Session Type Inference",
+booktitle="Programming Languages and Systems",
+year="2017",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="804--830",
+abstract="Some interesting communication protocols can be precisely described only by context-free session types, an extension of conventional session types with a general form of sequential composition. The complex metatheory of context-free session types, however, hinders the definition of corresponding checking and inference algorithms. In this work we address and solve these problems introducing a new type system for context-free session types of which we provide two OCaml embeddings.",
+isbn="978-3-662-54434-1"
+}
+
+@inproceedings{Palamidessi1997,
+author = {Palamidessi, Catuscia},
+title = {Comparing the Expressive Power of the Synchronous and the Asynchronous Pi-Calculus},
+year = {1997},
+isbn = {0897918533},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/263699.263731},
+doi = {10.1145/263699.263731},
+abstract = {The Asynchronous $\pi$-calculus, as recently proposed by Boudol and, independently, by Honda and Tokoro, is a subset of the $\pi$-calculus which contains no explicit operators for choice and output-prefixing. The communication mechanism of this calculus, however, is powerful enough to simulate output-prefixing, as shown by Boudol, and input-guarded choice, as shown recently by Nestmann and Pierce. A natural question arises, then, whether or not it is possible to embed in it the full $\pi$-calculus. We show that this is not possible, i.e. there does not exist any uniform, parallel-preserving, translation from the $\pi$-calculus into the asynchronous $\pi$-calculus, up to any "reasonable" notion of equivalence. This result is based on the incapablity of the asynchronous $\pi$-calculus of breaking certain symmetries possibly present in the initial communication graph. By similar arguments, we prove a separation result between the $\pi$-calculus and CCS.},
+booktitle = {Proceedings of the 24th ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+pages = {256–265},
+numpages = {10},
+location = {Paris, France},
+series = {POPL '97}
+}
+
+@article{FelleisenHieb1992,
+title = {The revised report on the syntactic theories of sequential control and state},
+journal = {Theoretical Computer Science},
+volume = {103},
+number = {2},
+pages = {235-271},
+year = {1992},
+issn = {0304-3975},
+doi = {https://doi.org/10.1016/0304-3975(92)90014-7},
+url = {https://www.sciencedirect.com/science/article/pii/0304397592900147},
+author = {Matthias Felleisen and Robert Hieb},
+abstract = {The syntactic theories of control and state are conservative extensions of the λυ-calculus for equational reasoning about imperative programming facilities in higher-order languages. Unlike the simple λυ-calculus, the extended theories are mixtures of equivalence relations and compatible congruence relations on the term language, which significantly complicates the reasoning process. In this paper we develop fully compatible equational theories of the same imperative higher-order programming languages. The new theories subsume the original calculi of control and state and satisfy the usual Church–Rosser and Standardization Theorems. With the new calculi, equational reasoning about imperative programs becomes as simple as reasoning about functional programs.}
+}
+
+@inproceedings{DalLagoGaboardi2011,
+author = {Dal Lago, Ugo and Gaboardi, Marco},
+title = {Linear Dependent Types and Relative Completeness},
+year = {2011},
+isbn = {9780769544120},
+publisher = {IEEE Computer Society},
+address = {USA},
+url = {https://doi.org/10.1109/LICS.2011.22},
+doi = {10.1109/LICS.2011.22},
+abstract = {A system of linear dependent types for the lambda calculus with full higher-order recursion, called dlPCF, is introduced and proved sound and relatively complete. Completeness holds in a strong sense: dlPCF is not only able to precisely capture the functional behaviour of PCF programs (i.e. how the output relates to the input) but also some of their intensional properties, namely the complexity of evaluating them with Krivine's Machine. dlPCF is designed around dependent types and linear logic and is parametrized on the underlying language of index terms, which can be tuned so as to sacrifice completeness for tractability.},
+booktitle = {Proceedings of the 2011 IEEE 26th Annual Symposium on Logic in Computer Science},
+pages = {133–142},
+numpages = {10},
+keywords = {lambda calculus, implicit computational complexity, type systems, relative completeness},
+series = {LICS '11}
+}
+
+@article{DalLago2009,
+author = {Lago, Ugo Dal},
+title = {Context Semantics, Linear Logic, and Computational Complexity},
+year = {2009},
+issue_date = {August 2009},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {10},
+number = {4},
+issn = {1529-3785},
+url = {https://doi.org/10.1145/1555746.1555749},
+doi = {10.1145/1555746.1555749},
+abstract = {We show that context semantics can be fruitfully applied to the quantitative analysis of proof normalization in linear logic. In particular, context semantics lets us define the weight of a proof-net as a measure of its inherent complexity: it is both an upper bound to normalization time (modulo a polynomial overhead, independently on the reduction strategy) and a lower bound to the amount of resources needed to compute the normal form. Weights are then exploited in proving strong soundness theorems for various subsystems of linear logic, namely elementary linear logic, soft linear logic, and light linear logic.},
+journal = {ACM Trans. Comput. Logic},
+month = {aug},
+articleno = {25},
+numpages = {32},
+keywords = {implicit computational complexity, linear logic, Geometry of interaction}
+}
+
+
+@inproceedings{HoffmannShao2015,
+author = {Hoffmann, Jan and Shao, Zhong},
+title = {Automatic Static Cost Analysis for Parallel Programs},
+year = {2015},
+isbn = {9783662466681},
+publisher = {Springer-Verlag},
+address = {Berlin, Heidelberg},
+url = {https://doi.org/10.1007/978-3-662-46669-8_6},
+doi = {10.1007/978-3-662-46669-8_6},
+abstract = {Static analysis of the evaluation cost of programs is an extensively studied problem that has many important applications. However, most automatic methods for static cost analysis are limited to sequential evaluation while programs are increasingly evaluated on modern multicore and multiprocessor hardware. This article introduces the first automatic analysis for deriving bounds on the worst-case evaluation cost of parallel first-order functional programs. The analysis is performed by a novel type system for amortized resource analysis. The main innovation is a technique that separates the reasoning about sizes of data structures and evaluation cost within the same framework. The cost semantics of parallel programs is based on call-by-value evaluation and the standard cost measures work and depth . A soundness proof of the type system establishes the correctness of the derived cost bounds with respect to the cost semantics. The derived bounds are multivariate resource polynomials which depend on the sizes of the arguments of a function. Type inference can be reduced to linear programming and is fully automatic. A prototype implementation of the analysis system has been developed to experimentally evaluate the effectiveness of the approach. The experiments show that the analysis infers bounds for realistic example programs such as quick sort for lists of lists, matrix multiplication, and an implementation of sets with lists. The derived bounds are often asymptotically tight and the constant factors are close to the optimal ones.},
+booktitle = {Proceedings of the 24th European Symposium on Programming on Programming Languages and Systems - Volume 9032},
+pages = {132–157},
+numpages = {26},
+keywords = {Resource Consumption, Amortized Analysis, Functional Programming, Static Analysis}
+}
+
+
+@article{CairesEtAl2016, title={Linear logic propositions as session types}, volume={26}, DOI={10.1017/S0960129514000218}, number={3}, journal={Mathematical Structures in Computer Science}, publisher={Cambridge University Press}, author={CAIRES, LUÍS and PFENNING, FRANK and TONINHO, BERNARDO}, year={2016}, pages={367–423}}
+
+@InProceedings{DardhaGay2018,
+author="Dardha, Ornela
+and Gay, Simon J.",
+editor="Baier, Christel
+and Dal Lago, Ugo",
+title="A New Linear Logic for Deadlock-Free Session-Typed Processes",
+booktitle="Foundations of Software Science and Computation Structures",
+year="2018",
+publisher="Springer International Publishing",
+address="Cham",
+pages="91--109",
+abstract="The {\$}{\$}{\backslash}pi {\$}{\$}$\pi$-calculus, viewed as a core concurrent programming language, has been used as the target of much research on type systems for concurrency. In this paper we propose a new type system for deadlock-free session-typed {\$}{\$}{\backslash}pi {\$}{\$}$\pi$-calculus processes, by integrating two separate lines of work. The first is the propositions-as-types approach by Caires and Pfenning, which provides a linear logic foundation for session types and guarantees deadlock-freedom by forbidding cyclic process connections. The second is Kobayashi's approach in which types are annotated with priorities so that the type system can check whether or not processes contain genuine cyclic dependencies between communication operations. We combine these two techniques for the first time, and define a new and more expressive variant of classical linear logic with a proof assignment that gives a session type system with Kobayashi-style priorities. This can be seen in three ways: (i) as a new linear logic in which cyclic structures can be derived and a {\$}{\$}{\backslash}small {\backslash}textsc {\{}Cycle{\}}{\$}{\$}CYCLE-elimination theorem generalises {\$}{\$}{\backslash}small {\backslash}textsc {\{}Cut{\}}{\$}{\$}CUT-elimination; (ii) as a logically-based session type system, which is more expressive than Caires and Pfenning's; (iii) as a logical foundation for Kobayashi's system, bringing it into the sphere of the propositions-as-types paradigm.",
+isbn="978-3-319-89366-2"
+}
+
+
+@InProceedings{GirardLafont1987,
+author="Girard, J. Y.
+and Lafont, Y.",
+editor="Ehrig, Hartmut
+and Kowalski, Robert
+and Levi, Giorgio
+and Montanari, Ugo",
+title="Linear logic and lazy computation",
+booktitle="TAPSOFT '87",
+year="1987",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="52--66",
+abstract="Recently, J.Y. Girard discovered that usual logical connectors such as ⇒ (implication) could be broken up into more elementary linear connectors. This provided a new linear logic [Girard86] where hypothesis are (in some sense) used once and only once. The most surprising is that all the power of the usual logic can be recovered by means of recursive logical operators (connector ``of course'').",
+isbn="978-3-540-47717-4"
+}
+
+@Inbook{Vasconcelos2009,
+author="Vasconcelos, Vasco T.",
+editor="Bernardo, Marco
+and Padovani, Luca
+and Zavattaro, Gianluigi",
+title="Fundamentals of Session Types",
+bookTitle="Formal Methods for Web Services: 9th International School on Formal Methods for the Design of Computer, Communication, and Software Systems, SFM 2009, Bertinoro, Italy, June 1-6, 2009, Advanced Lectures",
+year="2009",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="158--186",
+abstract="We present a reconstruction of session types in a linear pi calculus where types are qualified as linear or unrestricted. Linearly qualified communication channels are guaranteed to occur in exactly one thread, possibly multiple times. In our language each channel is characterised by two distinct variables, one used for reading, the other for writing; scope restriction binds together two variables, thus establishing the correspondence between the two ends of a same channel. This mechanism allows a precise control of resources via a linear type system. We build the language gradually, starting from simple input/output, then adding choice, recursive types, replication and finally subtyping. We also present an algorithmic type checking system.",
+isbn="978-3-642-01918-0",
+doi="10.1007/978-3-642-01918-0_4",
+url="https://doi.org/10.1007/978-3-642-01918-0_4"
+}
+
+
+@Article{GayHole2005,
+author="Gay, Simon
+and Hole, Malcolm",
+title="Subtyping for session types in the pi calculus",
+journal="Acta Informatica",
+year="2005",
+month="Nov",
+day="01",
+volume="42",
+number="2",
+pages="191--225",
+abstract="Extending the pi calculus with the session types proposed by Honda et al. allows high-level specifications of structured patterns of communication, such as client-server protocols, to be expressed as types and verified by static typechecking. We define a notion of subtyping for session types, which allows protocol specifications to be extended in order to describe richer behaviour; for example, an implemented server can be refined without invalidating type-correctness of an overall system. We formalize the syntax, operational semantics and typing rules of an extended pi calculus, prove that typability guarantees absence of run-time communication errors, and show that the typing rules can be transformed into a practical typechecking algorithm.",
+issn="1432-0525",
+doi="10.1007/s00236-005-0177-z",
+url="https://doi.org/10.1007/s00236-005-0177-z"
+}
+
+
+@inproceedings{CairesPfenning2010,
+author = {Caires, Lu\'{\i}s and Pfenning, Frank},
+title = {Session Types as Intuitionistic Linear Propositions},
+year = {2010},
+isbn = {3642153747},
+publisher = {Springer-Verlag},
+address = {Berlin, Heidelberg},
+abstract = {Several type disciplines for $\pi$-calculi have been proposed in which linearity plays
+a key role, even if their precise relationship with pure linear logic is still not
+well understood. In this paper, we introduce a type system for the $\pi$-calculus that
+exactly corresponds to the standard sequent calculus proof system for dual intuitionistic
+linear logic. Our type system is based on a new interpretation of linear propositions
+as session types, and provides the first purely logical account of all (both shared
+and linear) features of session types. We show that our type discipline is useful
+from a programming perspective, and ensures session fidelity, absence of deadlocks,
+and a tight operational correspondence between $\pi$-calculus reductions and cut elimination
+steps.},
+booktitle = {Proceedings of the 21st International Conference on Concurrency Theory},
+pages = {222–236},
+numpages = {15},
+location = {Paris, France},
+series = {CONCUR'10}
+}
+
+@InProceedings{GiuntiVasconcelos2010,
+author="Giunti, Marco
+and Vasconcelos, Vasco T.",
+editor="Gastin, Paul
+and Laroussinie, Fran{\c{c}}ois",
+title="A Linear Account of Session Types in the Pi Calculus",
+booktitle="CONCUR 2010 - Concurrency Theory",
+year="2010",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="432--446",
+abstract="We present a reconstruction of session types in a conventional pi calculus where types are qualified as linear or unrestricted. Linearly typed communication channels are guaranteed to occur in exactly one thread, possibly multiple times. We equip types with a constructor that denotes the two ends of a same communication channel. In order to assess the flexibility of the new type system, we provide three distinct encodings (from the linear lambda calculus, from the linear pi calculus, and from the pi calculus with polarized variables) into our system. For each language we present operational and typing correspondences, showing that our system effectively subsumes the linear pi calculus as well as foregoing works on session types.",
+isbn="978-3-642-15375-4"
+}
+
+
+
+
+
+
+@InProceedings{Honda1993,
+author="Honda, Kohei",
+editor="Best, Eike",
+title="Types for dyadic interaction",
+booktitle="CONCUR'93",
+year="1993",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="509--523",
+abstract="We formulate a typed formalism for concurrency where types denote freely composable structure of dyadic interaction in the symmetric scheme. The resulting calculus is a typed reconstruction of name passing process calculi. Systems with both the explicit and implicit typing disciplines, where types form a simple hierarchy of types, are presented, which are proved to be in accordance with each other. A typed variant of bisimilarity is formulated and it is shown that typed $\beta$-equality has a clean embedding in the bisimilarity. Name reference structure induced by the simple hierarchy of types is studied, which fully characterises the typable terms in the set of untyped terms. It turns out that the name reference structure results in the deadlock-free property for a subset of terms with a certain regular structure, showing behavioural significance of the simple type discipline.",
+isbn="978-3-540-47968-0"
+}
+
+
+@article{KobayashiSangiorgi2010,
+author = {Kobayashi, Naoki and Sangiorgi, Davide},
+title = {A Hybrid Type System for Lock-Freedom of Mobile Processes},
+year = {2008},
+issue_date = {May 2010},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {32},
+number = {5},
+issn = {0164-0925},
+url = {https://doi-org.zorac.aub.aau.dk/10.1145/1745312.1745313},
+doi = {10.1145/1745312.1745313},
+abstract = {We propose a type system for lock-freedom in the $\pi$-calculus, which guarantees that
+certain communications will eventually succeed. Distinguishing features of our type
+system are: it can verify lock-freedom of concurrent programs that have sophisticated
+recursive communication structures; it can be fully automated; it is hybrid, in that
+it combines a type system for lock-freedom with local reasoning about deadlock-freedom,
+termination, and confluence analyses. Moreover, the type system is parameterized by
+deadlock-freedom/termination/confluence analyses, so that any methods (e.g. type systems
+and model checking) can be used for those analyses. A lock-freedom analysis tool has
+been implemented based on the proposed type system, and tested for nontrivial programs.},
+journal = {ACM Trans. Program. Lang. Syst.},
+month = may,
+articleno = {16},
+numpages = {49},
+keywords = {Type systems, concurrency, mobile processes}
+}
+
+@article{Milner1978,
+title = {A theory of type polymorphism in programming},
+journal = {Journal of Computer and System Sciences},
+volume = {17},
+number = {3},
+pages = {348-375},
+year = {1978},
+issn = {0022-0000},
+doi = {https://doi.org/10.1016/0022-0000(78)90014-4},
+url = {https://www.sciencedirect.com/science/article/pii/0022000078900144},
+author = {Robin Milner},
+abstract = {The aim of this work is largely a practical one. A widely employed style of programming, particularly in structure-processing languages which impose no discipline of types, entails defining procedures which work well on objects of a wide variety. We present a formal type discipline for such polymorphic procedures in the context of a simple programming language, and a compile time type-checking algorithm W which enforces the discipline. A Semantic Soundness Theorem (based on a formal semantics for the language) states that well-type programs cannot “go wrong” and a Syntactic Soundness Theorem states that if W accepts a program then it is well typed. We also discuss extending these results to richer languages; a type-checking algorithm based on W is in fact already implemented and working, for the metalanguage ML in the Edinburgh LCF system.}
+}
+
+@article{KobayashiPierce1999,
+author = {Kobayashi, Naoki and Pierce, Benjamin C. and Turner, David N.},
+title = {Linearity and the Pi-Calculus},
+year = {1999},
+issue_date = {Sept. 1999},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {21},
+number = {5},
+issn = {0164-0925},
+url = {https://doi.org/10.1145/330249.330251},
+doi = {10.1145/330249.330251},
+abstract = {The economy and flexibility of the pi-calculus make it an attractive object of theoretical
+study and a clean basis for concurrent language design and implementation. However,
+such generality has a cost: encoding higher-level features like functional computation
+in pi-calculus throws away potentially useful information. We show how a linear type
+system can be used to recover important static information about a process's behavior.
+In particular, we can guarantee that two processes communicating over a linear channel
+cannot interfere with other communicating processes. After developing standard results
+such as soundness of typing, we focus on equivalences, adapting the standard notion
+of barbed bisimulation to the linear setting and showing how reductions on linear
+channels induce a useful “partial confluence” of process behaviors. For an extended
+example of the theory, we prove the validity of a tail-call optimization for higher-order
+functions represented as processes.},
+journal = {ACM Trans. Program. Lang. Syst.},
+month = sep,
+pages = {914–947},
+numpages = {34},
+keywords = {concurrency, linear types, process calculi, confluence, pi-calculus}
+}
+
+
+
+
+@article{Kobayashi2002,
+author = {Kobayashi, Naoki},
+title = {A Type System for Lock-Free Processes},
+year = {2002},
+issue_date = {15 September 2002},
+publisher = {Academic Press, Inc.},
+address = {USA},
+volume = {177},
+number = {2},
+issn = {0890-5401},
+url = {https://doi.org/10.1016/S0890-5401(02)93171-8},
+doi = {10.1016/S0890-5401(02)93171-8},
+abstract = {Advanced type systems for the $\pi$-calculus have recently been proposed to guarantee
+deadlock-freedom in the sense that certain communications will eventually succeed
+unless the whole process diverges. Although such guarantees are useful for reasoning
+about the behavior of concurrent programs, there still remains the weakness that the
+success of a communication is not completely guaranteed due to the possibility of
+divergence. For example, although a server process that has received a request message
+cannot discard the request, it is allowed to infinitely delegate the request to other
+processes, causing a livelock. In this paper, we present a type system which guarantees
+that certain communications will eventually succeed under fair scheduling, regardless
+of whether processes diverge. We also present a variant of the type system which guarantees
+that a communication will succeed within a given number of reduction steps.},
+journal = {Inf. Comput.},
+month = sep,
+pages = {122–159},
+numpages = {38}
+}
+
+
+
+@InProceedings{HondaEtAl1998,
+author="Honda, Kohei
+and Vasconcelos, Vasco T.
+and Kubo, Makoto",
+editor="Hankin, Chris",
+title="Language primitives and type discipline for structured communication-based programming",
+booktitle="Programming Languages and Systems",
+year="1998",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="122--138",
+abstract="We introduce basic language constructs and a type discipline as a foundation of structured communication-based concurrent programming. The constructs, which are easily translatable into the summation-less asynchronous $\pi$-calculus, allow programmers to organise programs as a combination of multiple flows of (possibly unbounded) reciprocal interactions in a simple and elegant way, subsuming the preceding communication primitives such as method invocation and rendez-vous. The resulting syntactic structure is exploited by a type discipline {\`a} la ML, which offers a high-level type abstraction of interactive behaviours of programs as well as guaranteeing the compatibility of interaction patterns between processes in a well-typed program. After presenting the formal semantics, the use of language constructs is illustrated through examples, and the basic syntactic results of the type discipline are established. Implementation concerns are also addressed.",
+isbn="978-3-540-69722-0"
+}
+
+
+
+@article{SumiiKobayashi1998,
+title = {A Generalized Deadlock-Free Process Calculus},
+journal = {Electronic Notes in Theoretical Computer Science},
+volume = {16},
+number = {3},
+pages = {225-247},
+year = {1998},
+note = {HLCL '98, 3rd International Workshop on High-Level Concurrent Languages (Satellite Workshop of CONCUR '98)},
+issn = {1571-0661},
+doi = {https://doi.org/10.1016/S1571-0661(04)00144-6},
+url = {https://www.sciencedirect.com/science/article/pii/S1571066104001446},
+author = {Eijiro Sumii and Naoki Kobayashi},
+abstract = {Deadlock is one of the most serious problems in concurrent programming. Recently, Kobayashi proposed a static type system for a process calculus which ensures that communication over some special channels never causes deadlock. However, since the class of such channels was fixed ad hoc by the type system, the deadlock-free fragment of the calculus was limited and the essence of the type system was not so clear. In this paper, we generalize his type system in order to extend the deadlock-free part of his calculus. For that purpose, we annotate each channel type with an expression called a usage, which specifies how the channel can and must be used. It is automatically checked by the type system that the usage does not cause deadlock and that the channel is indeed used along the specification. As a result, the deadlock-freedom property is treated more uniformly and guaranteed more extensively.}
+}
+
+
+%ikke gammelt
+
+@InProceedings{Hoffmann2010,
+author="Hoffmann, Jan
+and Hofmann, Martin",
+editor="Gordon, Andrew D.",
+title="Amortized Resource Analysis with Polynomial Potential",
+booktitle="Programming Languages and Systems",
+year="2010",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="287--306",
+abstract="In 2003, Hofmann and Jost introduced a type system that uses a potential-based amortized analysis to infer bounds on the resource consumption of (first-order) functional programs. This analysis has been successfully applied to many standard algorithms but is limited to bounds that are linear in the size of the input.",
+isbn="978-3-642-11957-6"
+}
+
+
+@article{Hofmann2003,
+author = {Hofmann, Martin and Jost, Steffen},
+title = {Static Prediction of Heap Space Usage for First-Order Functional Programs},
+year = {2003},
+issue_date = {January 2003},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {38},
+number = {1},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/640128.604148},
+doi = {10.1145/640128.604148},
+abstract = {We show how to efficiently obtain linear a priori bounds on the heap space consumption
+of first-order functional programs.The analysis takes space reuse by explicit deallocation
+into account and also furnishes an upper bound on the heap usage in the presence of
+garbage collection. It covers a wide variety of examples including, for instance,
+the familiar sorting algorithms for lists, including quicksort.The analysis relies
+on a type system with resource annotations. Linear programming (LP) is used to automatically
+infer derivations in this enriched type system.We also show that integral solutions
+to the linear programs derived correspond to programs that can be evaluated without
+any operating system support for memory management. The particular integer linear
+programs arising in this way are shown to be feasibly solvable under mild assumptions.},
+journal = {SIGPLAN Not.},
+month = jan,
+pages = {185–197},
+numpages = {13},
+keywords = {garbage collection, heap, program analysis, resources, functional programming}
+}
+
+
+@article{AvanziniLago2017,
+author = {Avanzini, Martin and Dal Lago, Ugo},
+title = {Automating Sized-Type Inference for Complexity Analysis},
+year = {2017},
+issue_date = {September 2017},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {1},
+number = {ICFP},
+url = {https://doi.org/10.1145/3110287},
+doi = {10.1145/3110287},
+abstract = { This paper introduces a new methodology for the complexity analysis of higher-order
+functional programs, which is based on three ingredients: a powerful type system for
+size analysis and a sound type inference procedure for it, a ticking monadic transformation
+and constraint solving. Noticeably, the presented methodology can be fully automated,
+and is able to analyse a series of examples which cannot be handled by most competitor
+methodologies. This is possible due to various key ingredients, and in particular
+an abstract index language and index polymorphism at higher ranks. A prototype implementation
+is available. },
+journal = {Proc. ACM Program. Lang.},
+month = aug,
+articleno = {43},
+numpages = {29},
+keywords = {runtime complexity analysis, sized types, automation}
+}
+
+
+@article{LagoGaboardi2012,
+  TITLE = {{Linear Dependent Types and Relative Completeness}},
+  AUTHOR = {Lago, Ugo Dal and Gaboardi, Marco},
+  URL = {https://hal.inria.fr/hal-00906347},
+  JOURNAL = {{Logical Methods in Computer Science}},
+  PUBLISHER = {{Logical Methods in Computer Science Association}},
+  VOLUME = {8},
+  NUMBER = {4},
+  YEAR = {2012},
+  PDF = {https://hal.inria.fr/hal-00906347/file/1104.0193.pdf},
+  HAL_ID = {hal-00906347},
+  HAL_VERSION = {v1},
+}
+
+
+
+@article{PierceSangiorgi1996, title={Typing and subtyping for mobile processes}, volume={6}, DOI={10.1017/S096012950007002X}, number={5}, journal={Mathematical Structures in Computer Science}, publisher={Cambridge University Press}, author={Pierce, Benjamin and Sangiorgi, Davide}, year={1996}, pages={409–453}}
+
+
+@article{Huttel2016,
+author = {H\"{u}ttel, Hans and Lanese, Ivan and Vasconcelos, Vasco T. and Caires, Lu\'{\i}s and Carbone, Marco and Deni\'{e}lou, Pierre-Malo and Mostrous, Dimitris and Padovani, Luca and Ravara, Ant\'{o}nio and Tuosto, Emilio and Vieira, Hugo Torres and Zavattaro, Gianluigi},
+title = {Foundations of Session Types and Behavioural Contracts},
+year = {2016},
+issue_date = {July 2016},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {49},
+number = {1},
+issn = {0360-0300},
+url = {https://doi.org/10.1145/2873052},
+doi = {10.1145/2873052},
+abstract = {Behavioural type systems, usually associated to concurrent or distributed computations,
+encompass concepts such as interfaces, communication protocols, and contracts, in
+addition to the traditional input/output operations. The behavioural type of a software
+component specifies its expected patterns of interaction using expressive type languages,
+so types can be used to determine automatically whether the component interacts correctly
+with other components. Two related important notions of behavioural types are those
+of session types and behavioural contracts. This article surveys the main accomplishments
+of the last 20 years within these two approaches.},
+journal = {ACM Comput. Surv.},
+month = apr,
+articleno = {3},
+numpages = {36},
+keywords = {Behavioural types}
+}
+
+
+
+
+@article{DasEtAl2018,
+author = {Das, Ankush and Hoffmann, Jan and Pfenning, Frank},
+title = {Parallel Complexity Analysis with Temporal Session Types},
+year = {2018},
+issue_date = {September 2018},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {2},
+number = {ICFP},
+url = {https://doi.org/10.1145/3236786},
+doi = {10.1145/3236786},
+abstract = {We study the problem of parametric parallel complexity analysis of concurrent, message-passing
+programs. To make the analysis local and compositional, it is based on a conservative
+extension of binary session types, which structure the type and direction of communication
+between processes and stand in a Curry-Howard correspondence with intuitionistic linear
+logic. The main innovation is to enrich session types with the temporal modalities
+next (◯ A), always (□ A), and eventually (◇ A), to additionally prescribe the timing
+of the exchanged messages in a way that is precise yet flexible. The resulting temporal
+session types uniformly express properties such as the message rate of a stream, the
+latency of a pipeline, the response time of a concurrent queue, or the span of a fork/join
+parallel program. The analysis is parametric in the cost model and the presentation
+focuses on communication cost as a concrete example. The soundness of the analysis
+is established by proofs of progress and type preservation using a timed multiset
+rewriting semantics. Representative examples illustrate the scope and usability of
+the approach.},
+journal = {Proc. ACM Program. Lang.},
+month = jul,
+articleno = {91},
+numpages = {30},
+keywords = {Resource analysis, Concurrency, Linear logic, Session Types}
+}
+
+
+
+
+@inproceedings{HughesEtAl1996,
+author = {Hughes, John and Pareto, Lars and Sabry, Amr},
+title = {Proving the Correctness of Reactive Systems Using Sized Types},
+year = {1996},
+isbn = {0897917693},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/237721.240882},
+doi = {10.1145/237721.240882},
+abstract = {We have designed and implemented a type-based analysis for proving some basic properties
+of reactive systems. The analysis manipulates rich type expressions that contain information
+about the sizes of recursively defined data structures. Sized types are useful for
+detecting deadlocks, nontermination, and other errors in embedded programs. To establish
+the soundness of the analysis we have developed an appropriate semantic model of sized
+types.},
+booktitle = {Proceedings of the 23rd ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages},
+pages = {410–423},
+numpages = {14},
+location = {St. Petersburg Beach, Florida, USA},
+series = {POPL '96}
+}
+
+
+
+@InProceedings{Milner1993,
+author="Milner, Robin",
+editor="Bauer, Friedrich L.
+and Brauer, Wilfried
+and Schwichtenberg, Helmut",
+title="The Polyadic $\pi$-Calculus: a Tutorial",
+booktitle="Logic and Algebra of Specification",
+year="1993",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="203--246",
+abstract="The $\pi$-calculus is a model of concurrent computation based upon the notion of naming. It is first presented in its simplest and original form, with the help of several illustrative applications. Then it is generalized from monadic to polyadic form. Semantics is done in terms of both a reduction system and a version of labelled transitions called commitment; the known algebraic axiomatization of strong bisimilarity is given in the new setting, and so also is a characterization in modal logic. Some theorems about the replication operator are proved.",
+isbn="978-3-642-58041-3"
+}
+
+
+@InProceedings{Kobayashi2000,
+author="Kobayashi, Naoki",
+editor="van Leeuwen, Jan
+and Watanabe, Osamu
+and Hagiya, Masami
+and Mosses, Peter D.
+and Ito, Takayasu",
+title="Type Systems for Concurrent Processes: From Deadlock-Freedom to Livelock-Freedom, Time-Boundedness",
+booktitle="Theoretical Computer Science: Exploring New Frontiers of Theoretical Informatics",
+year="2000",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="365--389",
+abstract="In our previous papers [7,11,23], we presented advanced type systems for the $\pi$-calculus, which can guarantee deadlock-freedom in the sense that certain communications will eventually succeed unless the whole process diverges. Although such guarantee is quite useful for reasoning about the behavior of concurrent programs, there still remains a weakness that the success of a communication cannot be completely guaranteed due to the problem of divergence. For example, while a server process that has received a request message cannot discard the request, it is allowed to infinitely delegate the request to other processes, causing a livelock. In this paper, we show that we can guarantee not only deadlock-freedom but also livelock-freedom, by modifying our previous type systems for deadlock-freedom. The resulting type system guarantees that certain communications will eventually succeed under fair scheduling, no matter whether processes diverge. Moreover, it can also guarantee that some of those communications will succeed within a certain amount of time.",
+isbn="978-3-540-44929-4"
+}
+
+@InProceedings{BaillotGhyselen2021,
+author="Baillot, Patrick
+and Ghyselen, Alexis",
+editor="Yoshida, Nobuko",
+title="Types for Complexity of Parallel Computation in Pi-Calculus",
+booktitle="Programming Languages and Systems",
+year="2021",
+publisher="Springer International Publishing",
+address="Cham",
+pages="59--86",
+abstract="Type systems as a technique to analyse or control programs have been extensively studied for functional programming languages. In particular some systems allow to extract from a typing derivation a complexity bound on the program. We explore how to extend such results to parallel complexity in the setting of the pi-calculus, considered as a communication-based model for parallel computation. Two notions of time complexity are given: the total computation time without parallelism (the work) and the computation time under maximal parallelism (the span). We define operational semantics to capture those two notions, and present two type systems from which one can extract a complexity bound on a process. The type systems are inspired both by size types and by input/output types, with additional temporal information about communications.",
+isbn="978-3-030-72019-3"
+}
+
+@InProceedings{BaillotEtAl2021,
+  author =	{Baillot, Patrick and Ghyselen, Alexis and Kobayashi, Naoki},
+  title =	{{Sized Types with Usages for Parallel Complexity of Pi-Calculus Processes}},
+  booktitle =	{32nd International Conference on Concurrency Theory (CONCUR 2021)},
+  pages =	{34:1--34:22},
+  series =	{Leibniz International Proceedings in Informatics (LIPIcs)},
+  ISBN =	{978-3-95977-203-7},
+  ISSN =	{1868-8969},
+  year =	{2021},
+  volume =	{203},
+  editor =	{Haddad, Serge and Varacca, Daniele},
+  publisher =	{Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
+  address =	{Dagstuhl, Germany},
+  URL =		{https://drops.dagstuhl.de/opus/volltexte/2021/14411},
+  URN =		{urn:nbn:de:0030-drops-144111},
+  doi =		{10.4230/LIPIcs.CONCUR.2021.34},
+  annote =	{Keywords: Type Systems, Pi-calculus, Process Calculi, Complexity Analysis, Usages, Sized Types}
+}
+
+@InProceedings{KobayashiEtAl2000,
+author="Kobayashi, Naoki
+and Saito, Shin
+and Sumii, Eijiro",
+editor="Palamidessi, Catuscia",
+title="An Implicitly-Typed Deadlock-Free Process Calculus",
+booktitle="CONCUR 2000 --- Concurrency Theory",
+year="2000",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="489--504",
+abstract="We extend Kobayashi and Sumii's type system for the deadlock-free $\pi$-calculus and develop a type reconstruction algorithm. Kobayashi and Sumii's type system helps high-level reasoning about concurrent programs by guaranteeing that communication on certain channels will eventually succeed. It can ensure, for example, that a process implementing a function really behaves like a function. However, because it lacked a type reconstruction algorithm and required rather complicated type annotations, applying it to real concurrent languages was impractical. We have therefore developed a type reconstruction algorithm for an extension of the type system. The key novelties that made it possible are generalization of usages (which specifies how each communication channel is used) and a subusage relation.",
+isbn="978-3-540-44618-7"
+}
+
+@article{Dijkstra1971,
+title = "Hierarchical ordering of sequential processes",
+abstract = "One of the primary functions of an operating system is to rebuild a machine that must be regarded as non-deterministic (on account of cycle stealing and interrupts) into a more or less deterministic automaton. Taming the degree of indeterminacy in steps will lead to a layered operating system. A bottom layer will be discussed and so will the adequacy of the interface it presents. An analysis of the requirements of the correctness proofs will give us an insight into the logical issues at hand. A {"}director-secretary{"} relationship will be introduced to reflect a possible discipline in the use of sequencing primitives.",
+author = "E.W. Dijkstra",
+year = "1971",
+doi = "10.1007/BF00289519",
+language = "English",
+volume = "1",
+pages = "115--138",
+journal = "Acta Informatica",
+issn = "0001-5903",
+publisher = "Springer",
+number = "2",
+}
+
+@inproceedings{Igarashi1997TypeBasedAO,
+  title={Type-Based Analysis of Communication for Concurrent Programming Languages},
+  author={Atsushi Igarashi and Naoki Kobayashi},
+  booktitle={SAS},
+  year={1997}
+}
+
+@article{PiCalculusLinearity,
+author = {Kobayashi, Naoki and Pierce, Benjamin C. and Turner, David N.},
+title = {Linearity and the Pi-Calculus},
+year = {1999},
+issue_date = {Sept. 1999},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {21},
+number = {5},
+issn = {0164-0925},
+url = {https://doi.org/10.1145/330249.330251},
+doi = {10.1145/330249.330251},
+abstract = {The economy and flexibility of the pi-calculus make it an attractive object of theoretical study and a clean basis for concurrent language design and implementation. However, such generality has a cost: encoding higher-level features like functional computation in pi-calculus throws away potentially useful information. We show how a linear type system can be used to recover important static information about a process's behavior. In particular, we can guarantee that two processes communicating over a linear channel cannot interfere with other communicating processes. After developing standard results such as soundness of typing, we focus on equivalences, adapting the standard notion of barbed bisimulation to the linear setting and showing how reductions on linear channels induce a useful “partial confluence” of process behaviors. For an extended example of the theory, we prove the validity of a tail-call optimization for higher-order functions represented as processes.},
+journal = {ACM Trans. Program. Lang. Syst.},
+month = {sep},
+pages = {914–947},
+numpages = {34},
+keywords = {concurrency, confluence, pi-calculus, linear types, process calculi}
+}
+
+@article{DardhaPerezComparison,
+title = {Comparing type systems for deadlock freedom},
+journal = {Journal of Logical and Algebraic Methods in Programming},
+volume = {124},
+pages = {100717},
+year = {2022},
+issn = {2352-2208},
+doi = {https://doi.org/10.1016/j.jlamp.2021.100717},
+url = {https://www.sciencedirect.com/science/article/pii/S2352220821000808},
+author = {Ornela Dardha and Jorge A. Pérez},
+keywords = {Concurrency, Process calculi, Linear types, Session types, Deadlock freedom, Linear logic},
+abstract = {Message-passing software systems exhibit non-trivial forms of concurrency and distribution; they are expected to follow intended protocols among communicating services, but also to never “get stuck”. This intuitive requirement has been expressed by liveness properties such as progress or (dead)lock freedom and various type systems ensure these properties for concurrent processes. Unfortunately, very little is known about the precise relationship between these type systems and the classes of typed processes they induce. This paper puts forward the first comparative study of different type systems for message-passing processes that guarantee deadlock freedom. We compare two classes of deadlock-free typed processes, here denoted L and K. The class L stands out for its canonicity: it results from Curry-Howard interpretations of classical linear logic propositions as session types. The class K, obtained by encoding session types into Kobayashi's linear types with usages, includes processes not typable in other type systems. We show that L is strictly included in K, and identify the precise conditions under which they coincide. We also provide two type-preserving translations of processes in K into processes in L.}
+}
+
+@techreport{sangiorgiVariantTypes,
+  TITLE = {{An Interpretation of Typed Objects Into Typed $\pi$-calculus}},
+  AUTHOR = {Sangiorgi, Davide},
+  URL = {https://hal.inria.fr/inria-00073696},
+  NUMBER = {RR-3000},
+  INSTITUTION = {{INRIA}},
+  YEAR = {1996},
+  MONTH = Oct,
+  KEYWORDS = {TYPES ; PI-CALCULUS ; OBJECT ORIENTED LANGUAGES},
+  PDF = {https://hal.inria.fr/inria-00073696/file/RR-3000.pdf},
+  HAL_ID = {inria-00073696},
+  HAL_VERSION = {v1},
+}
+
+@article{EsparzaAndNielsen,
+author = {Esparza, Javier and Nielsen, Mogens},
+year = {1994},
+month = {01},
+pages = {143-160},
+title = {Decidability Issues for Petri Nets - a survey},
+volume = {30},
+journal = {Elektronische Informationsverarbeitung und Kybernetik}
+}
+
+
+
+%gammelt
+@article{Hazelnut1,
+  author    = {Cyrus Omar and
+               Ian Voysey and
+               Michael Hilton and
+               Joshua Sunshine and
+               Claire {Le Goues} and
+               Jonathan Aldrich and
+               Matthew A. Hammer},
+  title     = {Toward Semantic Foundations for Program Editors},
+  journal   = {CoRR},
+  volume    = {abs/1703.08694},
+  year      = {2017},
+  url       = {http://arxiv.org/abs/1703.08694},
+  archivePrefix = {arXiv},
+  eprint    = {1703.08694},
+  timestamp = {Mon, 13 Aug 2018 16:46:06 +0200},
+  biburl    = {https://dblp.org/rec/journals/corr/OmarVHSGAH17.bib},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{vasco,
+author = {Vasconcelos, Vasco},
+year = {2011},
+month = {01},
+pages = {},
+title = {Sessions, from types to programming languages},
+volume = {103},
+journal = {Bulletin of the European Association for Theoretical Computer Science EATCS}
+}
+
+@book{keller2016applied,
+  title={Applied Combinatorics},
+  author={Keller, M. and Trotter, W.T.},
+  isbn={9781534878655},
+  url={https://books.google.dk/books?id=9a8CvgAACAAJ},
+  year={2016},
+  publisher={CreateSpace Independent Publishing Platform}
+}
+
+@article{abelruffinitheorem,
+ ISSN = {00039519, 14320657},
+ URL = {http://www.jstor.org/stable/41133596},
+ author = {Raymond G. Ayoub},
+ journal = {Archive for History of Exact Sciences},
+ number = {3},
+ pages = {253--277},
+ publisher = {Springer},
+ title = {Paolo Ruffini's Contributions to the Quintic},
+ volume = {23},
+ year = {1980}
+}
+
+@Inbook{Karp1972,
+author="Karp, Richard M.",
+editor="Miller, Raymond E.
+and Thatcher, James W.
+and Bohlinger, Jean D.",
+title="Reducibility among Combinatorial Problems",
+bookTitle="Complexity of Computer Computations: Proceedings of a symposium on the Complexity of Computer Computations, held March 20--22, 1972, at the IBM Thomas J. Watson Research Center, Yorktown Heights, New York, and sponsored by the Office of Naval Research, Mathematics Program, IBM World Trade Corporation, and the IBM Research Mathematical Sciences Department",
+year="1972",
+publisher="Springer US",
+address="Boston, MA",
+pages="85--103",
+abstract="A large class of computational problems involve the determination of properties of graphs, digraphs, integers, arrays of integers, finite families of finite sets, boolean formulas and elements of other countable domains. Through simple encodings from such domains into the set of words over a finite alphabet these problems can be converted into language recognition problems, and we can inquire into their computational complexity. It is reasonable to consider such a problem satisfactorily solved when an algorithm for its solution is found which terminates within a number of steps bounded by a polynomial in the length of the input. We show that a large number of classic unsolved problems of covering, matching, packing, routing, assignment and sequencing are equivalent, in the sense that either each of them possesses a polynomial-bounded algorithm or none of them does.",
+isbn="978-1-4684-2001-2",
+doi="10.1007/978-1-4684-2001-2_9",
+url="https://doi.org/10.1007/978-1-4684-2001-2_9"
+}
+
+@article{HofmannAndJost2003,
+author = {Hofmann, Martin and Jost, Steffen},
+title = {Static Prediction of Heap Space Usage for First-Order Functional Programs},
+year = {2003},
+issue_date = {January 2003},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {38},
+number = {1},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/640128.604148},
+doi = {10.1145/640128.604148},
+abstract = {We show how to efficiently obtain linear a priori bounds on the heap space consumption of first-order functional programs.The analysis takes space reuse by explicit deallocation into account and also furnishes an upper bound on the heap usage in the presence of garbage collection. It covers a wide variety of examples including, for instance, the familiar sorting algorithms for lists, including quicksort.The analysis relies on a type system with resource annotations. Linear programming (LP) is used to automatically infer derivations in this enriched type system.We also show that integral solutions to the linear programs derived correspond to programs that can be evaluated without any operating system support for memory management. The particular integer linear programs arising in this way are shown to be feasibly solvable under mild assumptions.},
+journal = {SIGPLAN Not.},
+month = {jan},
+pages = {185–197},
+numpages = {13},
+keywords = {functional programming, garbage collection, heap, program analysis, resources}
+}
+
+@InProceedings{HofmannAndHoffmann2010,
+author="Hoffmann, Jan
+and Hofmann, Martin",
+editor="Gordon, Andrew D.",
+title="Amortized Resource Analysis with Polynomial Potential",
+booktitle="Programming Languages and Systems",
+year="2010",
+publisher="Springer Berlin Heidelberg",
+address="Berlin, Heidelberg",
+pages="287--306",
+abstract="In 2003, Hofmann and Jost introduced a type system that uses a potential-based amortized analysis to infer bounds on the resource consumption of (first-order) functional programs. This analysis has been successfully applied to many standard algorithms but is limited to bounds that are linear in the size of the input.",
+isbn="978-3-642-11957-6"
+}
+
+@article{HoffmannEtAl2012,
+author = {Hoffmann, Jan and Aehlig, Klaus and Hofmann, Martin},
+title = {Multivariate Amortized Resource Analysis},
+year = {2012},
+issue_date = {October 2012},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {34},
+number = {3},
+issn = {0164-0925},
+url = {https://doi.org/10.1145/2362389.2362393},
+doi = {10.1145/2362389.2362393},
+abstract = {We study the problem of automatically analyzing the worst-case resource usage of procedures with several arguments. Existing automatic analyses based on amortization or sized types bound the resource usage or result size of such a procedure by a sum of unary functions of the sizes of the arguments.In this article we generalize this to arbitrary multivariate polynomial functions thus allowing bounds of the form mn which had to be grossly overestimated by m2 + n2 before. Our framework even encompasses bounds like ∑i,j≤ n mi mj where the mi are the sizes of the entries of a list of length n.This allows us for the first time to derive useful resource bounds for operations on matrices that are represented as lists of lists and to considerably improve bounds on other superlinear operations on lists such as longest common subsequence and removal of duplicates from lists of lists. Furthermore, resource bounds are now closed under composition which improves accuracy of the analysis of composed programs when some or all of the components exhibit superlinear resource or size behavior.The analysis is based on a novel multivariate amortized resource analysis. We present it in form of a type system for a simple first-order functional language with lists and trees, prove soundness, and describe automatic type inference based on linear programming.We have experimentally validated the automatic analysis on a wide range of examples from functional programming with lists and trees. The obtained bounds were compared with actual resource consumption. All bounds were asymptotically tight, and the constants were close or even identical to the optimal ones.},
+journal = {ACM Trans. Program. Lang. Syst.},
+month = {nov},
+articleno = {14},
+numpages = {62},
+keywords = {static analysis, resource consumption, Amortized analysis, quantitative analysis, functional programming}
+}
+
+
+@TechReport{PresburgerArithmetic,
+author="Ryan Stansifer",
+title= "Presburger’s Article on Integer Airthmetic: Remarks and Translation",
+number="TR84-639",
+institution="Cornell University, Computer Science Department",
+url="http://techreports.library.cornell.edu:8081/Dienst/UI/1.0/Display/cul.cs/TR84-639",
+month= "September",
+year= "1984",
+}
+
+@article{Kobayashi1998,
+author = {Kobayashi, Naoki},
+title = {A Partially Deadlock-Free Typed Process Calculus},
+year = {1998},
+issue_date = {March 1998},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {20},
+number = {2},
+issn = {0164-0925},
+url = {https://doi.org/10.1145/276393.278524},
+doi = {10.1145/276393.278524},
+journal = {ACM Trans. Program. Lang. Syst.},
+month = {mar},
+pages = {436–482},
+numpages = {47},
+keywords = {concurrency, deadlock-freedom, type theory}
+}

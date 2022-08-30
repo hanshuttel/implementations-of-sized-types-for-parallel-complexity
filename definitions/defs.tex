@@ -1,0 +1,113 @@
+\newcommand*\bang[1]{! #1}
+%\newcommand{\ifthenelse}[3]{\texttt{if}\; #1 \texttt{ then}\; #2 \texttt{ else}\; #3}
+\newcommand{\match}[4]{\texttt{match}\; #1\; \{ 0 \mapsto #2;\; s(#3) \mapsto #4 \}}
+
+\newcommand{\outputch}[4]{\overline{#1}\langle #2\rangle^{#3}\!.#4}
+\newcommand{\inputch}[4]{#1(#2)^{#3}.#4}
+
+\newcommand{\asyncoutputch}[3]{\overline{#1}\!\langle #2\rangle^{#3}}
+\newcommand{\asyncinputch}[3]{#1\!\left( #2\right)^{#3}}
+\newcommand{\asyncrepinputch}[3]{\bang{\asyncinputch{#1}{#2}{#3}}}
+
+
+\newcommand{\splitatcommas}[1]{%
+  \begingroup
+  \begingroup\lccode`~=`, \lowercase{\endgroup
+    \edef~{\mathchar\the\mathcode`, \penalty0 \noexpand\hspace{0pt plus 1em}}%
+  }\mathcode`,="8000 #1%
+  \endgroup
+}
+
+
+
+\newcommand{\parcomp}[2]{#1 \mid #2}
+\newcommand{\parcompthree}[3]{\parcomp{\parcomp{#1}{#2}}{#3}}
+\newcommand{\parcompfour}[4]{\parcompthree{#1}{#2}{\parcomp{#3}{#4}}}
+\newcommand{\parcompseven}[7]{#1 \mid #2 \mid #3 \mid #4 \mid #5 \mid #6 \mid #7}
+
+\newcommand{\uparcomp}[2]{\parcomp{#1}{#2}}
+\newcommand{\uparcompthree}[3]{\uparcomp{\uparcomp{#1}{#2}}{#3}}
+\newcommand{\uparcompfour}[4]{\uparcompthree{#1}{#2}{\uparcomp{#3}{#4}}}
+\newcommand{\uparcompfive}[5]{\uparcompfour{#1}{#2}{#3}{\uparcomp{#4}{#5}}}
+
+\newcommand{\newvar}[2]{(\nu #1) #2}
+\newcommand{\newvarU}[1]{\left(\nu #1\right)}
+
+\newcommand{\nil}{\mathbf{0}}
+
+\newcommand{\freemodule}[0]{\mathbb{Z}[i_1,\dots,i_n]}
+
+\newcommand{\true}{\textit{true}}
+\newcommand{\false}{\textit{false}}
+
+\newcommand{\succeeds}{\mathbf{c}}
+
+\newcommand{\succc}[1]{s(#1)}
+
+\newcommand{\tick}[1]{\texttt{tick}.#1}
+
+
+\newcommand{\dasfwr}[1]{[#1]^{-1}_R}
+
+
+\newcommand{\subst}[2]{#1\!\left[#2\right]}
+
+\newcommand{\substi}[2]{\{#1/#2\}}
+
+% Type stuff
+\newcommand{\withusage}[2]{#1/#2}
+\newcommand{\withtype}[2]{#1:#2}
+\newcommand{\channeltype}[1]{\texttt{ch}(#1)}
+\newcommand{\channeltypeusage}[2]{\withusage{\channeltype{#1}}{#2}}
+\newcommand{\inchanneltypeS}[2]{\texttt{in}_{#1}(#2)}
+\newcommand{\outchanneltypeS}[2]{\texttt{out}_{#1}(#2)}
+\newcommand{\channeltypeS}[2]{\texttt{ch}_{#1}(#2)}
+\newcommand{\tparcomp}[2]{\parcomp{#1}{#2}}
+\newcommand{\withdelay}[2]{\uparrow^{#1}\!\!#2}
+\newcommand{\usagepref}[3]{#1^{#2}_{#3}}
+\newcommand{\inusagesym}[0]{\texttt{In}}
+\newcommand{\outusagesym}[0]{\texttt{Out}}
+\newcommand{\inusagepref}[2]{\usagepref{\inusagesym}{#1}{#2}}
+\newcommand{\outusagepref}[2]{\usagepref{\outusagesym}{#1}{#2}}
+\newcommand{\repinusagepref}[2]{\bang{\usagepref{\inusagesym}{#1}{#2}}}
+\newcommand{\usagerep}[1]{\;*\!#1}
+\newcommand{\errres}[0]{\textbf{\texttt{err}}}
+\newcommand{\comlabel}[0]{\textbf{com}}
+
+\newcommand{\withcomplex}[2]{#1 \triangleleft #2}
+
+\newcommand{\typenat}[0]{\texttt{Nat}}
+\newcommand{\typechanusage}[2]{\withusage{\channeltype{#1}}{#2}}
+\newcommand{\kinterval}[2]{\left[#1,#2\right]}
+\newcommand{\kintervalsingle}[1]{\left[#1\right]}
+\newcommand{\natinterval}[2]{\typenat\!\kinterval{#1}{#2}}
+\newcommand{\natintervalsingle}[1]{\typenat\!\left[#1\right]}
+
+\newcommand{\encoding}[1]{\left[\!\left[#1\right]\!\right]}
+
+
+\newcommand\defeq{\stackrel{\mathclap{\normalfont\tiny\mbox{def}}}{=}}
+
+
+\newcommand{\servt}[5]{\forall_{#1} #2.\texttt{serv}^{#3}_{#4}(#5)}
+\newcommand{\chant}[3]{\texttt{ch}^{#1}_{#2}(#3)}
+
+\newcommand{\servU}[4]{\withusage{\forall #1.\texttt{serv}^{#2}(#3)}{#4}}
+
+\newcommand{\reliableU}[1]{#1\;\text{reliable}\;}
+\newcommand{\reliableT}[1]{#1\;\text{reliable}\;}
+
+%\newcommand{\susume}[4]{\langle #1 \rangle^{#2;#3}_{#4}} % old
+\newcommand{\susume}[4]{\downarrow^{#2;#3}_{#4}\!\!(#1)} % new
+\newcommand{\susumesim}[2]{\downarrow_{#2}\!\!#1}
+\newcommand{\tforward}[4]{\susume{#1}{#2}{#3}{#4}}
+\newcommand{\tforwardsim}[2]{\susumesim{#1}{#2}}
+
+\newcommand{\vect}[1]{\texttt{(#1)}}
+\newcommand{\evect}[2][]{\vect{#2}_{\!#1}}
+\newcommand{\cvect}[2][\varphi]{\vect{#2}_{\!#1}}
+
+\newcommand{\normlinearindex}[3][\mathcal{E}(I)]{#2 + \sum_{\alpha\in #1} #3_\alpha i_\alpha}
+
+\newcommand{\monus}[0]{\dot -}
+\newcommand{\monusE}[1][\varphi;\Phi]{\monus_{#1}}
