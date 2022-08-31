@@ -1,0 +1,237 @@
+\section{The $\pi$-calculus}\label{ch:picalc}
+
+We first introduce a extended $\pi$-calculus and a cost model for time that uses process annotations to represent incurred reduction costs. Using this, we can then define the notion of parallel complexity.
+
+%% 
+
+\subsection{Syntax and semantics}
+We consider an asynchronous polyadic $\pi$-calculus extended with naturals as algebraic terms and a pattern matching construct that enables deconstruction of such terms. The languages of processes and expressions are defined by the syntax 
+%
+\begin{align*}
+    P,Q \text{ (processes) } ::=&\; \nil \mid \left(\parcomp{P}{Q} \right) \mid \inputch{a}{\widetilde{v}}{}{P} \mid \asyncoutputch{a}{\widetilde{e}}{} \mid\; \bang{\inputch{a}{\widetilde{v}}{}{P}} \mid \newvar{a}{P} \mid \tick{P} \mid \\
+    &\; \match{e}{P}{x}{Q}\\
+    e \text{ (expressions) } ::=&\; 0 \mid \succc{e} \mid v
+\end{align*}
+%
+where we assume a countably infinite set of names $\textbf{Var}$, such that $a,b,c\in\textbf{Var}$ represent channels, $x,y,z\in\textbf{Var}$ are bound to algebraic terms and the meta-variable $v\in\textbf{Var}$ may be bound to any expression. As usual, we have inaction $\mathbf{0}$ representing a terminated process, the parallel composition of two processes $P \mid Q$ and restrictions $\newvar{a}{P}$. 
+%Here, $T$ is a type annotation the implications of which we shall defer until Subsection \ref{sec:typesandsubs}.
+For polyadic inputs and outputs $\inputch{a}{\widetilde{v}}{}{P}$ and $\asyncoutputch{a}{\widetilde{e}}{}$, we use the notation $\widetilde{v}$ and $\widetilde{e}$, respectively, to denote sequences of names $v_1,\dots,v_n$ and expressions $e_1,\dots,e_n$, and we write $P[\widetilde{v}\mapsto\widetilde{e}]$ to denote the substitution $P[v_1\mapsto e_1,\dots,v_n\mapsto e_n]$ for names in process $P$. Similarly, for nested restrictions $\newvar{a_1}{\cdots \newvar{a_n}{P}}$ we may write $\newvar{\widetilde{a}}{P}$. For technical convenience, we only enable replication on inputs, i.e. $!\inputch{a}{\widetilde{v}}{}{P}$, such that we can more easily determine which channels induce recursive behavior. Note that any replicated process $!P$ can be simulated using a replicated input $!\inputch{a}{}{}{(P \mid \asyncoutputch{a}{}{})} \mid \asyncoutputch{a}{}{})$.\\ 
+
+Naturals are represented by a zero constructor $0$, representing the smallest natural number, and a successor constructor $\succc{e}$ that represents the successor of the natural number $e$. Thus, algebraic terms have a clearly distinguishable base case. We use this for the pattern matching constructor that deconstructs such terms, by branching based on the shapes of the expressions. This will be useful later, as this enables us to analyze termination conditions for some processes with recursive behavior. The \texttt{tick} constructor represents a cost in time complexity of one. We provide a detailed account of this constructor in Subsection \ref{sec:parcomplex}.\\
+
+In Definition \ref{def:structcong1}, we introduce the usual structural congruence relation \cite{Milner1993}. We omit rules for replication, as these will be covered by the reduction relation. The congruence relation essentially introduces associative and commutative properties to parallel compositions and enables widening or narrowing of the scopes of restrictions, thereby simplifying the semantics.
+%
+\begin{definition}[Structural congruence]
+We define structural congruence $\equiv$ as the least congruence relation that satisfies the rules
+%
+\begin{align*}
+    &\kern6em\runa{SC-nil}\;\;\parcomp{P}{\nil} \equiv P\kern2em \runa{SC-commu}\;\; \parcomp{P}{Q} \equiv \parcomp{Q}{P}\\ &\kern7em\runa{SC-assoc}\;\; \parcomp{P}{\left(\parcomp{Q}{R}\right)} \equiv \parcomp{\left(\parcomp{P}{Q}\right)}{R}\\
+    %
+    &\kern2em\runa{SC-scope}\;\;\newvar{a}{\left(\parcomp{P}{Q}\right)} \equiv \parcomp{\newvar{a}{P}}{Q}\;\; \text{ if } a \text{ is not free in } Q\\
+    %
+    &\kern2.5em\runa{SC-par}\;\;\infrule{P \equiv P'}{\parcomp{P}{Q} \equiv \parcomp{P'}{Q}} \kern2em
+    \runa{SC-res}\;\;\infrule{P \equiv Q}{\newvar{a}{P} \equiv \newvar{a}{Q}}
+\end{align*}
+\label{def:structcong1}
+\end{definition}
+%
+We extend the usual definition of structural congruence with rules that enable us to group restrictions. This allows us to introduce a normal form for processes that simplifies the definition of parallel complexity or span, and consequently makes it easier to prove various properties for typed $\pi$-calculi. We formalize the normal form in Definition \ref{def:canonform1}, referring to it as the canonical form. Essentially, we can view a process in canonical form as a sequence of bound names and a multiset of guarded processes. In Lemma \ref{lemma:cannform}, we prove that an arbitrary process is structurally congruent to a process in this form.
+%
+\begin{definition}[Canonical form]
+We say that a process $P$ is in canonical form if is has the shape $\newvar{\widetilde{a}}{\left(\parcomp{G_1}{\parcomp{G_2}{\parcomp{\dots}{G_n}}}\right)}$
+ where $G_1,G_2,\dots,G_n$ are referred to as guarded processes which may be of any of the forms
+\begin{equation*}
+    G ::=\; \bang{\inputch{a}{\widetilde{y}}{}{P}} \mid \inputch{a}{\widetilde{v}}{}{P} \mid \asyncoutputch{a}{\widetilde{e}}{} \mid \match{e}{P}{x}{Q} \mid \tick P
+\end{equation*}
+If $n = 0$ then the canonical form is $\newvar{\widetilde{a}}{\nil}$.
+\label{def:canonform1}
+\end{definition}
+%
+\begin{lemma}[Existence of a canonical form]\label{lemma:cannform}
+Let $P$ be a process. Then there exists a process $Q$ in canonical form such that $P \equiv Q$.
+\begin{proof}
+Suppose by $\alpha$-renaming that all names are unique, then by using rule $\runa{SC-res}$ from left to right and $\runa{SC-scope}$ from right to left, we can widen the scope of all unguarded restrictions, such that all unguarded restrictions are outmost. Then using rule $\runa{SC-res}$ and $\runa{SC-zero}$ from left to right, we remove all unguarded inactions. If the whole process is unguarded, one inaction will remain and we have the canonical form $\newvar{\widetilde{a} : \widetilde{T}}{\mathbf{0}}$.
+\end{proof}
+\end{lemma}
+%
+In Table \ref{tab:redurules}, we define the reduction relation $\longrightarrow$ for $\pi$-calculus processes, such that $P \longrightarrow Q$ denotes that process $P$ reduces to $Q$ in one reduction step \cite{Milner1993}. We have the usual rules for the asynchronous polyadic $\pi$-calculus, enriched with rules for replicated inputs, pattern matching and temporal reductions. The former is covered by rule $\runa{R-rep}$ that synchronizes a replicated input with an output, preserving the replicated input for subsequent synchronizations. Rule $\runa{R-zero}$ considers the base case for pattern matching on naturals. For pattern matches on successors, we substitute the \textit{deconstructed} terms for variables bound in the patterns of the pattern match constructors. Finally, rule $\runa{R-tick}$ reduces a tick prefix, representing a cost of one in time complexity.
+%
+\begin{table*}[ht]
+    \centering
+    \begin{framed}\vspace{-1em}\begin{tabular}{l}
+        \kern0em\runa{R-rep}\;\;\infrule{}{\parcomp{\;\bang{\inputch{a}{\widetilde{v}}{}{P}}}{\asyncoutputch{a}{\widetilde{e}}{}} \longrightarrow \parcomp{\;\bang{\inputch{a}{\widetilde{v}}{}{P}}}{\subst{P}{\widetilde{v}\mapsto \widetilde{e}}}}
+        %
+        \kern7em\runa{R-comm}\;\;\infrule{}{\parcomp{\inputch{a}{\widetilde{v}}{}{P}}{\asyncoutputch{a}{\widetilde{e}}{}} \longrightarrow \subst{P}{\widetilde{v}\mapsto \widetilde{e}}}\\[-1em]
+        %
+        \kern0em\runa{R-zero}\;\;\infrule{}{\match{0}{P}{x}{Q} \longrightarrow P}
+        %
+        \kern7em\runa{R-par}\;\;\infrule{P \longrightarrow Q}{\parcomp{P}{R} \longrightarrow \parcomp{Q}{R}}
+        \\[-1em]
+        %
+        \kern0em\runa{R-succ}\;\;\infrule{}{\match{\succc{e}}{P}{x}{Q} \longrightarrow \subst{Q}{x \mapsto e}} \kern9.5em \runa{R-tick}\kern-1.5em\infrule{}{\tick P \longrightarrow P} \\[-1em]
+        %
+        %\kern0em\runa{R-empty}\;\;\infrule{}{\texttt{match}\; []\; \{ [] \mapsto P; x :: y \mapsto Q \} \longrightarrow P}
+        %
+        \kern-0em \runa{R-res}\kern-1em\infrule{P \longrightarrow Q}{\newvar{a}{P} \longrightarrow \newvar{a}{Q}}
+        %
+        %\kern7em\runa{R-cons}\;\;\infrule{}{\texttt{match}\; e :: e'\; \{ [] \mapsto P; x :: y \mapsto Q \} \longrightarrow Q[x \mapsto e,y \mapsto e']}\\[-1em]
+        %
+        %\kern3em\runa{R-par}\;\;\infrule{P \longrightarrow Q}{\parcomp{P}{R} \longrightarrow \parcomp{Q}{R}} \kern-0em \runa{R-res}\;\;\infrule{P \longrightarrow Q}{\newvar{a}{P} \longrightarrow \newvar{a}{Q}}\\
+        %
+        \kern2em\runa{R-struct}\infrule{P \equiv P'\quad P' \longrightarrow Q'\quad Q' \equiv Q}{P \longrightarrow Q} 
+    \end{tabular}\end{framed}
+    \smallskip
+    \caption{The reduction rules defining $\longrightarrow$.}
+    \label{tab:redurules}
+\end{table*}
+%
+%
+\subsection{Parallel complexity}\label{sec:parcomplex}
+There are several tried approaches to modeling time complexity for the $\pi$-calculus. One way is to incur a cost for every axiomatic reduction, in our case whenever a channel synchronizes or a pattern match branches. A widely used alternative, including the one chosen by Baillot and Ghyselen, is to introduce an explicit process prefix constructor $\tick P$ denoting that the continuation $P$ is preceded by a cost in time complexity \cite{BaillotGhyselen2021,BaillotEtAl2021,DasEtAl2018}. This approach is more flexible, as we can simulate many different cost models, based on placement patterns of tick prefixes. We now present some of the properties of the tick constructor with respect to parallel complexity. We are interested in maximizing the parallelism, and to do so we must reduce ticks in parallel. Consider the process
+\begin{align*}
+    \overbrace{\tick\nil \mid \tick\nil \mid \cdots \mid \tick\nil}^{n}
+\end{align*}
+The sequential complexity or work is $n$, whereas the parallel complexity or span is $1$, as we can reduce the $n$ ticks in parallel. To keep track of the span during reduction, we introduce integer annotations to processes, such that process $P$ can be represented as $m : P$ where $m$ represents the time already incurred. We refer to such processes as \textit{annotated processes}, and we enrich the definition of structural congruence with four additional rules that include time annotations in Definition \ref{def:structuralcongruenceanno}. Intuitively, this means that process annotations can be moved outward and may be summed. Any process is also structurally congruent to one with an extra annotation of $0$.
+
+\begin{definition}\label{def:structuralcongruenceanno}
+    We enrich the definition of structural congruence with the four rules
+    %
+    \begin{align*}
+        &\runa{SC-dis}\;\; m : (P \mid Q) \equiv (m : P) \mid (m : Q) \kern3em \runa{SC-ares}\;\; m : \newvar{a}{P} \equiv \newvar{a}{(m : P)} \\
+        &\kern4em\runa{SC-sum}\;\; m : (n : P) \equiv (m + n) : P \kern3em \runa{SC-zero}\;\; 0 : P \equiv P
+    \end{align*}
+\end{definition}
+
+Annotations on processes introduce another notion of canonical process that can be seen in Definition \ref{def:annotatedcanonical}. That is, an annotated process in canonical form is a sequence of nested restrictions on a parallel composition of annotated guarded processes.
+
+% canonical form for annotated processes
+\begin{definition}[Annotated canonical form]\label{def:annotatedcanonical}
+An annotated process is in canonical form if it is of the form
+\begin{align*}
+    \newvar{\widetilde{a}}{(n_1 : G_1 \mid \cdots \mid n_m : G_m)}
+\end{align*}
+where $G_1, \dots, G_m$ are guarded annotated processes. If $m=0$, its canonical form is $\newvar{\widetilde{a}}{(0 : \nil)}$.
+\end{definition}
+
+\begin{lemma}[Existence of an annotated canonical form]\label{lemma:anncannform}
+Let $P$ be an annotated process. Then there exists an annotated process $Q$ in annotated canonical form such that $P \equiv Q$.
+\begin{proof}
+Suppose by $\alpha$-renaming that all names are unique, then by using rule $\runa{SC-res}$, $\runa{SC-ares}$, $\runa{SC-dis}$ and $\runa{SC-sum}$ from left to right, and $\runa{SC-scope}$ from right to left, we can widen the scope of all unguarded restrictions, such that all unguarded restrictions are outmost, and all non-guarded annotations are prefixes to guarded processes. Then using rule $\runa{SC-res}$ and $\runa{SC-zero}$ from left to right, we remove all unguarded inactions. For all remaining guarded processes that are not prefixed with an annotation, we use $\runa{SC-res}$, $\runa{SC-par}$ and $\runa{SC-zero}$ to introduce prefixing $0$-annotations. If the whole process is unguarded, one inaction will remain and we have the canonical form $\newvar{\widetilde{a} : \widetilde{T}}{\mathbf{0}}$.
+\end{proof}
+\end{lemma}
+
+With annotated processes, we can define the parallel reduction relation $\Longrightarrow$ in Table \ref{tab:redurulesanno}. Most notably, we can see that the tick constructor reduces to an annotation of $1$, and during communication we choose the maximum annotation amongst the two endpoints.\\
+
+\begin{table*}[ht]
+    \centering
+    \begin{framed}\begin{tabular}{l}
+        \vspace{-1.0em}
+        \kern0em\runa{PR-rep}\;\infrule{}{\parcomp{(n :\;\bang{\inputch{a}{\widetilde{v}}{}{P}})}{(m : \asyncoutputch{a}{\widetilde{e}}{})} \Longrightarrow \parcomp{(n :\;\bang{\inputch{a}{\widetilde{v}}{}{P}})}{(\text{max}(n,m) : \subst{P}{\widetilde{v}\mapsto \widetilde{e}}})}\\ 
+        %
+        \kern1.5em\runa{PR-comm}\;\infrule{}{\parcomp{(n : \inputch{a}{\widetilde{v}}{}{P})}{(m :\asyncoutputch{a}{\widetilde{e}}{})} \Longrightarrow \text{max}(n,m) : \subst{P}{\widetilde{v}\mapsto \widetilde{e}}}        \vspace{-1em}\\
+        %
+        \kern-1em\runa{PR-tick}\;\infrule{}{\tick{P} \Longrightarrow 1 : P}
+        %
+        %\vspace{-1.5em}
+        \kern-2em\runa{PR-zero}\;\infrule{}{\match{0}{P}{x}{Q} \Longrightarrow P}\vspace{-1em}\\
+        %
+        \kern4em\runa{PR-succ}\;\infrule{}{\match{\succc{e}}{P}{x}{Q} \Longrightarrow \subst{Q}{x \mapsto e}}\vspace{-1.0em}\\
+        %
+        \kern1em\runa{PR-par}\;\infrule{P \Longrightarrow Q}{\parcomp{P}{R} \Longrightarrow \parcomp{Q}{R}} \kern0em \runa{PR-res}\;\infrule{P \Longrightarrow Q}{\newvar{a}{P} \Longrightarrow \newvar{a}{Q}}\\
+        \kern1em\runa{PR-annot}\;\infrule{P \Longrightarrow Q}{n : P \Longrightarrow n : Q}
+        %
+        \kern-1em\runa{PR-struct}\;\infrule{P \equiv P'\quad P' \Longrightarrow Q'\quad Q' \equiv Q}{P \Longrightarrow Q}
+    \end{tabular}\end{framed}
+    \smallskip
+    \caption{The reduction rules defining $\Rightarrow$.}
+    \label{tab:redurulesanno}
+\end{table*}
+
+In Definition \ref{def:bglcsim}, we define the local parallel complexity $C_\ell(P)$ of a process $P$. Intuitively, the local complexity is the maximal integer annotation in the canonical form of $P$.
+
+\begin{definition}[Local complexity]\label{def:bglcsim}
+    We define the local parallel complexity $\mathcal{C}_\ell(P)$ of a process $P$ by the following rules
+    \begin{align*}
+        \mathcal{C}_\ell(n:P) &= n + \mathcal{C}_\ell(P)\quad\quad
+        \mathcal{C}_\ell(P \mid Q) = \text{max}(\mathcal{C}_\ell(P), \mathcal{C}_\ell(Q))\\
+        \mathcal{C}_\ell(\newvar{a}{P}) &= \mathcal{C}_\ell(P)\quad\quad
+        \mathcal{C}_\ell(G) = 0 \text{ if } G \text{ is a guarded process}
+    \end{align*}
+\end{definition}
+
+We now formalize the parallel complexity or span of a process in Definition \ref{def:spancomp}. To account for the non-determinism of the $\pi$-calculus, the parallel complexity of a process is defined as the maximal integer annotation in any reduction sequence. To see why this is necessary, consider the process
+%
+\begin{align*}
+    \inputch{a}{}{}{\tick} \mid \inputch{a}{}{}{\tick\asyncoutputch{a}{}{}} \mid \asyncoutputch{a}{}{}
+\end{align*}
+%
+We have two possible reduction sequences with different integer annotations. That is, if we were to reduce the left-most input first, we have a single time reduction, as the second tick will be guarded. If we instead reduce the second input first, then we can synchronize of channel $a$ again after one time reduction, thus yielding two time reductions.
+%
+\begin{definition}[Parallel complexity]\label{def:spancomp}
+We define the parallel complexity (or span) $\mathcal{C}_{\mathcal{P}}(P)$ of process $P$ as the maximal local complexity of any reduction sequence from $P$.
+\begin{align*}
+    \mathcal{C}_{\mathcal{P}}(P) = \text{max}\{n \mid P \Longrightarrow^* Q \land \mathcal{C}_\ell(Q) = n\}
+\end{align*}
+where $\Longrightarrow^*$ is the reflexive and transitive closure of $\Longrightarrow$.
+\end{definition}
+
+
+% As the reduction relation $\longrightarrow$ is sequential, we define a parallel reduction relation $\Longrightarrow^{-1}\subseteq\longrightarrow^*$ that reduces all outer-most ticks in parallel. Here, $\longrightarrow^*$ is the transitive and reflexive closure of $\longrightarrow$, and $P \Longrightarrow^{-1} Q$ is called a \textit{time reduction}. We formalize the relation in Definition \ref{def:timereduction}.
+% %
+% %
+% \begin{definition}[Time reduction]\label{def:timereduction}
+% Let $P$ be a process with canonical form $P \equiv \newvar{\widetilde{a}}{(G_1\mid\dots\mid G_n \mid \tick R_1 \mid\dots\mid\tick R_m)}$ such that $G_1\dots G_n$ are not guarded by ticks. We refer to the reduction sequence from $P$ to $Q\equiv \newvar{\widetilde{a}}{(G_1\mid\dots\mid G_n \mid R_1 \mid\dots\mid R_m)}$ $P\longrightarrow^* Q$ as a \textit{time reduction}, denoted $P \Longrightarrow^{-1} Q$. We say that a time reduction $P\Longrightarrow^{-1} Q$ is \textit{productive} if $P\neq Q$, i.e. $P$ is not invariant to $\Longrightarrow^{-1}$.
+% \end{definition}
+% %
+% Another concern with respect to maximal parallelism is the reduction order. Consider the process
+% %
+% \begin{align*}
+%     \tick \nil \mid \inputch{a}{}{}{\tick\nil} \mid \asyncoutputch{a}{}{}
+% \end{align*}
+% %
+% We have two valid reduction sequences, we can either reduce the left-most tick first yielding a reduction sequence with two time reductions, or synchronize on channel $a$ first, such that the second tick is unguarded, thereby enabling a single time reduction. Thus, to maximize the parallelism, we must prioritize reductions on channels and pattern matches, to maximize the number of ticks in parallel, before performing a time reduction. Therefore, we introduce a reduction relation $\leadsto\subseteq\longrightarrow$ that represents \textit{non-temporal reductions}, i.e. reductions that do not use rule $\runa{R-tick}$. We formalize this relation in Definition \ref{def:nontempreduction}.
+% %
+% \begin{definition}[Non-temporal reduction]\label{def:nontempreduction}
+% We define a relation $\leadsto\subseteq\longrightarrow$ such that $P\leadsto Q$ if $P \longrightarrow Q$ without using $\runa{R-tick}$. If there exists $Q$ such that $P\leadsto Q$, we write $P\!\!\leadsto$, and conversely, $P\!\not\!\leadsto$ if no such $Q$ exists. We write $P \leadsto^* Q$ for the transitive and reflexive closure of $\leadsto$.
+% \end{definition}
+% %
+% Much inspired by a similar reduction strategy in Baillot and Ghyselen \cite{BaillotGhyselen2021}, we introduce the tick-last reduction strategy in Definition \ref{def:ticklaststrat}. To maximize the parallelism of reduction of process $P$, we perform non-temporal reductions until no non-temporal reduction is defined, and then we perform a single time reduction. If a tick was reduced, we proceed to perform non-temporal reduction again. If no tick was reduced, we terminate reduction, as the process then cannot reduce with reduction relation $\longrightarrow$.
+% %
+% \begin{definition}[Tick-last strategy]\label{def:ticklaststrat}
+% We define a reduction strategy for processes called the tick-last strategy. We reduce a process $P$ in two steps
+% \begin{enumerate}
+%     \item We perform a sequence of non-temporal reductions on $P$ such that $P\leadsto^* Q$  and $Q\!\not\!\leadsto$.
+    
+%     \item We perform a single time reduction on $Q$ such that if
+%     \begin{itemize}
+%         \item $Q \Longrightarrow^{-1} Q$ we stop, as $Q$ cannot reduce any further.
+%         \item $Q \Longrightarrow^{-1} R$ with $Q \neq R$ we proceed to step one starting from $R$.  
+%     \end{itemize}
+% \end{enumerate}
+% We say that a reduction sequence $P_1 \longrightarrow^* P_{n+1}$ adheres to the tick-last strategy if it is of the form
+% \begin{align*}
+%     P_1 \leadsto^{*} P_1' \Longrightarrow^{-1} P_2 \leadsto^{*} \cdots \Longrightarrow^{-1} P_n \leadsto^{*} P_n' \Longrightarrow^{-1} P_{n+1}
+% \end{align*}
+% such that $P_1'\!\not\!\leadsto$, $P_1' \neq P_2$, $P_n'\!\not\!\leadsto$ and $P_n' = P_{n+1}$. Moreover, we write $P_1 \hookrightarrow^n P_{n+1}$ to denote that $P_1$ reduces to $P_{n+1}$ by the tick-last strategy using $n$ productive time reductions.
+% \end{definition}
+% %
+% We now formalize the parallel complexity or span of a process in Definition \ref{def:spancomp}. To account for the non-determinism of the $\pi$-calculus, the parallel complexity of a process is defined as the maximal number of productive time reductions in any reduction sequence that adheres to the tick-last strategy. To see why this is necessary, consider the process
+% %
+% \begin{align*}
+%     \inputch{a}{}{}{\tick} \mid \inputch{a}{}{}{\tick\asyncoutputch{a}{}{}} \mid \asyncoutputch{a}{}{}
+% \end{align*}
+% %
+% We have two reduction sequences that adhere to the tick-last strategy, yet have different numbers of productive time reductions. That is, if we were to reduce the left-most input first, we have a single time reduction, as the second tick will be guarded. If we instead reduce the second input first, then we can synchronize of channel $a$ again after one time reduction, thus yielding two time reductions.
+% %
+% \begin{definition}[Parallel complexity]\label{def:spancomp}
+% Let $P$ be a process. The parallel complexity (or span) of $P$ is given as the maximum number of productive time reductions in any reduction sequence from $P$ that adheres to the tick-last strategy 
+% \begin{align*}
+%     \mathcal{C}(P) = \text{max}\{n \mid P \hookrightarrow^n Q\}
+% \end{align*}
+% \end{definition}
+
+%%
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../esop2023"
+%%% End:

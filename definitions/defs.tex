@@ -111,3 +111,138 @@
 
 \newcommand{\monus}[0]{\dot -}
 \newcommand{\monusE}[1][\varphi;\Phi]{\monus_{#1}}
+
+% Fede mængder
+
+\newcommand{\skat}[1]{\textbf{#1}\xspace}
+\newcommand{\EnvV}{\skat{EnvV}}
+\newcommand{\Var}{\skat{Var}}
+\newcommand{\Store}{\skat{Store}}
+\newcommand{\Loc}{\skat{Loc}}
+
+% De hele tal
+
+\newcommand{\Z}{\ensuremath{\mathbb{Z}}}
+
+% Inferensregler
+
+\newcommand{\condinfrule}[3]
+          {\parbox{5.5cm}{$$ {\frac{#1}{#2}}{\qquad
+            #3} \hfill  $$}}
+
+\newcommand{\infrule}[2]
+          {\parbox{4.5cm}{$$ \frac{#1}{#2}\hspace{.5cm}$$}}
+
+% Regelnavne
+           
+\newcommand{\runa}[1]{\mbox{\textsc{\protect{(#1})}}}
+\newcommand{\runatt}[2]{$[{\mbox{\textsc{#1}}}_{\mbox{\textsc{\small
+        #2}}}]$\xspace}
+
+% Pile
+
+\newcommand{\ra}[1][\relax]{\ensuremath \rightarrow_{#1}}
+\newcommand{\lra}{\longrightarrow}
+\newcommand{\Ra}{\Rightarrow}
+\newcommand{\pra}{\ensuremath \rightharpoonup }
+
+% Kantede parenteser
+
+\newcommand{\lag}{\langle}
+\newcommand{\rag}{\rangle}
+\newcommand{\conf}[1]{\ensuremath{\lag #1 \rag}}
+
+% Mængder
+
+\newcommand{\setof}[2]{\ensuremath{\{ #1 \mid #2 \}}}
+\newcommand{\set}[1]{\ensuremath{\{ #1 \}}}
+
+% Kommandoer i Bims
+
+\newcommand{\skib}{\texttt{skip}}
+%\newcommand{\ifthenelse}[3]{\texttt{if}\; #1 \; \texttt{then}\; #2 \;
+%  \texttt{else}\; #3}
+%\newcommand{\whiledo}[2]{\texttt{while}\; #1 \; \texttt{do}\; #2}
+
+% Neu commands
+\newcommand{\hole}{(\!\mid\mid\!)}
+\newcommand{\nehole}[1]{\mathord{(\!\mid\!\!#1\!\!\mid\!)}}
+\newcommand{\prerep}{[^{m}\!\!\//_{\!\!D}]}
+\newcommand{\replace}[1]{\lbrbrak #1 \rbrbrak}
+\newcommand{\cursor}[1]{\mathord{
+    \lBrack\mspace{1mu}#1\mspace{1mu}\rBrack
+}}
+\newcommand{\breakpoint}[1]{
+\mathord{
+    \lAngle\mspace{1mu}#1\mspace{1mu}\rAngle
+}}
+\newcommand{\wellformed}[1]{\letvdash{wf}#1}
+\newcommand{\complete}[1]{\letvdash{c}#1}
+\newcommand{\cursorexc}[1]{\letvdash{ce}#1}
+\newcommand{\nodevalid}[1]{\letvdash{nv}#1}
+\newcommand{\cursorctx}[1]{C\!\left[#1\right]}
+\newcommand{\cursorctxhole}{\left[\cdot\right]}
+\newcommand{\recursion}[2]{#1\!\left(#2\right)}
+% Next
+
+\newcommand{\nexte}{\textrm{next}\xspace}
+
+\newcommand{\editelig}[1]{\mathcal{E}#1}
+\newcommand{\noteditelig}[1]{\overline{\mathcal{E}#1}}
+
+\newcommand{\consistent}[2]{#1 \sim #2}
+
+% Omvendt \vdash
+\usepackage{graphicx}
+
+\makeatletter
+\providecommand*{\dashv}{%
+  \mathrel{%
+    \mathpalette\@dashv\vdash
+  }%
+}
+\newcommand*{\@dashv}[2]{%
+  \reflectbox{$\m@th#1#2$}%
+}
+
+\newcommand{\f}{\mkern-2mu f\mkern-3mu}%fix f i mathmode
+
+\newcommand{\cmdchild}[1]{\texttt{child}\; #1}
+\newcommand{\cmdparent}{\texttt{parent}}
+\newcommand{\cmdlambda}[1]{\texttt{lambda}\; #1}
+\newcommand{\cmdhole}{\texttt{hole}}
+\newcommand{\cmdrec}[1]{\texttt{rec}\; #1.}
+\newcommand{\cmdapp}{\texttt{app}}
+\newcommand{\cmdbreak}{\texttt{break}}
+
+
+\newcommand{\condexp}[2]{#1 \Rightarrow #2}
+\newcommand{\condexpto}[3]{#1 \Rightarrow #2 \vert #3}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\makeatother

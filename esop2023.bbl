@@ -1,0 +1,120 @@
+\begin{thebibliography}{10}
+
+\bibitem{AvanziniLago2017}
+Martin Avanzini and Ugo Dal~Lago.
+\newblock Automating sized-type inference for complexity analysis.
+\newblock {\em Proc. ACM Program. Lang.}, 1(ICFP), August 2017.
+
+\bibitem{BaillotGhyselen2021}
+Patrick Baillot and Alexis Ghyselen.
+\newblock Types for complexity of parallel computation in pi-calculus.
+\newblock In Nobuko Yoshida, editor, {\em Programming Languages and Systems},
+  pages 59--86, Cham, 2021. Springer International Publishing.
+
+\bibitem{BaillotEtAl2021}
+Patrick Baillot, Alexis Ghyselen, and Naoki Kobayashi.
+\newblock {Sized Types with Usages for Parallel Complexity of Pi-Calculus
+  Processes}.
+\newblock In Serge Haddad and Daniele Varacca, editors, {\em 32nd International
+  Conference on Concurrency Theory (CONCUR 2021)}, volume 203 of {\em Leibniz
+  International Proceedings in Informatics (LIPIcs)}, pages 34:1--34:22,
+  Dagstuhl, Germany, 2021. Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r
+  Informatik.
+
+\bibitem{DalLagoGaboardi2011}
+Ugo Dal~Lago and Marco Gaboardi.
+\newblock Linear dependent types and relative completeness.
+\newblock In {\em Proceedings of the 2011 IEEE 26th Annual Symposium on Logic
+  in Computer Science}, LICS '11, page 133–142, USA, 2011. IEEE Computer
+  Society.
+
+\bibitem{DasEtAl2018}
+Ankush Das, Jan Hoffmann, and Frank Pfenning.
+\newblock Parallel complexity analysis with temporal session types.
+\newblock {\em Proc. ACM Program. Lang.}, 2(ICFP), July 2018.
+
+\bibitem{HoffmannEtAl2012}
+Jan Hoffmann, Klaus Aehlig, and Martin Hofmann.
+\newblock Multivariate amortized resource analysis.
+\newblock {\em ACM Trans. Program. Lang. Syst.}, 34(3), nov 2012.
+
+\bibitem{HofmannAndHoffmann2010}
+Jan Hoffmann and Martin Hofmann.
+\newblock Amortized resource analysis with polynomial potential.
+\newblock In Andrew~D. Gordon, editor, {\em Programming Languages and Systems},
+  pages 287--306, Berlin, Heidelberg, 2010. Springer Berlin Heidelberg.
+
+\bibitem{HoffmannShao2015}
+Jan Hoffmann and Zhong Shao.
+\newblock Automatic static cost analysis for parallel programs.
+\newblock In {\em Proceedings of the 24th European Symposium on Programming on
+  Programming Languages and Systems - Volume 9032}, page 132–157, Berlin,
+  Heidelberg, 2015. Springer-Verlag.
+
+\bibitem{HofmannAndJost2003}
+Martin Hofmann and Steffen Jost.
+\newblock Static prediction of heap space usage for first-order functional
+  programs.
+\newblock {\em SIGPLAN Not.}, 38(1):185–197, jan 2003.
+
+\bibitem{HughesEtAl1996}
+John Hughes, Lars Pareto, and Amr Sabry.
+\newblock Proving the correctness of reactive systems using sized types.
+\newblock In {\em Proceedings of the 23rd ACM SIGPLAN-SIGACT Symposium on
+  Principles of Programming Languages}, POPL '96, page 410–423, New York, NY,
+  USA, 1996. Association for Computing Machinery.
+
+\bibitem{Kobayashi1998}
+Naoki Kobayashi.
+\newblock A partially deadlock-free typed process calculus.
+\newblock {\em ACM Trans. Program. Lang. Syst.}, 20(2):436–482, mar 1998.
+
+\bibitem{Kobayashi2005}
+Naoki Kobayashi.
+\newblock Type-based information flow analysis for the $\pi$-calculus.
+\newblock {\em Acta Inf.}, 42(4):291–347, dec 2005.
+
+\bibitem{KobayashiEtAl2000}
+Naoki Kobayashi, Shin Saito, and Eijiro Sumii.
+\newblock An implicitly-typed deadlock-free process calculus.
+\newblock In Catuscia Palamidessi, editor, {\em CONCUR 2000 --- Concurrency
+  Theory}, pages 489--504, Berlin, Heidelberg, 2000. Springer Berlin
+  Heidelberg.
+
+\bibitem{LagoGaboardi2012}
+Ugo~Dal Lago and Marco Gaboardi.
+\newblock {Linear Dependent Types and Relative Completeness}.
+\newblock {\em {Logical Methods in Computer Science}}, 8(4), 2012.
+
+\bibitem{Lhoussaine2004}
+C\'{e}dric Lhoussaine.
+\newblock Type inference for a distributed $\pi$-calculus.
+\newblock {\em Sci. Comput. Program.}, 50(1–3):225–251, mar 2004.
+
+\bibitem{Z3}
+{Microsoft Research}.
+\newblock Z3.
+\newblock \url{https://github.com/Z3Prover/z3}.
+\newblock Accessed: June 11th 2022.
+
+\bibitem{Milner1978}
+Robin Milner.
+\newblock A theory of type polymorphism in programming.
+\newblock {\em Journal of Computer and System Sciences}, 17(3):348--375, 1978.
+
+\bibitem{PresburgerArithmetic}
+Ryan Stansifer.
+\newblock Presburger’s article on integer airthmetic: Remarks and
+  translation.
+\newblock Technical Report TR84-639, Cornell University, Computer Science
+  Department, September 1984.
+
+\bibitem{SumiiKobayashi1998}
+Eijiro Sumii and Naoki Kobayashi.
+\newblock A generalized deadlock-free process calculus.
+\newblock {\em Electronic Notes in Theoretical Computer Science},
+  16(3):225--247, 1998.
+\newblock HLCL '98, 3rd International Workshop on High-Level Concurrent
+  Languages (Satellite Workshop of CONCUR '98).
+
+\end{thebibliography}

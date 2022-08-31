@@ -1,0 +1,38 @@
+\usepackage{mathtools}
+\usepackage{stackengine}
+\newcommand\letvdash[1]{\mathrel{
+  \stackengine{1.2ex}{\vdash}{\;\;\scriptscriptstyle#1}{O}{c}{F}{T}{L}}}
+\stackMath
+
+\usepackage{upgreek}%alpha symbol
+\usepackage{adjmulticol}
+\usepackage[utf8]{inputenc}
+
+\usepackage{xspace}
+\usepackage{comment}
+\usepackage{multicol}
+\usepackage{wasysym}
+\usepackage{float}
+\usepackage{array}
+\usepackage{framed}
+
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{mathrsfs}
+\usepgfplotslibrary{external}
+\usetikzlibrary{external}
+\tikzexternalize[prefix=tikz/]
+
+\usepackage[
+breaklinks=true,colorlinks=true,
+%linkcolor=blue,urlcolor=blue,citecolor=blue,% PDF VIEW
+linkcolor=black,urlcolor=black,citecolor=black,% PRINT
+bookmarks=true,bookmarksopenlevel=2]{hyperref}
+
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
