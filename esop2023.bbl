@@ -5,6 +5,11 @@ Martin Avanzini and Ugo Dal~Lago.
 \newblock Automating sized-type inference for complexity analysis.
 \newblock {\em Proc. ACM Program. Lang.}, 1(ICFP), August 2017.
 
+\bibitem{abelruffinitheorem}
+Raymond~G. Ayoub.
+\newblock Paolo ruffini's contributions to the quintic.
+\newblock {\em Archive for History of Exact Sciences}, 23(3):253--277, 1980.
+
 \bibitem{BaillotGhyselen2021}
 Patrick Baillot and Alexis Ghyselen.
 \newblock Types for complexity of parallel computation in pi-calculus.
@@ -32,6 +37,16 @@ Ugo Dal~Lago and Marco Gaboardi.
 Ankush Das, Jan Hoffmann, and Frank Pfenning.
 \newblock Parallel complexity analysis with temporal session types.
 \newblock {\em Proc. ACM Program. Lang.}, 2(ICFP), July 2018.
+
+\bibitem{Davis1973}
+Martin Davis.
+\newblock Hilbert's tenth problem is unsolvable.
+\newblock {\em The American Mathematical Monthly}, 80(3):233--269, 1973.
+
+\bibitem{Hilbert1902}
+David Hilbert.
+\newblock Mathematical problems.
+\newblock {\em Bull. Amer. Math. Soc.}, 8(10):437--479, 1902.
 
 \bibitem{HoffmannEtAl2012}
 Jan Hoffmann, Klaus Aehlig, and Martin Hofmann.
@@ -63,6 +78,11 @@ John Hughes, Lars Pareto, and Amr Sabry.
 \newblock In {\em Proceedings of the 23rd ACM SIGPLAN-SIGACT Symposium on
   Principles of Programming Languages}, POPL '96, page 410–423, New York, NY,
   USA, 1996. Association for Computing Machinery.
+
+\bibitem{Karp1972}
+Richard~M. Karp.
+\newblock {\em Reducibility among Combinatorial Problems}, pages 85--103.
+\newblock Springer US, Boston, MA, 1972.
 
 \bibitem{Kobayashi1998}
 Naoki Kobayashi.
@@ -102,12 +122,18 @@ Robin Milner.
 \newblock A theory of type polymorphism in programming.
 \newblock {\em Journal of Computer and System Sciences}, 17(3):348--375, 1978.
 
-\bibitem{PresburgerArithmetic}
-Ryan Stansifer.
-\newblock Presburger’s article on integer airthmetic: Remarks and
-  translation.
-\newblock Technical Report TR84-639, Cornell University, Computer Science
-  Department, September 1984.
+\bibitem{Milner1993}
+Robin Milner.
+\newblock The polyadic $\pi$-calculus: a tutorial.
+\newblock In Friedrich~L. Bauer, Wilfried Brauer, and Helmut Schwichtenberg,
+  editors, {\em Logic and Algebra of Specification}, pages 203--246, Berlin,
+  Heidelberg, 1993. Springer Berlin Heidelberg.
+
+\bibitem{PierceSangiorgi1996}
+Benjamin Pierce and Davide Sangiorgi.
+\newblock Typing and subtyping for mobile processes.
+\newblock {\em Mathematical Structures in Computer Science}, 6(5):409–453,
+  1996.
 
 \bibitem{SumiiKobayashi1998}
 Eijiro Sumii and Naoki Kobayashi.

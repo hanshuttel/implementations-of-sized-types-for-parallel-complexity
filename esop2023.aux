@@ -23,6 +23,7 @@
 \citation{BaillotGhyselen2021}
 \citation{BaillotEtAl2021}
 \citation{Kobayashi1998,KobayashiEtAl2000}
+\providecommand \oddpage@label [2]{}
 \@writefile{toc}{\contentsline {title}{Implementations of Sized Types for Parallel Complexity of Message-passing Processes}{1}{chapter.1}}
 \@writefile{toc}{\authcount {4}}
 \@writefile{toc}{\contentsline {author}{Thomas Herrmann \and Hans H\IeC {\"u}ttel \and Naoki Kobayashi \and Mikkel Korup Lauridsen}{1}{chapter.1}}
@@ -164,24 +165,82 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.11}Trivial judgements}{43}{subsection.1.4.11}}
 \newlabel{example:baillotghyssimple}{{5}{43}{Trivial judgements}{example.1.5}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.12}Examples}{44}{subsection.1.4.12}}
+\citation{HofmannAndJost2003,HofmannAndHoffmann2010,HoffmannEtAl2012}
+\citation{KobayashiEtAl2000,Kobayashi2005}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Inference of sized types for parallel complexity}{48}{section.1.5}}
+\newlabel{ch:timeinference}{{5}{48}{Inference of sized types for parallel complexity}{section.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}The principal typing property}{49}{subsection.1.5.1}}
+\newlabel{def:constraintexten}{{21}{51}{The principal typing property}{definition.1.21}{}}
+\newlabel{def:timetagget}{{22}{51}{The principal typing property}{definition.1.22}{}}
+\newlabel{def:principaltyping}{{23}{52}{The principal typing property}{definition.1.23}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Inference of simple types}{52}{subsection.1.5.2}}
+\newlabel{sec:simpletypeinf}{{5.2}{52}{Inference of simple types}{subsection.1.5.2}{}}
+\citation{HofmannAndJost2003,HofmannAndHoffmann2010,HoffmannEtAl2012}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Inference of constraints on use-capabilities and coefficients}{53}{subsection.1.5.3}}
+\newlabel{def:freshfun}{{24}{53}{Inference of constraints on use-capabilities and coefficients}{definition.1.24}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Inference rules for expressions.}}{55}{table.1.7}}
+\newlabel{tab:inferencerulesexp}{{7}{55}{Inference rules for expressions}{table.1.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Process time inference rules (1).}}{56}{table.1.8}}
+\newlabel{tab:inferencerules1}{{8}{56}{Process time inference rules (1)}{table.1.8}{}}
+\newlabel{examp:consinferr}{{6}{56}{Inference of constraints on use-capabilities and coefficients}{example.1.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Process time inference rules (2).}}{57}{table.1.9}}
+\newlabel{tab:inferencerules2}{{9}{57}{Process time inference rules (2)}{table.1.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Reduction of constraint satisfaction problems}{58}{section.1.6}}
+\newlabel{sec:redcons}{{6}{58}{Reduction of constraint satisfaction problems}{section.1.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Reduction from type constraints to use-constraints}{58}{subsection.1.6.1}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Rules for reduction of time invariance constraints.}}{58}{table.1.10}}
+\newlabel{tab:inferencerulesinv}{{10}{58}{Rules for reduction of time invariance constraints}{table.1.10}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Rules for reduction of conditional subsumption constraints.}}{59}{table.1.11}}
+\newlabel{tab:inferencerulesss}{{11}{59}{Rules for reduction of conditional subsumption constraints}{table.1.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Rules for reduction of type equivalence constraints.}}{59}{table.1.12}}
+\newlabel{tab:inferencerulessim}{{12}{59}{Rules for reduction of type equivalence constraints}{table.1.12}{}}
+\citation{IgarashiKobayashi2000}
+\newlabel{examp:consredu}{{7}{60}{Reduction from type constraints to use-constraints}{example.1.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Reduction from use-constraints to index constraints}{60}{subsection.1.6.2}}
+\@writefile{loa}{\contentsline {algocf}{\numberline {1}{\ignorespaces Iterative use-constraint solver}}{61}{algocf.1}}
+\newlabel{alg:ioalgsolv}{{1}{61}{Reduction from use-constraints to index constraints}{algocf.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Solving constraint satisfaction problems}{61}{subsection.1.6.3}}
+\newlabel{sec:solvcons}{{6.3}{61}{Solving constraint satisfaction problems}{subsection.1.6.3}{}}
+\newlabel{lemma:remconsok}{{17}{62}{Solving constraint satisfaction problems}{lemma.1.17}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Simplification of constraint satisfaction problems}{62}{subsection.1.6.4}}
+\citation{BaillotGhyselen2021}
+\citation{Z3}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Haskell implementation}{64}{subsection.1.6.5}}
+\citation{BaillotGhyselen2021}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{65}{section.1.7}}
+\newlabel{ch:conclusion}{{7}{65}{Conclusion}{section.1.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Results}{65}{subsection.1.7.1}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Discussion}{66}{subsection.1.7.2}}
+\citation{BaillotGhyselen2021}
+\citation{HofmannAndHoffmann2010}
+\citation{HoffmannEtAl2012}
+\citation{BaillotGhyselen2021}
+\citation{BaillotEtAl2021}
+\citation{KobayashiEtAl2000, Kobayashi2005}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Future work}{67}{subsection.1.7.3}}
 \bibstyle{plain}
 \bibdata{bibliography/esop2023-sources}
 \bibcite{AvanziniLago2017}{1}
-\bibcite{BaillotGhyselen2021}{2}
-\bibcite{BaillotEtAl2021}{3}
-\bibcite{DalLagoGaboardi2011}{4}
-\bibcite{DasEtAl2018}{5}
-\bibcite{HoffmannEtAl2012}{6}
-\bibcite{HofmannAndHoffmann2010}{7}
-\bibcite{HoffmannShao2015}{8}
-\bibcite{HofmannAndJost2003}{9}
-\bibcite{HughesEtAl1996}{10}
-\bibcite{Kobayashi1998}{11}
-\bibcite{Kobayashi2005}{12}
-\bibcite{KobayashiEtAl2000}{13}
-\bibcite{LagoGaboardi2012}{14}
-\bibcite{Lhoussaine2004}{15}
-\bibcite{Z3}{16}
-\bibcite{Milner1978}{17}
-\bibcite{PresburgerArithmetic}{18}
-\bibcite{SumiiKobayashi1998}{19}
+\bibcite{abelruffinitheorem}{2}
+\bibcite{BaillotGhyselen2021}{3}
+\bibcite{BaillotEtAl2021}{4}
+\bibcite{DalLagoGaboardi2011}{5}
+\bibcite{DasEtAl2018}{6}
+\bibcite{Davis1973}{7}
+\bibcite{Hilbert1902}{8}
+\bibcite{HoffmannEtAl2012}{9}
+\bibcite{HofmannAndHoffmann2010}{10}
+\bibcite{HoffmannShao2015}{11}
+\bibcite{HofmannAndJost2003}{12}
+\bibcite{HughesEtAl1996}{13}
+\bibcite{Karp1972}{14}
+\bibcite{Kobayashi1998}{15}
+\bibcite{Kobayashi2005}{16}
+\bibcite{KobayashiEtAl2000}{17}
+\bibcite{LagoGaboardi2012}{18}
+\bibcite{Lhoussaine2004}{19}
+\bibcite{Z3}{20}
+\bibcite{Milner1978}{21}
+\bibcite{Milner1993}{22}
+\bibcite{PierceSangiorgi1996}{23}
+\bibcite{SumiiKobayashi1998}{24}

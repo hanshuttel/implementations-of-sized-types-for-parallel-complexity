@@ -1,0 +1,854 @@
+\section{Inference of sized types for parallel complexity}\label{ch:timeinference}
+
+In this section, we address type inference for the type system introduced in Section \ref{ch:bgts}. The main idea is to perform inference over several steps, starting with inference of simple types, and annotation of server types with index variables. We then perform a second pass over the process, inferring constraints on use-capabilities and indices. For unknown indices, we introduce \textit{templates} based on the available index variables at any point in the derivation. That is, we restrict indices to be linear functions over index variables with coefficient variables in place of coefficients as used in \cite{HofmannAndJost2003,HofmannAndHoffmann2010,HoffmannEtAl2012}. The result should be a triple $(\Gamma,\mathcal{C},K)$ of a type context, a set of type variable constraints and an index, such that when provided a solution $\theta$ to $\mathcal{C}$ (a substitution of naturals for type variables), we have that $\varphi;\cdot;\theta\Gamma\vdash P \triangleleft \theta K$ where $P$ is the original process, $\varphi$ is the set of free index variables in $\Gamma$. Here, $\theta\Gamma$ and $\theta K$ denote the application of substitution $\theta$ to $\Gamma$ and $K$, respectively. Note that this requires $P$ to be closed with respect to index variable constraints. We are interested in a secondary property: if $P$ is well-typed, then $K$ is the least bound on the span of $P$, in the sense that there then exists a solution $\theta$ to $\mathcal{C}$ such that $\theta K$ is the least upper bound on the span of $P$. Later, we consider the more challenging problem of solving the kind of constraint satisfaction problem that we infer, and present a Haskell implementation. The whole chapter is inspired by inference techniques for usage types \cite{KobayashiEtAl2000,Kobayashi2005}.
+%
+\subsection{The principal typing property}
+In this section, we formalize the approach outlined above. We first modify the type rules from Chapter \ref{ch:bgts} to make the type system more suitable for type inference. As we intend to infer types bottom-up, we replace advancement of type by delaying of time, as introduced in Section \ref{sec:tcsoundness}. For instance, the type rule for inputs on channels becomes
+\begin{align*}
+    \kern-8em\runa{BG-ich'}\;\infrule{\texttt{in}\in\sigma\quad \varphi;\Phi;\Gamma,a:\texttt{ch}^\sigma_0(\widetilde{T}),\widetilde{v}:\widetilde{T} \vdash P \triangleleft K}{\varphi;\Phi;\uparrow^I\!\!\Gamma,a:\texttt{ch}^\sigma_I(\widetilde{T})\vdash \inputch{a}{\widetilde{v}}{}{P} \triangleleft K + I}
+\end{align*}
+Note that the rule $\runa{BG-iserv}$ must be treated differently, due to time invariance, which is not compatible with delaying. Therefore, we do not modify this rule, and instead handle this in our inference algorithm. We now introduce types without indices and use-capabilities, referring to these as \textit{simple} types. Inference of such types is straightforward, and they are useful for later inference of indices and use-capabilities. We distinguish simple types ($\dot{T}$ and $\dot{S}$ as metavariables) and types ($T$ and $S$ as metavariables). We also enrich the definition of types with type variables and restrict indices to be linear functions of index variables 
+\begin{align*}
+    \dot{T},\dot{S} ::=&\; \beta \mid  \texttt{Nat} \mid \texttt{ch}(\widetilde{\dot{T}}) \mid \forall\widetilde{i}.\texttt{serv}(\widetilde{\dot{T}})\\
+    T,S ::=&\; \texttt{Nat}[I,J] \mid \texttt{ch}^\sigma_I(\widetilde{T}) \mid \forall_I\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})\\
+    I,J,K,L ::=&\; \mathbf{c} i + I \mid \mathbf{c}\\
+    \sigma ::=&\; \gamma \mid \{\texttt{in}\} \mid \{\texttt{out}\} \mid \{\texttt{in},\texttt{out}\}\\
+    \mathbf{c} ::=&\; \alpha \mid n \mid \mathbf{c} + \mathbf{c}' \mid \mathbf{c} \mathbf{c}'
+\end{align*}
+where $\beta$ is a type variable for simple types, $\mathbf{c}$ is a coefficient, $\alpha$ is a coefficient variable, $n$ is a numeric constant and $\gamma$ is a type variable for use-capabilities. Note that although indices are linear in index variables, coefficients may be polynomial in coefficient variables. This is due to type rule $\runa{BG-oserv}$ in Table \ref{tab:bgprocesstypingrules} where we require a substitution of indices for index variables quantified in a server type. Moreover, to accommodate these substitutions as well as time invariance, we allow for negative valuations of coefficient variables.\\
+
+
+We write $\text{ftv}(\Gamma)$, $\text{ftv}(\mathcal{C}$) and $\text{ftv}(I)$ for the set of free type variables in a set of index variable constraints, a type context, a set of type variable constraints or an index, respectively. For a substitution of types and naturals for type variables, we use the metavariable $\theta$. Moreover, we write $\theta\Gamma$, $\theta\mathcal{C}$ and $\theta I$ to apply a type variable substitution.\\ 
+
+We next define the language of constraints. We first distinguish constraints for simple types, as such constraints must be inferred and solved before other kinds of constraints can be considered. The constraint $\dot{T} \sim \dot{S}$ enforces that $\dot{T}$ and $\dot{S}$ must be the same simple type. We write $?(\widetilde{\dot{T}})$ for a channel or server type that has message types $\widetilde{\dot{T}}$, which is needed for outputs, as we cannot determine whether a channel or server is required from an output alone. We write $\mathcal{C}_\beta$ for a set of simple type constraints.
+%
+\begin{align*}
+    c_\beta ::=&\; \dot{T} \sim \dot{S} \mid \dot{T} \sim\; ?(\widetilde{\dot{S}}) \\%\mid\; ?(\widetilde{\dot{T}}) \sim \dot{S} \\
+    %
+    c_T ::=&\; T \sim S \mid \varphi;\Phi\vdash \texttt{inv}(T) \mid \widetilde{c_\gamma} \implies (\varphi;\Phi\vdash T \sqsubseteq S) \mid c_{IO} \\
+    %
+    c_{IO} ::=&\; \widetilde{c_\gamma} \implies (\varphi;\Phi\vDash I \leq J) \mid \widetilde{c_\gamma} \implies c_\gamma' \mid c_I\\
+    %
+    c_I ::=&\; I \sim J \mid \varphi;\Phi\vDash I \leq J \mid \texttt{false}\\
+    %
+    c_\gamma ::=&\; \sigma \subseteq \sigma' 
+    % c_T ::=&\; T \sim S \mid \varphi;\Phi\vdash \texttt{inv}(T) \mid \varphi;\Phi\vdash T \sqsubseteq S \mid (\sigma \subseteq \sigma') \implies (\varphi;\Phi\vdash T \sqsubseteq S)\\
+    % c_I ::=&\; I \sim J \mid \varphi;\Phi\vDash I \leq J \mid (\sigma \subseteq \sigma') \implies (\varphi;\Phi\vDash I \leq J) \\
+    % c_I ::=&\; \mathbf{c} \sim \mathbf{c}' \mid \mathbf{c} \leq \mathbf{c}'\\
+    % %
+    % c_p ::=&\; (\sigma \subseteq \sigma') \implies c_p \mid 
+\end{align*}
+%
+The remaining constraint language is defined in steps, such that a \textit{type constraint} $c_T$ may be a use-constraint $c_{IO}$, which in turn may be an \textit{index constraint} $c_I$. We make this distinction, as we are interested in reducing a set of type constraints to a set of \textit{use-constraints}, and finally a set of use-constraints to a set of index constraints that we can attempt to solve. Note the distinction between constraints on index variables, as we have seen in constraint judgements previously, and constraints on indices. In the remainder of this thesis, we refer to the former as index variable constraints.\\
+
+Type constraints may contain types. We have type equality constraints $T \sim S$, time invariance constraints $\varphi;\Phi\vdash \texttt{inv}(T)$ and conditional subsumption constraints $\widetilde{c_\gamma} \implies (\varphi;\Phi\vdash T \sqsubseteq S)$. The latter is read as a Horn-clause, where the antecedent $\widetilde{c_\gamma}$ is a sequence of inclusion use-constraints. We may write $\varphi;\Phi\vdash T \sqsubseteq S$ if the antecedent is empty. For equivalence constraints on types, we may write $\Gamma \sim \Delta$ to denote the set $\{ \Gamma(v) \sim \Delta(v) \mid v \in \text{dom}(\Gamma) \cap \text{dom}(\Delta) \}$. Similarly, we write $\varphi;\Phi\vdash \Gamma \sqsubseteq \Delta$ for the set $\{\varphi;\Phi\vdash \Gamma(v) \sqsubseteq \Delta(v) \mid v \in \text{dom}(\Gamma) \cap \text{dom}(\Delta)\}$. Finally, for a set of indices $\mathbf{I}$ we write $\varphi;\Phi\vDash \mathbf{I} \leq J$ for the set $\{ \varphi;\Phi\vDash I \leq J \mid I \in \mathbf{I}\}$. \\
+
+Use-constraints may contain inclusion use-constraints and conditions. Specifically, we have conditional index inequalities and conditional inclusion use-constraints. Such constraints are introduced upon reduction of conditional subsumption constraints, as we shall later see. Finally, index constraints may be coefficient equivalence constraints or non-conditional index inequality constraints. We include the constraint $\texttt{false}$ here, as we may declare a process ill-typed at any point.\\
+ 
+Note that some constraints require knowledge about a set of index variables and a set of index variable constraints. This is problematic, as such constraints are then existentially and universally quantified, implying that they are often not solvable using existing constraint satisfaction solvers. That is, coefficient variables are existentially quantified and index variables are universally quantified. However, we can reduce type constraints to constraints on indices, which can be over-approximated by multiple constraints on coefficients that do no involve universal quantifiers. We return to these topics in Section \ref{sec:redcons} and \ref{sec:solvcons}.\\
+
+In Definition \ref{def:constraintexten} we introduce an operation on type constraints that extends sets of constraints on index variables where applicable. This is useful for the match constructor, for which constraints inferred from the two subprocesses should be extended with constraints regarding the size of the pattern match expression.
+%
+\begin{definition}[Constraint extension]\label{def:constraintexten}
+We define an operator $C\merge c_T$ on type constraints that extends the set of index variable constraints in a type constraint $c_T$ with the index constraint $C$.
+\begin{align*}
+    C \merge T \sim S \defeq&\; T \sim S\\
+    C \merge I \sim J \defeq&\; I \sim J \\
+    C \merge \varphi;\Phi\vdash \texttt{inv}(T) \defeq&\; \varphi;(\Phi,C)\vdash \texttt{inv}(T)\\
+    %
+    C \merge \widetilde{c_\gamma} \implies (\varphi;\Phi\vdash T \sqsubseteq S) \defeq&\; \widetilde{c_\gamma} \implies (\varphi;(\Phi,C)\vdash T \sqsubseteq S)\\
+    %
+    C \merge \widetilde{c_\gamma} \implies (\varphi;\Phi\vdash I \leq J) \defeq&\; \widetilde{c_\gamma}\implies (\varphi;(\Phi,C)\vdash I \leq J)\\
+    C \merge \widetilde{c_\gamma} \implies c_\gamma' \defeq&\; \widetilde{c_\gamma} \implies c_\gamma' \\
+    %
+    C \merge \mathbf{c} \sim \mathbf{c}' \defeq&\; \mathbf{c} \sim \mathbf{c}'\\
+    %
+    C\merge \varphi;\Phi\vDash I \leq J \defeq&\; \varphi;(\Phi,C)\vDash I\leq J \\
+    C\merge \texttt{false} \defeq&\; \texttt{false}
+    %
+\end{align*}
+We extend the operator to sets of type constraints $\mathcal{C}_T$
+\begin{align*}
+    C \merge \mathcal{C}_T \defeq \{ C \merge c_T \mid c_T \in \mathcal{C}_T \}
+\end{align*}
+\end{definition}
+%
+To enforce time invariance, we constrain the time-tags of servers. For convenience, we therefore define a function $\text{tag}(T)$ in Definition \ref{def:timetagget} that returns the time-tag of an argument channel or server $T$.
+\begin{definition}\label{def:timetagget}
+We define a function on types $\text{tag}(T)$ that returns the time-tag of a channel or server
+\begin{align*}
+    \text{tag}(\texttt{ch}^\sigma_I(\widetilde{T})) =&\; I\\
+    \text{tag}(\forall_I\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})) =&\; I
+\end{align*}
+We extend the function to type contexts, such that $\text{tag}(\Gamma) = \{ I \mid v \in \text{dom}(\Gamma)\; \text{and}\; \text{tag}(\Gamma(v)) = I \}$.
+\end{definition}
+%
+We are now ready to formalize the triple discussed briefly above. We refer to this as a \textit{principal typing} as seen in Definition \ref{def:principaltyping}. Note that a principal typing does not guarantee that a process is well-typed. Rather, it provides a constraint satisfaction problem, whose solutions provide bounds on the span. Moreover, there may be multiple possible solutions, with different implications to the bound on the span.
+
+\begin{definition}[Principal typing]\label{def:principaltyping}
+A triple $(\Gamma,\mathcal{C},K)$ of a type context, a set of type constraints and an index $K$ is a \textit{principal typing} of a closed process $P$, if it satisfies the properties
+\begin{enumerate}
+    \item If provided a substitution $\theta$ with $\text{dom}(\theta) \subseteq \text{ftv}(\Gamma) \cup \text{ftv}(\mathcal{C}) \cup \text{ftv}(K)$ and $\theta\mathcal{C}$ satisfied then there exists $\varphi$ such that $\varphi;\cdot;\theta\Gamma\vdash P \triangleleft \theta K$.
+    %
+    \item If $\varphi;\cdot;\Gamma'\vdash P \triangleleft K'$ then there exists a substitution $\theta$ such that $\theta\mathcal{C}$ is satisfied and $\varphi;\cdot\vDash K' \leq \theta K$.
+\end{enumerate}
+\end{definition}
+\subsection{Inference of simple types}\label{sec:simpletypeinf}
+We are interested in an inference algorithm that only returns principal typings, as it then suffices to solve the corresponding constraint satisfaction problem. We first show how simple types can be inferred, as a foundation for the more novel inference phases. As this inference phase is quite straightforward, we only present our approach using an example. We consider a server that performs an action $n$ times in parallel, where $n$ is a parameter. Each action has a cost of $1$ in time complexity, and so we should be able to assign a constant bound to the server. The whole process is shown below, annotated with simple type variables.
+\begin{align*}
+    &\kern-1em P_{\text{npar}} \defeq\\
+    &(\nu \text{npar} : {\color{blue} \beta_1})(\\
+    &\kern1em !\text{npar}(n,r).\texttt{match}\; n\; \{\\
+    &\kern2em 0 \mapsto \asyncoutputch{r}{}{}\\
+    &\kern2em s(x) \mapsto (\nu r' : {\color{blue} \beta_2})(\nu r'' : {\color{blue} \beta_3})(\tick{\asyncoutputch{r'}{}{}} \mid
+ \asyncoutputch{\text{npar}}{x,r''}{} \mid \inputch{r'}{}{}{\inputch{r''}{}{}{\asyncoutputch{r}{}{}}}) \} \\
+    &\kern1em \mid \\
+    &(\nu r : {\color{blue} \beta_4})( \asyncoutputch{\text{npar}}{s(s(0)),r}{} \mid \inputch{r}{}{}{\nil} ))
+\end{align*}
+
+We then traverse the process tree bottom-up and infer constraints on simple type variables. We solve the resulting constraint satisfaction problem yielding us a substitution of simple types for simple type variables. We assign each server type a fixed number of index variables as a heuristic. If the later inference phases do not yield satisfying results, we may increase the number of index variables. We opt to use a single index variable $i$, and so we obtain the following constraint satisfaction problem for the process above
+\begin{align*}
+    \beta_1 \sim \forall i.\texttt{serv}(\beta_5,\beta_6)\kern2em\beta_5 \sim \texttt{Nat}\kern2em\beta_6 \sim \;?()\\
+    \beta_2 \sim \texttt{ch}()\kern2em\beta_1 \sim \texttt{ch}(\texttt{Nat},\beta_3)\kern2em \beta_3 \sim \texttt{ch}()\\
+    \beta_1 \sim\; ?(\texttt{Nat},\beta_3)\kern2em \beta_1 \sim\; ?(\texttt{Nat},\beta_4)
+\end{align*}
+For outputs, we cannot determine whether a channel or server type is required, and so we introduce the constraint $?(\widetilde{\dot{T}})$ that specifies that either of the two is acceptable. We solve the constraints by substitution of simple types for simple type variables, and so we get the following solution
+\begin{align*}
+    [\beta_1 \mapsto \forall i.\texttt{serv}(\texttt{Nat},\texttt{ch}()),\beta_2 \mapsto \texttt{ch}(), \beta_3 \mapsto \texttt{ch}(), \beta_4 \mapsto \texttt{ch}()]
+\end{align*}
+Finally, by application of the substitution to simple type variable annotations in the process, we get
+%
+%For parallel compositions and match constructors, we combine the contexts inferred from the two subprocesses. When a name is bound in both contexts, we use the operator from Definition \ref{def:typejoin}
+% \begin{definition}\label{def:typejoin}
+% We define the binary operator on simple types $\sqcup$ inductively
+% \begin{align*}
+%     \texttt{Nat} \sqcup \texttt{Nat} = \texttt{Nat}\quad\quad \texttt{ch}^\sigma(\widetilde{\dot{T}}) \sqcup \texttt{ch}^{\sigma'}(\widetilde{\dot{S}}) = \texttt{ch}^{\sigma\cup\sigma'}(\widetilde{\dot{T}}\sqcap \widetilde{\dot{S}})\\
+%     %
+%     \texttt{serv}^\sigma(\widetilde{\dot{T}}) \sqcup \texttt{serv}^{\sigma'}(\widetilde{\dot{S}}) = \left\{
+%     \begin{matrix}
+%     \texttt{serv}^{\sigma\cup\sigma' }(\widetilde{\dot{T}} \sqcup \widetilde{\dot{S}}) & \text{ if } \texttt{in} \in \sigma\cap\sigma'\text{ or } \texttt{in} \notin \sigma\cup\sigma'\\
+%     %
+%     \texttt{serv}^{\sigma\cup\sigma' }(\widetilde{\dot{T}} \sqcap \widetilde{\dot{S}}) & \text{ if } \texttt{in} \in \sigma\text{ and } \texttt{in}\notin \sigma'\\
+%     %
+%     \texttt{serv}^{\sigma\cup\sigma' }(\widetilde{\dot{S}} \sqcap \widetilde{\dot{T}}) & \text{ if } \texttt{in} \in \sigma'\text{ and } \texttt{in}\notin \sigma
+%     \end{matrix}
+%     \right.
+% \end{align*}
+% \end{definition}
+%
+% \begin{align*}
+%     &(\nu \text{npar} : {\color{blue} \forall i.\texttt{serv}(\texttt{Nat},\texttt{ch}())})(\\
+%     &\kern1em !\text{npar}(n,r).\texttt{match}\; n\; \{\\
+%     &\kern2em 0 \mapsto \asyncoutputch{r}{}{}\\
+%     &\kern2em s(x) \mapsto (\nu r' : {\color{blue} \texttt{ch}()})(\nu r'' : {\color{blue} \texttt{ch}()})\tick ({\asyncoutputch{r'}{}{}} \mid
+%  \asyncoutputch{\text{npar}}{x,r''}{} \mid \inputch{r'}{}{}{\inputch{r''}{}{}{\asyncoutputch{r}{}{}}}) \} \\
+%     &\kern1em \mid \\
+%     &(\nu r : {\color{blue} \texttt{ch}()})( \asyncoutputch{\text{npar}}{s(s(0)),r}{} \mid \inputch{r}{}{}{\nil} ))
+% \end{align*}
+\begin{align*}
+    &(\nu \text{npar} : {\color{blue} \forall i.\texttt{serv}(\texttt{Nat},\texttt{ch}())})(\\
+    &\kern1em !\text{npar}(n,r).\texttt{match}\; n\; \{\\
+    &\kern2em 0 \mapsto \asyncoutputch{r}{}{}\\
+    &\kern2em s(x) \mapsto (\nu r' : {\color{blue} \texttt{ch}()})(\nu r'' : {\color{blue} \texttt{ch}()})(\tick{\asyncoutputch{r'}{}{}} \mid
+ \asyncoutputch{\text{npar}}{x,r''}{} \mid \inputch{r'}{}{}{\inputch{r''}{}{}{\asyncoutputch{r}{}{}}}) \} \\
+    &\kern1em \mid \\
+    &(\nu r : {\color{blue} \texttt{ch}()})( \asyncoutputch{\text{npar}}{s(s(0)),r}{} \mid \inputch{r}{}{}{\nil} ))
+\end{align*}
+
+%\subsection{Templates and heuristics for index variables}
+
+
+% \begin{align*}
+%     &(\nu \text{npar} : {\color{blue} \forall_{\alpha_1}i.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}(\texttt{Nat}[\alpha_2 + \alpha_3 i, \alpha_4 + \alpha_5 i],\texttt{ch}^{\{\texttt{out}\}}_{\alpha_6 + \alpha_7 i}())})(\\
+%     &\kern1em !\text{npar}(n,r).\texttt{match}\; n\; \{\\
+%     &\kern2em 0 \mapsto \asyncoutputch{r}{}{}\\
+%     &\kern2em s(x) \mapsto (\nu r' : {\color{blue} \texttt{ch}^{\{\texttt{in},\texttt{out}\}}_{\alpha_8 + \alpha_{9} i}()})(\nu r'' : {\color{blue} \texttt{ch}^{\{\texttt{in},\texttt{out}\}}_{\alpha_{10} + \alpha_{11} i}()})(\tick{\asyncoutputch{r'}{}{}} \mid
+%  \asyncoutputch{\text{npar}}{x,r''}{} \mid \inputch{r'}{}{}{\inputch{r''}{}{}{\asyncoutputch{r}{}{}}}) \} \\
+%     &\kern1em \mid \\
+%     &(\nu r : {\color{blue} \texttt{ch}^{\{\texttt{in},\texttt{out}\}}_{\alpha_{12}}()})( \asyncoutputch{\text{npar}}{s(s(0)),r}{} \mid \inputch{r}{}{}{\nil} ))
+% \end{align*}
+
+
+\subsection{Inference of constraints on use-capabilities and coefficients}
+
+We now show how a triple $(\Gamma,\mathcal{C},K)$ can be inferred when provided information about simple types. We present our approach as a collection of algorithmic inference rules, based on the premises of the augmented type rules. Judgements for expressions are of the form $\varphi;\dot{\Gamma}\vdash_{\mathcal{C}} e : (\Gamma, T)$ and are read as \textit{provided a set of index variables and a context of simple types, expression} $e$ \textit{can be assigned type} $\theta T$ \textit{using context} $\theta\Gamma$ \textit{for any substitution} $\theta$ \textit{such that} $\theta\mathcal{C}$ \textit{is satisfied}. Similarly, we have judgements for processes of the form $\varphi;\dot{\Gamma}\vdash_{\mathcal{C}} P \triangleleft (\Gamma,K)$ that are read as \textit{provided a set of index variables and a context of simple types, process} $P$ \textit{can be assigned complexity bound} $\theta K$ \textit{using context} $\theta\Gamma$ \textit{for any substitution} $\theta$ \textit{such that} $\theta\mathcal{C}$ \textit{is satisfied}. \\ %Our judgements take inspiration from constraint-based type inference for the lambda-calculus.\\
+
+We first address inference of indices. Recall that indices are restricted to linear functions over index variables, which allows us to introduce \textit{templates} for indices. That is, provided a set of known index variables (We obtain this directly from simple types), we represent an unknown index as a coefficient variable representing a constant term plus a sum of the index variables each scaled by a unique coefficient variable. For instance, given two index variables $i$ and $j$, we have the template $\alpha_0 + \alpha_1 i + \alpha_2 j$ where $\alpha_0$, $\alpha_1$ and $\alpha_2$ are coefficient variables. Templates are widely used, as they simplify constraint generation for coefficient variables \cite{HofmannAndJost2003,HofmannAndHoffmann2010,HoffmannEtAl2012}. For convenience, we introduce an algorithm \textit{fresh} that granted a set of index variables provides a template with all coefficient variables fresh. We extend the function to simple types, returning a corresponding type with fresh templates. Here, we also introduce use-capability variables for channel and server types. The function is shown in Definition \ref{def:freshfun}
+%
+\begin{definition}[Fresh variables]\label{def:freshfun}
+We write $\alpha\; \textit{fresh}$ and $\gamma\; \textit{fresh}$ to denote that $\alpha$ and $\gamma$, respectively, are new unique variables. We define an algorithm \textit{fresh} that provided a set of index variables returns a template with all coefficient variables fresh
+\begin{align*}
+    \text{fresh}(\{i_1,\dots,i_n\}) = \alpha_0 + \sum_{1\leq j \leq n} \alpha_j i_j\quad\text{with}\; \alpha_0,\alpha_1,\dots,\alpha_n\;\textit{fresh}
+\end{align*}
+We extend the definition to types
+\begin{align*}
+    \text{fresh}(\texttt{Nat},\varphi) =&\; \texttt{Nat}[I,J]\quad\text{with}\; I,J = \text{fresh}(\varphi)\\
+    %
+    \text{fresh}(\texttt{ch}(\widetilde{\dot{T}}),\varphi) =&\; \texttt{ch}^\gamma_I(\widetilde{T})\quad \text{with}\;
+    \gamma\;\textit{fresh},I = \text{fresh}(\varphi)\;\text{and}\;\widetilde{T} = \text{fresh}(\widetilde{\dot{T}},\varphi)\\
+    %
+    \text{fresh}(\forall\widetilde{i}.\texttt{serv}(\widetilde{\dot{T}})) =&\; \forall_I\widetilde{i}.\texttt{serv}^\gamma_K(\widetilde{T}) \quad \text{with}\;
+    \gamma\;\textit{fresh},I = \text{fresh}(\varphi),K = \text{fresh}((\varphi,\widetilde{i}))\;\text{and}\;\widetilde{T} = \text{fresh}(\widetilde{\dot{T}},(\varphi,\widetilde{i}))
+\end{align*}
+We introduce a variant of the algorithm that replaces the time-tags of channels and servers with fresh templates
+\begin{align*}
+    \text{freshtag}(\texttt{Nat}[I,J],\varphi) =&\; \texttt{Nat}[I,J]\\
+    \text{freshtag}(\texttt{ch}^\sigma_I(\widetilde{T})) =&\; \texttt{ch}^\sigma_J(\widetilde{T})\quad \text{with}\; J = \text{fresh}(\varphi)\\
+    \text{freshtag}(\forall_I\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})) =&\; \forall_J\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})\quad \text{with}\; J = \text{fresh}(\varphi)
+\end{align*}
+We extend the definitions to type contexts, such that if $\text{dom}(\Gamma)=\{v_1,\dots,v_n\}$ then $\text{fresh}(\Gamma,\varphi)=v_1 :\text{fresh}(\Gamma(v_1),\varphi),\dots,v_n :\text{fresh}(\Gamma(v_n),\varphi)$. Moreover, for a sequence of simple types $\widetilde{\dot{T}}$ we write $\widetilde{T} = \text{fresh}(\widetilde{\dot{T}},\varphi)$ to denote $T = \text{fresh}(\dot{T},\varphi)$ for each $\dot{T}$ in the sequence $\widetilde{\dot{T}}$.
+\end{definition}
+%
+%In Definition \ref{def:joincontext}, we introduce a binary operator $\sqcup$ that joins two type contexts. We use the operator for parallel compositions and match constructors where we infer two contexts that must be compatible, as we shall later see. Due to subtyping, it suffices to constraint the types of names bound in both contexts to be equivalent, and so we can simply select the left-hand side type here in such cases.
+%
+% \begin{definition}\label{def:joincontext}
+% We define a binary operator on type contexts that returns a new context with associations from both type contexts, selecting those from the left-hand side for all names in the intersection of domains.
+% %
+% \begin{align*}
+%     (\Gamma\sqcup\Delta)(v) = \left\{\begin{matrix}
+%     \Gamma(v) & \text{ if } v\in\text{dom}(\Gamma)\\
+%     \Delta(v) & \text{ if } v\in\text{dom}(\Delta)\setminus\text{dom}(\Gamma)
+%     \end{matrix}\right.
+%     % \cdot \sqcup \Delta =&\; \Delta\\
+%     % \Gamma \sqcup \cdot =&\; \Gamma\\
+%     % (\Gamma,v : T) \sqcup (\Delta,v:S) =&\; (\Gamma \sqcup \Delta),v:T\\
+%     % (\Gamma,v : T) \sqcup \Delta =&\; (\Gamma \sqcup \Delta),v:T\quad\text{if}\; v\notin\text{dom}(\Delta)\\
+%     % \Gamma \sqcup (\Delta,v:S) =&\; (\Gamma \sqcup \Delta),v:S\quad\text{if}\; v\notin\text{dom}(\Gamma)
+% \end{align*}
+% \end{definition}
+%
+We are now ready to introduce the inference rules. We implicitly introduce constraints of the form $\varphi;\cdot\vDash 0 \leq I$ for all indices $I$ as both complexity and size must be non-negative. The rules for expressions are shown in Table \ref{tab:inferencerulesexp}. Note that we do not include an inference rule for subtyping of expressions, as the subsumption rule is not algorithmic. Instead, we incorporate subtyping into the remaining rules. For the 0-constructor we allow for an arbitrary non-negative bound on the span to accommodate subtyping. For variables, we assign a fresh instantiation of the simple type it is bound to. We implicitly introduce constraints for all occurrences of the natural type constructor in the type assigned to a variable that ensure upper bounds cannot be smaller than lower bounds. Finally, for the successor constructor $s(e)$, we introduce a constraint that enables subtyping and enforces a size increase of 1. \\
+
+\begin{table*}[!ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        %
+        &\kern-20em\runa{I-zero}\;\condinfrule{}{\varphi;\dot{\Gamma}\vdash_{\emptyset} 0 : (\cdot,\texttt{Nat}[0,J])}{\text{where}\; J=\text{fresh}(\varphi)}\\[-1em]
+        %
+        &\kern-20em\runa{I-var}\;\condinfrule{}{\varphi;\dot{\Gamma},v:\dot{T}\vdash_\emptyset v : ((\cdot,v : T),T)}{\text{where}\; T = \text{fresh}(\dot{T},\varphi)}\\[-1em]
+        %
+        &\kern-20em\runa{I-succ}\;\condinfrule{\varphi;\dot{\Gamma}\vdash_{\mathcal{C}} e : (\Gamma,\texttt{Nat}[I,J])}{\varphi;\dot{\Gamma}\vdash_{\mathcal{C} \cup \{\varphi;\cdot\vdash \texttt{Nat}[I+1,J+1] \sqsubseteq \texttt{Nat}[I',J']\}} s(e) : (\Gamma,\texttt{Nat}[I',J'])}{\text{where}\; I',J' = \text{fresh}(\varphi)}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Inference rules for expressions.}
+    \label{tab:inferencerulesexp}
+\end{table*}
+%
+We now consider the inference rules of processes, which are shown in Table \ref{tab:inferencerules1} and \ref{tab:inferencerules2}. Inference rule $\runa{I-nu}$ infers a triple $(\Gamma,\mathcal{C},K)$ for a restriction. We discard the name bound in the restriction from the inferred type context. For parallel compositions, we use rule $\runa{I-par}$ where we infer a tuple for each subprocess and constrain the types of names bound in both subsequent contexts to be equivalent, as per type rule $\runa{BG-par}$ in Table \ref{tab:bgprocesstypingrules}. Similarly, we constrain the two complexity bounds to be equivalent, which is a reasonable constraint due to subtyping in other inference rules.\\
+
+Rule $\runa{I-tick}$ infers a tuple for a tick constructor. Here, we use the delaying operator from Chapter \ref{ch:typecheck} to add 1 to each time tag in the context inferred for the continuation. We introduce a fresh template for the complexity and constrain it to be greater than or equal to the complexity bound inferred for the continuation plus 1. We use rule $\runa{I-match}$ for the match constructor. Here, the type inferred for the pattern match expression must be a natural type, and for the two subprocesses, we extend the inferred constraints with size information about the expression. That is, for the subprocess guarded by the zero pattern, we can guarantee that the lower-bound on the size of the expression is 0, and for the other subprocess, the upper-bound must be at least 1. As we do for $\runa{I-par}$, we constrain the subsequent complexity bounds to be equivalent, and the contexts to be equivalent for shared names. Finally, if the variable bound in the successor pattern is free in the corresponding subprocess, we constrain its size bounds according to the type of the pattern match expression.\\
+%
+\begin{table*}[!ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        %
+        &\kern-0em\runa{I-nu}\; \infrule{\varphi;\dot{\Gamma},a : \dot{T}\vdash_{\mathcal{C}} P \triangleleft (\Gamma,K)}{\varphi;\dot{\Gamma}\vdash_{\mathcal{C}} \newvar{a : \dot{T}}{P} \triangleleft (\Gamma\!\setminus\!\{a\},K)}\kern3em
+        %
+        \runa{I-tick}\; \infrule{ \varphi;\dot{\Gamma}\vdash_{\mathcal{C}}P \triangleleft (\Gamma,K) }{\varphi;\dot{\Gamma}\vdash_{\mathcal{C} \cup \{ \varphi;\cdot\vDash K + 1 \leq K' \}}\tick P \triangleleft (\uparrow^1\!\!\Gamma,K') }\\[-1em]
+        &\kern20em {\text{with}\; K' = \text{fresh}(\varphi)}\\[-1em]
+        %
+        &\kern-0em\runa{I-par}\; \infrule{\varphi;\dot{\Gamma}\vdash_{\mathcal{C}_1} P \triangleleft (\Gamma, K)\quad \varphi;\dot{\Gamma}\vdash_{\mathcal{C}_2} Q \triangleleft (\Delta,K') }{\varphi;\dot{\Gamma}\vdash_{\mathcal{C}_1\cup \mathcal{C}_2 \cup \Gamma \sim \Delta \cup \{K \sim K'\}} P \mid Q \triangleleft ((\Gamma, \Delta), K)}\kern8em\runa{I-nil}\;\infrule{}{\varphi;\dot{\Gamma}\vdash_{\{\varphi;\cdot\vDash 0 \leq K\}} \nil \triangleleft (\cdot,K)}\\[-1em]
+        &\kern25em {\text{with}\; K = \text{fresh}(\varphi)}\\[-1em]
+        %
+        &\kern-0em\runa{I-match}\; \infrule{\varphi;\dot{\Gamma}\vdash_{\mathcal{C}_1} e : (\Delta, \texttt{Nat}[I,J])\quad \varphi;\dot{\Gamma}\vdash_{\mathcal{C}_2} P \triangleleft (\Gamma,K)\quad \varphi;\dot{\Gamma},x:\texttt{Nat}\vdash_{\mathcal{C}_3} Q \triangleleft (\Gamma',K') }{\varphi;\dot{\Gamma}\vdash_{\mathcal{C}_1 \cup (I=0\merge\mathcal{C}_2) \cup (J\geq 1\merge \mathcal{C}_3)\cup \mathcal{C}_4 \cup \mathcal{C}_5}\match{e}{P}{x}{Q} \triangleleft (\Delta, (\Gamma,\Gamma')\!\setminus\!\{x\},K)} \kern25em \text{ } \\[-1em]
+        &\kern3em\text{where}\; \mathcal{C}_4 = \left\{ \begin{matrix}
+        \{\varphi;\cdot\vdash \texttt{Nat}[I,J] \sqsubseteq \texttt{Nat}[J'+1,I'+1]\} & \text{if}\; \Gamma'(x) = \texttt{Nat}[I',J']\\
+        \emptyset & \text{if}\; x\notin \text{dom}(\Gamma')
+        \end{matrix}
+        \right.\\
+        &\kern5.7em \mathcal{C}_5 = \Gamma\sim\Gamma'\sim\Delta \cup \{ K \sim K' \} %\\[.1em]
+        %
+        % &\kern-5em\runa{I-iserv}\;\infrule{ (\varphi,\widetilde{i});(\dot{\Gamma},\widetilde{v}:\widetilde{\dot{T}})\vdash_{\mathcal{C}_1} P \triangleleft (\Gamma,K) }{ \varphi;(\dot{\Gamma},a : \forall\widetilde{i}.\texttt{serv}(\widetilde{\dot{T}})) \vdash_{ \mathcal{C}_1 \cup \mathcal{C}_2 \cup \mathcal{C}_3 \cup \mathcal{C}_4 }\; !\inputch{a}{\widetilde{v}}{}{P} \triangleleft ((\uparrow^I\!\!(\Gamma\!\setminus\!\{a,\widetilde{v}\}),a : \forall_I\widetilde{i}.\texttt{serv}^{\gamma}_{K''}(\widetilde{T})), K')  }\\[-1em]
+        % &\kern0em\text{where}\;  \forall_I\widetilde{i}.\texttt{serv}^{\gamma}_{K''}(\widetilde{T}) = \text{fresh}(\forall\widetilde{i}.\texttt{serv}(\widetilde{\dot{T}}),\varphi)\kern2em K' = \text{fresh}(\varphi)\\
+        % &\kern3em \mathcal{C}_2 = \{ \texttt{inv}(\Gamma(w)) \mid w\in\text{dom}(\Gamma \setminus \{\widetilde{v}\}) \}\\
+        % &\kern3em \mathcal{C}_3 = (\varphi,\widetilde{i});\cdot\vdash(\cdot,a:\forall_I\widetilde{i}.\texttt{serv}^{\gamma}_{K''}(\widetilde{T}),\widetilde{v} : \widetilde{T}) \sqsubseteq \Gamma\\
+        % &\kern3em \mathcal{C}_4 = \{\{\texttt{in}\} \subseteq \gamma, K\sim K'',\varphi;\cdot\vDash I \leq K'\}\\[-1em]
+        % %
+        % &\kern-5em\runa{I-oserv}\;\infrule{\varphi;\dot{\Gamma}\vdash^{(1 \leq j \leq n)} e_j :  (\Gamma_j,S_j)}{\varphi;(\dot{\Gamma},a : \forall\widetilde{i}.\texttt{serv}(\dot{\Gamma}_1,\dots,\dot{\Gamma}_n))\vdash_{ \mathcal{C}_1 \cup \mathcal{C}_2 \cup \mathcal{C}_3 } \asyncoutputch{a}{e_1,\dots,e_n}{} \triangleleft (\Delta,K)}\\[-1em]
+        % %
+        % &\kern0em\text{where}\;  \forall_I\widetilde{i}.\texttt{serv}^{\gamma}_{K'}(T_1,\dots,T_n) = \text{fresh}(\forall\widetilde{i}.\texttt{serv}(\widetilde{\dot{T}}),\varphi)\\
+        % &\kern3em \Delta = \uparrow^I\!\!((\Gamma_1\sqcup\cdots\sqcup\Gamma_n)\!\setminus\!\{a\}),a:\forall_I\widetilde{i}.\texttt{serv}^{\gamma}_{K'}(T_1,\dots,T_n)\\
+        % &\kern3em K,\widetilde{J} = \text{fresh}(\varphi)\kern2em S_j' =^{(1\leq j\leq n)} \text{fresh}(S_j,\varphi)\\
+        % &\kern3em \mathcal{C}_1 = \{ \varphi;\cdot\vdash S_j \sqsubseteq S_j' \mid 1 \leq j \leq n\}\\
+        % &\kern3em \mathcal{C}_2 = \{ S_j' \sim T_j\{\widetilde{J}/\widetilde{i}\} \mid 1\leq j \leq n\}\\
+        % &\kern3em \mathcal{C}_3 = \{\varphi;\cdot\vDash I + K'\{\widetilde{J}/\widetilde{i}\} \leq K, \{\texttt{out}\} \subseteq \gamma\}\\[-1em]
+        % %
+        % &\runa{I-ich}\;\infrule{ \varphi;(\dot{\Gamma},a:\texttt{ch}(\widetilde{\dot{T}}),\widetilde{v}:\widetilde{\dot{T}})\vdash_{\mathcal{C}_1} P \triangleleft (\Gamma,K) }{\varphi;\dot{\Gamma},a:\texttt{ch}(\widetilde{\dot{T}})\vdash_{ \mathcal{C}_1 \cup \mathcal{C}_2 \cup \mathcal{C}_3 } \inputch{a}{\widetilde{v}}{}{P} \triangleleft ((\uparrow^I\!\!(\Gamma\! \setminus\! \{a,\widetilde{v}\}),a:\texttt{ch}_I^\gamma(\widetilde{T})) , K') }\\[-1em]
+        % &\kern3em\text{where}\; \texttt{ch}^\gamma_I(\widetilde{T}) = \text{fresh}(\texttt{ch}(\widetilde{\dot{T}}),\varphi)\kern2em K' = \text{fresh}(\varphi)\\
+        % &\kern5.7em \mathcal{C}_2 = \varphi;\cdot\vdash (\cdot,a:\texttt{ch}^\gamma_I(\widetilde{T}),\widetilde{v} : \widetilde{T}) \sqsubseteq \Gamma\\
+        % &\kern5.7em \mathcal{C}_3 = \{\{\texttt{in}\}\subseteq\gamma,\varphi;\cdot\vDash K+I \leq K'\}
+        %
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Process time inference rules (1).}
+    \label{tab:inferencerules1}
+\end{table*}
+
+We next consider the inference rules for inputs and outputs. Rule $\runa{I-serv}$ infers a triple $(\Gamma,\mathcal{C},K)$ for a replicated input. We infer a tuple for the continuation, and delay the subsequent type context according to the fresh time tag of the server, and discard associations for the names bound in the replicated input. Moreover, we introduce time invariance constraints for all names that are free in the continuation and unbound in the input. Time invariance constraints do not account for the time-tags of servers that must be zero within the continuation of the replicated input, yet may still be advanced. We enable this by introducing fresh templates for the time-tags of the servers that are free in the continuation, which we then constrain to be less than or equal to the time-tag of the server of the replicated input. This way, we essentially discard the original time-tags of the time invariant servers, which is sound as these must be non-negative (by our implicit constraints on all indices). We use inference rule $\runa{I-oserv}$ and $\runa{I-och}$ for outputs. We distinguish between outputs on servers and channels using the simple type context. For the former, we introduce constraints that ensure the expressions to be output are \textit{instantiations} of the message types of the server. That is, there must exist a substitution $\{\widetilde{J}/\widetilde{i}\}$ of indices $\widetilde{J}$ for index variables $\widetilde{i}$. Note that this is where polynomial coefficients are necessary, and so by over-approximation of substitutions, we can simplify the resulting constraint satisfaction problems if necessary. The rules for normal channels are similar, and so we do not consider them in detail. Example \ref{examp:consinferr} shows some of the constraints inferred for a process. \\
+
+\begin{table*}[!ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        %
+        % &\kern-10em\runa{I-nu}\; \condinfrule{\varphi;(\dot{\Gamma},a : \dot{T})\vdash_{\mathcal{C}} P \triangleleft (\Gamma,K)}{\varphi;\dot{\Gamma}\vdash_{\mathcal{C}\cup\mathcal{C}'} \newvar{a : \dot{T}}{P} \triangleleft (\Gamma\!\setminus\!\{a\},K)}{\text{where}\; \mathcal{C}' = \left\{\begin{matrix}
+        % \{\{\texttt{in},\texttt{out}\} \subseteq \gamma\} & \text{if}\; \Gamma(a) = \texttt{ch}^\gamma_I(\widetilde{T}) \\
+        % \{\{\texttt{in},\texttt{out}\} \subseteq \gamma\} & \text{if}\; \Gamma(a) = \forall_I\widetilde{i}.\texttt{serv}^\gamma_K(\widetilde{T}) \\
+        % \emptyset & \text{otherwise}
+        % \end{matrix}\right.} \\[-1em]
+        % %
+        % &\kern-0em\runa{I-par}\; \infrule{\varphi;\dot{\Gamma}\vdash_{\mathcal{C}_1} P \triangleleft (\Gamma, K_1)\quad \varphi;\dot{\Gamma}\vdash_{\mathcal{C}_2} Q \triangleleft (\Delta,K_2) }{\varphi;\dot{\Gamma}\vdash_{\mathcal{C}_1\cup \mathcal{C}_2 \cup \Gamma \sim \Delta} P \mid Q \triangleleft (\Gamma \sqcup \Delta, K_3)}\\[-1em]
+        % %
+        % &\kern0em \runa{I-nil}\;\condinfrule{}{\varphi;\dot{\Gamma}\vdash_{\{\varphi;\cdot\vDash 0 \leq K\}} \nil \triangleleft (\cdot,K)}{\text{with}\; K = \text{fresh}(\varphi)}\\[-1em]
+        % %
+        % &\runa{I-tick}\; \condinfrule{ \varphi;\dot{\Gamma}\vdash_{\mathcal{C}}P \triangleleft (\Gamma,K) }{\varphi;\dot{\Gamma}\vdash_{\mathcal{C} \cup \{ \varphi;\cdot\vDash K + 1 \leq K' \}}\tick P \triangleleft (\uparrow^{1}\!\!\Gamma,K') }{\text{with}\; K' = \text{fresh}(\varphi)}\\[-1em]
+        % %
+        % &\kern-8em\runa{I-match}\; \infrule{\varphi;\dot{\Gamma}\vdash e \triangleleft (\Delta, \texttt{Nat}[I,J])\quad \varphi;\dot{\Gamma}\vdash_{\mathcal{C}} P \triangleleft (\Gamma,K)\quad \varphi;(\dot{\Gamma},x:\texttt{Nat})\vdash_{\mathcal{C}'} Q \triangleleft (\Gamma',K') }{\varphi;\dot{\Gamma}\vdash_{(I=0\vDash\mathcal{C}_1) \cup (J\geq 1\vDash \mathcal{C}_2)\cup \mathcal{C}_3 \cup \mathcal{C}_4}\match{e}{P}{x}{Q} \triangleleft (\Delta\sqcup (\Gamma\sqcup\Gamma')\!\setminus\!\{x\},K)}\\[-1em]
+        % &\kern-3em\text{where}\; \mathcal{C}_3 = \left\{ \begin{matrix}
+        % \{\varphi;\cdot\vdash \texttt{Nat}[I,J] \sqsubseteq \texttt{Nat}[J'+1,I'+1],K\sim K'\} & \text{if}\; (\Gamma\sqcup\Gamma')(x) = \texttt{Nat}[I',J']\\
+        % \{K\sim K'\} & \text{if}\; x\notin \text{dom}(\Gamma\sqcup\Gamma')
+        % \end{matrix}
+        % \right.\\
+        % &\kern-0em \mathcal{C}_4 = \Gamma\sim\Gamma'\sim\Delta\\[.1em]
+        %
+        &\kern-3em\runa{I-iserv}\;\infrule{ \varphi,\widetilde{i};\dot{\Gamma},\widetilde{v}:\widetilde{\dot{T}}\vdash_{\mathcal{C}_1} P \triangleleft (\Gamma,K) }{ \varphi;\dot{\Gamma},a : \forall\widetilde{i}.\texttt{serv}(\widetilde{\dot{T}}) \vdash_{ \mathcal{C}_1 \cup \mathcal{C}_2 \cup \mathcal{C}_3 \cup \mathcal{C}_4 }\; !\inputch{a}{\widetilde{v}}{}{P} \triangleleft ((\Delta,a : \forall_I\widetilde{i}.\texttt{serv}^{\gamma}_{K''}(\widetilde{T})), K')  }\\[-1em]
+        &\kern1em\text{where}\;  \forall_I\widetilde{i}.\texttt{serv}^{\gamma}_{K''}(\widetilde{T}) = \text{fresh}(\forall\widetilde{i}.\texttt{serv}(\widetilde{\dot{T}}),\varphi)\kern2em K' = \text{fresh}(\varphi)\\
+        &\kern4em \mathcal{C}_2 = \{ \varphi;\cdot\vDash\texttt{inv}(\Gamma(w)) \mid w\in\text{dom}(\Gamma \setminus \{\widetilde{v}\}) \}\\
+        %&\kern3em \mathcal{C}_3 = (\varphi,\widetilde{i});\cdot\vdash(\cdot,\widetilde{v} : \widetilde{T}) \sqsubseteq \Gamma\\
+        &\kern4em \mathcal{C}_3 = \{\{\texttt{in}\} \subseteq \gamma, K\sim K'',\varphi;\cdot\vDash I \leq K',(\varphi,\widetilde{i});\cdot\vdash(\cdot,\widetilde{v} : \widetilde{T}) \sqsubseteq \Gamma\}\\
+        %
+        &\kern4em\Delta = \text{fresh}(\dot{\Gamma}\setminus\{a\},\varphi)\\ 
+        &\kern4em\mathcal{C}_4 = \{\varphi;\cdot\vDash \text{tag}(\Delta) \leq I,\varphi;\cdot\vdash \Delta,a:\forall_I\widetilde{i}.\texttt{serv}^{\gamma}_{K''}(\widetilde{T}) \sqsubseteq \text{freshtag}(\Gamma,\varphi)\} \\
+        %
+        %&\kern3em \mathcal{C}_6 = \left\{ 
+        %\begin{matrix}
+        % \{\sigma \subseteq \gamma, (\varphi,\widetilde{i});\cdot\vdash K'' \leq K_3, (\varphi,\widetilde{i});\cdot\vdash \widetilde{S} \sqsubseteq \widetilde{T}\} & \text{if}\; \Gamma(a) = \forall_J\widetilde{i}.\texttt{serv}^{\sigma}_{K_3}(\widetilde{S}) \\
+        % \emptyset & \text{if}\; a\notin\text{dom}(\Gamma)
+        % \end{matrix}
+        % \right. \\
+        %
+        &\kern-3em\runa{I-oserv}\;\infrule{\varphi;\dot{\Gamma}\vdash^{(1 \leq j \leq n)} e_j :  (\Gamma_j,S_j)}{\varphi;\dot{\Gamma},a : \forall\widetilde{i}.\texttt{serv}(\dot{\Gamma}_1,\dots,\dot{\Gamma}_n)\vdash_{ \mathcal{C}_1 \cup \mathcal{C}_2 \cup \mathcal{C}_3 } \asyncoutputch{a}{e_1,\dots,e_n}{} \triangleleft (\Delta,K)}\\[-1em]
+        %
+        &\kern1em\text{where}\;  \forall_I\widetilde{i}.\texttt{serv}^{\gamma}_{K'}(T_1,\dots,T_n) = \text{fresh}(\forall\widetilde{i}.\texttt{serv}(\widetilde{\dot{T}}),\varphi)\\%\kern2em K = \text{fresh}(\varphi)\\
+        &\kern4em \Delta =\; \uparrow^I\!\!(\Gamma_1,\dots,\Gamma_n),a:\forall_I\widetilde{i}.\texttt{serv}^{\gamma}_{K'}(T_1,\dots,T_n)\\
+        &\kern3em K,\widetilde{J} = \text{fresh}(\varphi)\\
+        &\kern3em \mathcal{C}_1 = \{ \varphi;\cdot\vdash S_j \sqsubseteq T_j\{\widetilde{J}/\widetilde{i}\} \mid 1 \leq j \leq n\}\\
+        %&\kern3em \mathcal{C}_2 = \{ S_j' \sim T_j\{\widetilde{J}/\widetilde{i}\} \mid 1\leq j \leq n\}\\
+        &\kern4em \mathcal{C}_2 = \Gamma_1 \sim \cdots \sim \Gamma_n \\
+        &\kern4em \mathcal{C}_3 = \{\varphi;\cdot\vDash I + K'\{\widetilde{J}/\widetilde{i}\} \leq K, \{\texttt{out}\} \subseteq \gamma\}\\
+        %
+        %
+        &\runa{I-ich}\;\infrule{ \varphi;\dot{\Gamma},a:\texttt{ch}(\widetilde{\dot{T}}),\widetilde{v}:\widetilde{\dot{T}}\vdash_{\mathcal{C}_1} P \triangleleft (\Gamma,K) }{\varphi;\dot{\Gamma},a:\texttt{ch}(\widetilde{\dot{T}})\vdash_{ \mathcal{C}_1 \cup \mathcal{C}_2 \cup \mathcal{C}_3 } \inputch{a}{\widetilde{v}}{}{P} \triangleleft ((\uparrow^I\!\!(\Gamma\! \setminus\! \{a,\widetilde{v}\}),a:\texttt{ch}_I^\gamma(\widetilde{T})) , K') }\\[-1em]
+        &\kern3em\text{where}\; \texttt{ch}^\gamma_I(\widetilde{T}) = \text{fresh}(\texttt{ch}(\widetilde{\dot{T}}),\varphi)\kern2em K' = \text{fresh}(\varphi)\\
+        &\kern5.7em \mathcal{C}_2 = \varphi;\cdot\vdash (\cdot,a:\texttt{ch}^\gamma_I(\widetilde{T}),\widetilde{v} : \widetilde{T}) \sqsubseteq \Gamma\\
+        &\kern5.7em \mathcal{C}_3 = \{\{\texttt{in}\}\subseteq\gamma,\varphi;\cdot\vDash K+I \leq K'\}\\
+        %
+        &\runa{I-och}\; \infrule{\varphi;\dot{\Gamma}\vdash^{(1\leq j \leq n)} e_j : (\Gamma_j,S_j) }{\varphi;\dot{\Gamma},a:\texttt{ch}(\dot{T}_1,\dots,\dot{T}_n)\vdash_{\mathcal{C}_1 \cup \mathcal{C}_2 \cup \mathcal{C}_3} \asyncoutputch{a}{e_1,\dots,e_n}{} \triangleleft (\Delta,K)}\\[-1em]
+        &\kern3em \text{where}\; \texttt{ch}^\gamma_I(T_1,\dots,T_n) = \text{fresh}(\texttt{ch}(\dot{T}_1,\dots,\dot{T}_n),\varphi)\kern2em K = \text{fresh}(\varphi)\\
+        &\kern5.7em \Delta =\; \uparrow^I\!\!(\Gamma_1,\dots,\Gamma_n), a : \texttt{ch}^\gamma_I(T_1,\dots,T_n)\\
+        %&\kern3em K,\widetilde{J} = \text{fresh}(\varphi)\kern2em S_j' =^{(1\leq j\leq n)} \text{fresh}(S_j,\varphi)\\
+        &\kern5.7em \mathcal{C}_1 = \{\varphi;\cdot\vdash S_j \sqsubseteq T_j\mid 1 \leq j \leq n\}\\
+        &\kern5.7em \mathcal{C}_2 = \Gamma_1 \sim \cdots \sim \Gamma_n\\
+        &\kern5.7em \mathcal{C}_3 = \{\varphi;\cdot\vDash I \leq K, \{\texttt{out}\}\subseteq \gamma\}
+        %
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Process time inference rules (2).}
+    \label{tab:inferencerules2}
+\end{table*}
+
+\begin{example}\label{examp:consinferr}
+We show the constraints inferred for a part of the process introduced in Section \ref{sec:simpletypeinf}. We assume a simple type context $\cdot,\text{npar} : \forall i.\texttt{serv}(\texttt{Nat},\texttt{ch}())$. We consider the following part of the process
+%
+\begin{align*}
+    (\nu r : {\color{blue} \texttt{ch}()})( \asyncoutputch{\text{npar}}{s(s(0)),r}{} \mid \inputch{r}{}{}{\nil} )
+\end{align*}
+%
+We infer the tuple below for the process. In the following section, we show how the constraint satisfaction problem can be reduced to constraints of the forms $\varphi;\Phi\vDash I \leq J$ and $I \sim J$.
+%
+\begin{align*}
+    ((\cdot,\text{npar} : \forall_{I_4}i.\texttt{serv}^{\gamma_4}_{K_1}(\texttt{Nat}[J_{12},J_{13}],\texttt{ch}^{\gamma_1}_{I_1}())),\mathcal{C},K_2) 
+\end{align*}
+\begin{align*}
+    \mathcal{C} = \{&\texttt{ch}^{\gamma_2}_{I_2}()\sim\texttt{ch}^{\gamma_1}_{I_1}()\{J_1/i\}, \cdot;\cdot\vdash \texttt{ch}^{\gamma_3}_{I_3}() \sqsubseteq \texttt{ch}^{\gamma_2}_{I_2}(),\\
+    &\texttt{Nat}[0,0] \sim \texttt{Nat}[J_2,J_3], \cdot;\cdot\vdash\texttt{Nat}[J_2 + 1,J_3 + 1] \sqsubseteq \texttt{Nat}[J_4,J_5],\\
+    &\texttt{Nat}[J_4,J_5] \sim \texttt{Nat}[J_6,J_7], \cdot;\cdot\vdash \texttt{Nat}[J_6+1,J_7+1] \sqsubseteq \texttt{Nat}[J_8,J_9],\\
+    &  \texttt{Nat}[J_{10},J_{11}] \sim \texttt{Nat}[J_{12},J_{13}]\{J_1/i\},\cdot;\cdot\vdash \texttt{Nat}[J_8,J_9] \sqsubseteq \texttt{Nat}[J_{10},J_{11}],\\
+    & \{\texttt{out}\} \subseteq \gamma_4, \cdot;\cdot\vDash I_4 + K_1\{J_1/i\} \leq K_2,\\
+    & \{\texttt{in}\} \subseteq \gamma_5,\cdot;\cdot\vDash K_3 + I_5 \leq K_4, \texttt{ch}^{\gamma_3}_{I_3}() \sim \texttt{ch}^{\gamma_5}_{I_5}(),K_2 \sim K_4\}
+\end{align*}
+\end{example}
+
+
+
+% \begin{align*}
+%     \infrule{}{\varphi;\Phi;\dot{\Gamma}\vdash P \triangleleft (\Gamma,K,\mathcal{C})}
+% \end{align*}
+
+% \begin{align*}
+%     &\infrule{}{(\cdot,i);(\cdot,J_1\leq 0);\dot{\Gamma}_1\vdash \asyncoutputch{r}{}{} \triangleleft ((\cdot,r : \texttt{ch}^{\gamma_1}_{I_1}()),K_1,\mathcal{C}_1)}\\
+% &\kern1em\text{where}\\
+% &\kern2em \dot{\Gamma}_1(r) = \texttt{ch}()\\ 
+% &\kern2em \mathcal{C}_1 = \{ (\cdot,i);(\cdot,J_1\leq 0) \vdash \texttt{ch}^{\gamma_1}_{I_1}() \sqsubseteq \texttt{ch}^{\{\texttt{out}\}}_{I_1}(), (\cdot,i);(\cdot,J_1\leq 0) \vDash I_1 \leq K_1\}\\
+% &\kern2em \text{and}\; I_1,K_1,\gamma_1\; \text{are fresh (templates and capability variables).}
+% \end{align*}
+
+
+% \begin{align*}
+%     &\infrule{}{(\cdot,i);(\cdot,J_2 \geq 1);\dot{\Gamma}_1,x:\texttt{Nat},r' : \texttt{ch}(),r'' : \texttt{ch}()\vdash \asyncoutputch{r'}{}{} \triangleleft ((\cdot,r' : \texttt{ch}^{\gamma_2}_{I_2}()),K_2,\mathcal{C}_2)}\\
+% &\kern1em\text{where}\\
+% &\kern2em \mathcal{C}_2 = \{ \cdot;(\cdot,J_2\geq 1) \vdash \texttt{ch}^{\gamma_2}_{I_2}() \sqsubseteq \texttt{ch}^{\{\texttt{out}\}}_{I_2}(), \cdot;(\cdot,J_2\geq 1) \vDash I_2 \leq K_2\}\\
+% &\kern2em \text{and}\; I_2,K_2,\gamma_2\; \text{are fresh (templates and capability variables).}
+% \end{align*}
+
+
+% \begin{align*}
+%     &\infrule{(\cdot,i);(\cdot,J_2 \geq 1);\dot{\Gamma}_1,x:\texttt{Nat},r' : \texttt{ch}(),r'' : \texttt{ch}()\vdash \asyncoutputch{r'}{}{} \triangleleft ((\cdot,r' : \texttt{ch}^{\gamma_2}_{I_2}()),K_2,\mathcal{C}_2)}{(\cdot,i);(\cdot,J_2 \geq 1);\dot{\Gamma}_1,x:\texttt{Nat},r' : \texttt{ch}(),r'' : \texttt{ch}()\vdash \tick\asyncoutputch{r'}{}{} \triangleleft (\Gamma_1,K_3,\mathcal{C}_2 \cup \mathcal{C}_3)}\\
+% &\kern1em\text{where}\\
+% &\kern2em \Gamma_1 = \cdot,r' : \texttt{ch}^{\gamma_3}_{I_3+1}() \\
+% %&\kern2em \dot{\Gamma}_1(r') = \texttt{ch}()\\ 
+% &\kern2em \mathcal{C}_2 = \{ (\cdot,i);(\cdot,J_2\geq 1) \vdash \texttt{ch}^{\gamma_2}_{I_2}() \sqsubseteq \texttt{ch}^{\{\texttt{out}\}}_{I_2}(), (\cdot,i);(\cdot,J_2\geq 1) \vDash I_2 \leq K_2\}\\
+% &\kern2em \mathcal{C}_3 = \{ (\cdot,i);(\cdot,J_2\geq 1) \vdash \texttt{ch}^{\gamma_3}_{I_3}() \sqsubseteq \texttt{ch}^{\gamma_2}_{I_2 + 1}(), (\cdot,i);(\cdot,J_2\geq 1) \vDash K_2 + 1 \leq K_3\}\\
+% &\kern2em \text{and}\; I_2,K_2,I_3,K_3,\gamma_2,\gamma_3\; \text{are fresh (templates and capability variables).}
+% \end{align*}
+
+% \begin{align*}
+%     &\infrule{}{(\cdot,i);(\cdot,J_2 \geq 1);\dot{\Gamma}_1,x:\texttt{Nat},r' : \texttt{ch}(),r'' : \texttt{ch}()\vdash \asyncoutputch{\text{npar}}{x,r''}{} \triangleleft (\Gamma_2,K_5,\mathcal{C}_4)}\\
+% &\kern1em\text{where}\\
+% &\kern2em \Gamma_2 = (\cdot,\text{npar} : \forall_{I_4}i.\texttt{serv}^{\gamma_4}_{K_4}(\texttt{Nat}[J_3,J_4],\texttt{ch}^{\gamma_5}_{I_5}()),x : \texttt{Nat}[J_5,J_6], r'' : \texttt{ch}^{\gamma_6}_{I_6}())\\
+% &\kern2em \mathcal{C}_4 = \{ (\cdot,i);(\cdot,J_2\geq 1) \vdash \forall_{I_4}i.\texttt{serv}^{\gamma_4}_{K_4}(\texttt{Nat}[J_3,J_4],\texttt{ch}^{\gamma_5}_{I_5}()) \sqsubseteq 
+% %
+% \forall_{I_4}i.\texttt{serv}^{\gamma_7}_{K_4}(\texttt{Nat}[J_7,J_8],\texttt{ch}^{\gamma_8}_{I_5}()),\\
+% %
+% &\kern5em(\cdot,i);(\cdot,J_2\geq 1) \vdash \texttt{Nat}[J_5,J_6] \sqsubseteq \texttt{Nat}[J_9,J_{10}],
+% %
+% (\cdot,i);(\cdot,J_2\geq 1) \vdash \texttt{ch}^{\gamma_6}_{I_6}() \sqsubseteq \texttt{ch}^{\gamma_9}_{I_6}(),\\
+% %
+% &\kern5em\texttt{Nat}[J_9,J_{10}] = \texttt{Nat}[J_7,J_{8}]\{J_{11}/i\},
+% %
+% \texttt{ch}^{\gamma_9}_{I_6}() = \texttt{ch}^{\gamma_9}_{I_7}()\{J_{11}/i\},\\
+% %
+% &\kern5em(\cdot,i);(\cdot,J_2\geq 1) \vDash I_4 + K_4\{J_{11}/i\} \leq K_5,
+% %
+% (\cdot,i);(\cdot,J_2\geq 1) \vDash I_4 \leq I_6\}\\
+% &\kern2em \text{and}\; I_2,K_2,\gamma_2\; \text{are fresh (templates and capability variables).}
+% \end{align*}
+
+% \begin{align*}
+% &\kern-0em\begin{prooftree}
+% \Infer0{ (\cdot,i);(\cdot,J_2 \geq 1);\dot{\Gamma}_1,x:\texttt{Nat},r' : \texttt{ch}(),r'' : \texttt{ch}()\vdash \asyncoutputch{r}{}{} \triangleleft ((\cdot,r : \texttt{ch}^{\gamma_{10}}_{I_{8}}()), K_6, \mathcal{C}_5) }
+% %
+% \Infer1{ (\cdot,i);(\cdot,J_2 \geq 1);\dot{\Gamma}_1,x:\texttt{Nat},r' : \texttt{ch}(),r'' : \texttt{ch}()\vdash \inputch{r''}{}{}{\asyncoutputch{r}{}{}} \triangleleft ((\cdot,r : \texttt{ch}^{\gamma_{11}}_{I_{8} + I_{9}}(),r'' : \texttt{ch}^{\gamma_{12}}_{I_{9}}()), K_7, \mathcal{C}_5 \cup \mathcal{C}_6) }
+% %
+% \Infer1{ (\cdot,i);(\cdot,J_2 \geq 1);\dot{\Gamma}_1,x:\texttt{Nat},r' : \texttt{ch}(),r'' : \texttt{ch}()\vdash \inputch{r'}{}{}{\inputch{r''}{}{}{\asyncoutputch{r}{}{}}} \triangleleft (\Gamma_3, K_8, \mathcal{C}_5 \cup \mathcal{C}_6 \cup \mathcal{C}_7)}
+% \end{prooftree}\\
+% &\kern1em\text{where}\\
+% &\kern2em \Gamma_3 = \cdot,r : \texttt{ch}^{\gamma_{13}}_{I_{8} + I_{9} + I_{10}}(),r'' : \texttt{ch}^{\gamma_{14}}_{I_{9} + I_{10}}(), r' : \texttt{ch}^{\gamma_{15}}_{I_{10}}()\\
+% &\kern2em \mathcal{C}_5 = \{ (\cdot,i);(\cdot,J_2\geq 1) \vdash \texttt{ch}^{\gamma_{10}}_{I_8}() \sqsubseteq \texttt{ch}^{\{\texttt{out}\}}_{I_8}(), (\cdot,i);(\cdot,J_2\geq 1) \vDash I_8 \leq K_6 \} \\
+% &\kern2em \mathcal{C}_6 = \{ (\cdot,i);(\cdot,J_2\geq 1) \vdash \texttt{ch}^{\gamma_{12}}_{I_9}() \sqsubseteq \texttt{ch}^{\{\texttt{in}\}}_{I_9}(), (\cdot,i);(\cdot,J_2\geq 1) \vDash K_6 + I_9 \leq K_7,\\ 
+% &\kern4.7em(\cdot,i);(\cdot,J_2\geq 1) \vdash \texttt{ch}^{\gamma_{11}}_{I_8}() \sqsubseteq \texttt{ch}^{\gamma_{10}}_{I_8}() \} \\
+% &\kern2em \mathcal{C}_7 = \{ (\cdot,i);(\cdot,J_2\geq 1) \vdash \texttt{ch}^{\gamma_{15}}_{I_{10}}() \sqsubseteq \texttt{ch}^{\{\texttt{in}\}}_{I_10}(), (\cdot,i);(\cdot,J_2\geq 1) \vDash K_7 + I_{10} \leq K_8,\\ 
+% &\kern4.7em(\cdot,i);(\cdot,J_2\geq 1) \vdash \texttt{ch}^{\gamma_{13}}_{I_8}() \sqsubseteq \texttt{ch}^{\gamma_{11}}_{I_8}(), (\cdot,i);(\cdot,J_2\geq 1) \vdash \texttt{ch}^{\gamma_{14}}_{I_9}() \sqsubseteq \texttt{ch}^{\gamma_{12}}_{I_9}() \} \\
+% &\kern2em \text{And}\; I_8,I_9,I_10,\gamma_{10},\gamma_{11},\gamma_{12},\gamma_{13},\gamma_{14},\gamma_{15}\;\text{are fresh (templates and capability variables).}
+% \end{align*}
+
+% \begin{align*}
+%     &\begin{prooftree}
+%     \Infer0{(\cdot,i);(\cdot,J_2\geq 1);\dot{\Gamma}_1, x : \texttt{Nat}, r' : \texttt{ch}(),r'' : \texttt{ch}()\vdash \tick\asyncoutputch{r}{}{} \mid \asyncoutputch{\text{npar}}{x,r''}{} \mid \inputch{r'}{}{}{\inputch{r''}{}{}{\asyncoutputch{r}{}{}}} \triangleleft (\Gamma_4,K_9,\mathcal{C}_8) }
+%     \end{prooftree}\\
+%     &\kern1em\text{where}\\
+%     &\kern2em \Gamma_4 = \Gamma_1 \sqcup \Gamma_2 \sqcup \Gamma_3 = \Gamma_1,\Gamma_2,\Gamma_3 \\
+%     &\kern2em \mathcal{C}_8 = \mathcal{C}_2 \cup \mathcal{C}_3 \cup \mathcal{C}_4 \cup \mathcal{C}_5 \cup \mathcal{C}_6 \cup \mathcal{C}_6 \cup \mathcal{C}_7 \cup \{ K_8 = K_9, K_5 = K_9, K_3 = K_9\}\\
+%     &\kern2em\text{And}\; K_9\;\text{ is a fresh template.}
+% \end{align*}
+
+% \begin{align*}
+%     &\begin{prooftree}
+%     \Infer0{(\cdot,i);(\cdot,J_2\geq 1);\dot{\Gamma}_1, x : \texttt{Nat}\vdash (\nu r')(\nu r'')( \tick\asyncoutputch{r}{}{} \mid \asyncoutputch{\text{npar}}{x,r''}{} \mid \inputch{r'}{}{}{\inputch{r''}{}{}{\asyncoutputch{r}{}{}}}) \triangleleft (\Gamma_5,K_9,\mathcal{C}_9) }
+%     \end{prooftree}\\
+%     &\kern1em\text{where}\\
+%     &\kern2em \Gamma_5 = \Gamma_4 \setminus \{r',r''\} \\
+%     &\kern2em \mathcal{C}_9 = \mathcal{C}_8 \cup \{ \gamma_{14} \subseteq \{\texttt{in},\texttt{out}\}, \gamma_{15} \subseteq \{\texttt{in},\texttt{out}\} \} %\mathcal{C}_2 \cup \mathcal{C}_3 \cup \mathcal{C}_4 \cup \mathcal{C}_5 \cup \mathcal{C}_6 \cup \mathcal{C}_6 \cup \mathcal{C}_7 \cup \{ K_8 = K_9, K_5 = K_9, K_3 = K_9\}\\
+%     %&\kern2em\text{And}\; K_9\;\text{ is a fresh template.}
+% \end{align*}
+
+% \begin{align*}
+%     &\begin{prooftree}
+%     \Infer0{(\cdot,i);\cdot;\dot{\Gamma}_1\vdash \match{n}{\cdots}{x}{\cdots} \triangleleft (\Gamma_6,K_{10},\mathcal{C}_{10}) }
+%     \end{prooftree}\\
+%     &\kern1em\text{where}\\
+%     &\kern2em \Gamma_6 = ((\cdot,r : \texttt{ch}^{\gamma_1}_{I_1}()) \sqcup (\Gamma_5 \setminus \{x\})),n : \texttt{Nat}[J_{12},J_{13}] = (\Gamma_5 \setminus \{r,x\}),(\cdot,r : \texttt{ch}^{\gamma_1}_{I_1}()),n : \texttt{Nat}[J_{12},J_{13}] \\
+%     &\kern2em \mathcal{C}_{10} = \mathcal{C}_9 \cup \{ \gamma_{13} \subseteq \gamma_1, I_1 = I_8 + I_9 + I_{10}, K_1 = K_{10}, K_9 = K_{10},\\ 
+%     &\kern4.7em(\cdot,i);\cdot\vdash \texttt{Nat}[J_{12},J_{13}] \sqsubseteq n : \texttt{Nat}[J_{5} + 1,J_{6} + 1]\}\\ %\mathcal{C}_2 \cup \mathcal{C}_3 \cup \mathcal{C}_4 \cup \mathcal{C}_5 \cup \mathcal{C}_6 \cup \mathcal{C}_6 \cup \mathcal{C}_7 \cup \{ K_8 = K_9, K_5 = K_9, K_3 = K_9\}\\
+%     &\kern2em\text{And}\; K_{10}\;\text{ is a fresh template.}
+% \end{align*}
+
+% \begin{align*}
+%     &\begin{prooftree}
+%     \Infer0{\cdot;\cdot;\dot{\Gamma}_0\vdash\; !\text{npar}(n,r).\match{n}{\cdots}{x}{\cdots} \triangleleft (\Gamma_7,K_{11},\mathcal{C}_{11}) }
+%     \end{prooftree}\\
+%     &\kern1em\text{where}\\
+%     &\kern2em \Gamma_7 = (\Gamma_6 \setminus \{\text{npar},x,r\}),\text{npar} : \forall_{I_{11}}i.\texttt{serv}^{\gamma_{16}}_{K_{12}}(\texttt{Nat}[J_{14},J_{15}], \texttt{ch}^{\gamma_{17}}_{I_{12}}()) \\
+%     &\kern2em \mathcal{C}_{11} = \mathcal{C}_{10} \cup \{ K_{12} = K_{10}, \cdot;\cdot\vDash I_{11}\leq K_{11}, I_4 = 0, \gamma_4 \subseteq \{\texttt{out}\}\\  
+%     &\kern4.7em \cdot;\cdot\vdash \forall_{I_{11}}i.\texttt{serv}^{\gamma_{16}}_{K_{12}}(\texttt{Nat}[J_{14},J_{15}], \texttt{ch}^{\gamma_{17}}_{I_{12}}()) \sqsubseteq \forall_{I_4}i.\texttt{serv}^{\gamma_4}_{K_4}(\texttt{Nat}[J_3,J_4],\texttt{ch}^{\gamma_5}_{I_5}()),\\
+%     &\kern4.7em \cdot;\cdot\vdash \texttt{Nat}[J_{14},J_{15}] \sqsubseteq \texttt{Nat}[J_{12},J_{13}], \cdot;\cdot\vdash \texttt{ch}^{\gamma_{17}}_{I_{12}}() \sqsubseteq \texttt{ch}^{\gamma_{1}}_{I_{1}}(), \{\texttt{in}\} \subseteq \gamma_{16} \}\\ %\mathcal{C}_2 \cup \mathcal{C}_3 \cup \mathcal{C}_4 \cup \mathcal{C}_5 \cup \mathcal{C}_6 \cup \mathcal{C}_6 \cup \mathcal{C}_7 \cup \{ K_8 = K_9, K_5 = K_9, K_3 = K_9\}\\
+%     &\kern2em\text{And}\; K_{11},K_{12},I_{11},I_{12},J_{14},J_{15},\gamma_{16}, \gamma_{17}\;\text{ are fresh (templates and capability variables).}
+% \end{align*}
+
+% \begin{align*}
+%     &\begin{prooftree}
+%     \Infer0{\cdot;\cdot;\dot{\Gamma}_0 \vdash (\nu r :  \texttt{ch}^{\{\texttt{in},\texttt{out}\}}())( \asyncoutputch{\text{npar}}{s(s(0)),r}{} \mid \inputch{r}{}{}{\nil} ) \triangleleft (\Gamma_8, K_{12}, \mathcal{C}_{12})}
+%     \end{prooftree}\\
+%     &\kern1em \text{where}\\
+%     &\kern2em \Gamma_8 = \cdot, \text{npar} : \forall_{I_{13}}i.\texttt{serv}^{\gamma_{18}}_{K_{13}}(\texttt{Nat}[J_{16},J_{17}],\texttt{ch}^{\gamma_{19}}_{I_{14}}()), r : \texttt{ch}^{\gamma_{20}}_{I_{15}}()\\
+%     &\kern2em \mathcal{C}_{12} = \{ \{\texttt{in},\texttt{out}\} \subseteq \gamma_{20}, \{\texttt{in}\} \subseteq \gamma_{20}, \cdot;\cdot\vDash I_{15} \leq K_{14}, I_{13} + K_{13}\{J_{18}/i\} \leq K_{15},\\
+%     &\kern4.7em \cdot;\cdot\vdash \texttt{Nat}[2,2] \sqsubseteq \texttt{Nat}[J_{19},J_{20}], \texttt{Nat}[J_{19},J_{20}] = \texttt{Nat}[J_{16},J_{17}]\{J_{18}/i\}, \texttt{ch}^{\gamma_{20}}_{I_{15}}() = \texttt{ch}^{\gamma_{19}}_{I_{14}}()\{J_{18}/i\} \} \\
+%     &\kern2em \text{And}\; K_{12},K_{13}, K_{14},K_{15}, I_{13},I_{14},I_{15},J_{16},J_{17},J_{18},J_{19},J_{20},\gamma_{18},\gamma_{19},\gamma_{20}
+% \end{align*}
+
+% \begin{align*}
+%     &\begin{prooftree}
+%     \Infer0{\cdot;\cdot;\cdot\vdash P_{\text{npar}} \triangleleft (\cdot, K_{16},\mathcal{C}_{13})}
+%     \end{prooftree}\\
+%     &\kern1em\text{where}\\
+%     &\kern2em \mathcal{C}_{13} = \mathcal{C}_{11} \cup \mathcal{C}_{12} \cup \{ \forall_{I_{13}}i.\texttt{serv}^{\gamma_{18}}_{K_{13}}(\texttt{Nat}[J_{16},J_{17}],\texttt{ch}^{\gamma_{19}}_{I_{14}}()) = \forall_{I_{11}}i.\texttt{serv}^{\gamma_{16}}_{K_{12}}(\texttt{Nat}[J_{14},J_{15}], \texttt{ch}^{\gamma_{17}}_{I_{12}}()),\\
+%     &\kern4.7em \{\texttt{in},\texttt{out}\} \subseteq \gamma_{18}, K_{11} = K_{16}, K_{12} = K_{16} \}\\
+%     &\kern2em \text{And}\; K_{16}\;\text{is a fresh template.}
+% \end{align*}
+
+
+\section{Reduction of constraint satisfaction problems}\label{sec:redcons}
+
+In this section, we show how a set of constraints can be reduced to a set of coefficient equivalence constraints and index inequality constraints. We first show how a set of type constraints can be reduced to a set of use-constraints. We then consider reduction of use-constraints to index constraints.
+\subsection{Reduction from type constraints to use-constraints}
+We consider rules for reduction of time invariance constraints, conditional subtyping constraints and equality constraints separately. The rules for reduction of time invariance constraints are shown in Table \ref{tab:inferencerulesinv}. As natural types are always time invariant, we can safely discard invariance constraints on such types. Similarly, normal channel types cannot be time invariant, and so if the constraint satisfaction problem includes such a constraint, we know there exists no solution. We constrain server types to only have output capability. Note that for a server to be time invariant, its time tag must also be zero. However, as we use delaying rather than advancement of time in the inference rules, we cannot enforce such a constraint here. We handle this separately in the inference rule for replicated inputs.\\
+
+\begin{table*}[!ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        %
+        (\Gamma,\mathcal{C} \cup \{\varphi;\Phi \vdash \texttt{inv}(\texttt{Nat}[I,J])\},K) \leadsto&\; (\Gamma,\mathcal{C},K)\\
+        %
+        (\Gamma,\mathcal{C} \cup \{\varphi;\Phi \vdash \texttt{inv}(\texttt{ch}^\sigma_I(\widetilde{T}))\},K) \leadsto&\; (\Gamma,\{\texttt{false}\},K)\\
+        %
+        (\Gamma,\mathcal{C} \cup \{\varphi;\Phi \vdash \texttt{inv}(\forall_I\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})\},K') \leadsto&\; (\Gamma,\mathcal{C} \cup \{\sigma \subseteq \{\texttt{out}\}\},K')
+        %
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Rules for reduction of time invariance constraints.}
+    \label{tab:inferencerulesinv}
+\end{table*}
+
+We next consider reduction of conditional subtyping constraints, as shown in Table \ref{tab:inferencerulesss}. These constraints are satisfied when either the antecedent is false or the consequent is satisfied. The idea behind using Horn-clauses is that reduction of subtyping constraints depends on use-capabilities, yet may introduce new use-constraints. Thus, their use enables reduction of subtyping constraints prior to solving use-constraints, thereby allowing us to solve them separately. For subtyping constraints on natural types, we simply introduce conditional constraints on the lower and upper size bounds. For channels and servers, we introduce conditional constraints for each type of variance, i.e. covariance, contravariance and invariance, and extend the antecedents of the implications accordingly.\\
+
+\begin{table*}[!ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        %
+        &(\Gamma,\mathcal{C} \cup \{ \widetilde{c_\gamma} \implies (\varphi;\Phi\vdash \texttt{Nat}[I,J] \sqsubseteq \texttt{Nat}[I',J'])\},K) \leadsto (\Gamma,\mathcal{C}\cup\left\{
+        \begin{matrix}
+        \widetilde{c_\gamma} \implies (\varphi;\Phi\vDash I' \leq I), \\ \widetilde{c_\gamma} \implies (\varphi;\Phi\vDash J \leq J')
+        \end{matrix}\right\},K)\\
+        %%
+        %
+        %%
+        &(\Gamma,\mathcal{C} \cup \{\widetilde{c_\gamma} \implies (\varphi;\Phi\vdash \texttt{ch}^\sigma_I(\widetilde{T}) \sqsubseteq \texttt{ch}^{\sigma'}_J(\widetilde{S}))\},K) \leadsto (\Gamma,\mathcal{C} \cup \left\{
+        \begin{matrix}
+        \widetilde{c_\gamma} \implies \sigma' \subseteq \sigma, I \sim J,\\
+        (\widetilde{c}_\gamma, \{\texttt{in}\} \subseteq \sigma') \implies (\varphi;\Phi\vdash \widetilde{T}\sqsubseteq \widetilde{S}),\\
+        %
+        (\widetilde{c}_\gamma,\{\texttt{out}\} \subseteq \sigma') \implies (\varphi;\Phi\vdash \widetilde{S}\sqsubseteq \widetilde{T})%,\\
+        %
+        % (\widetilde{c}_\gamma, \{\texttt{in},\texttt{out}\} \subseteq \sigma') \implies (\varphi;\Phi\vdash \widetilde{T}\sqsubseteq \widetilde{S}),\\
+        % %
+        % (\widetilde{c}_\gamma, \{\texttt{in},\texttt{out}\}\subseteq \sigma') \implies (\varphi;\Phi\vdash \widetilde{S}\sqsubseteq \widetilde{T})
+        \end{matrix}\right\},K)\\
+        %
+        % (\Gamma,\mathcal{C} \cup \{\varphi;\Phi\vdash \texttt{ch}^\sigma_I(\widetilde{T}) \sqsubseteq \texttt{ch}^{\{\texttt{out}\}}_J(\widetilde{S})\},K) \leadsto&\; (\Gamma,\mathcal{C} \cup \{\{\texttt{out}\} \subseteq \sigma, I \sim J, \varphi;\Phi\vdash \widetilde{S} \sqsubseteq \widetilde{T} \},K)\\
+        % %
+        % (\Gamma,\mathcal{C} \cup \{\varphi;\Phi\vdash \texttt{ch}^\sigma_I(\widetilde{T}) \sqsubseteq \texttt{ch}^{\{\texttt{in},\texttt{out}\}}_J(\widetilde{S})\},K) \leadsto&\; (\Gamma,\mathcal{C} \cup 
+        % %
+        % \left\{
+        % \begin{matrix}
+        % \{\texttt{in},\texttt{out}\} \subseteq \sigma, I \sim J,\\ \varphi;\Phi\vdash \widetilde{T} \sqsubseteq \widetilde{S},  \varphi;\Phi\vdash \widetilde{S} \sqsubseteq \widetilde{T}
+        % \end{matrix} \right\},K)\\
+        %
+        &(\Gamma,\mathcal{C} \cup \{ \widetilde{c_\gamma} \implies (\varphi;\Phi\vdash \forall_I\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T}) \sqsubseteq \forall_J\widetilde{i}.\texttt{serv}^{\sigma'}_{K'}(\widetilde{S}))\},K'') \leadsto\\ 
+        &\kern10em(\Gamma,\mathcal{C} \cup \left\{ \begin{matrix} \widetilde{c_\gamma} \implies \sigma' \subseteq \sigma, I \sim J,\\ 
+        %
+        (\widetilde{c_\gamma},\{\texttt{in}\}\subseteq \sigma') \implies ((\varphi,\widetilde{i});\Phi\vdash \widetilde{T} \sqsubseteq \widetilde{S}),\\ 
+        %
+        (\widetilde{c_\gamma},\{\texttt{in}\}\subseteq \sigma') \implies ((\varphi,\widetilde{i});\Phi\vDash K' \leq K ),\\
+        %
+        %
+        (\widetilde{c_\gamma},\{\texttt{out}\}\subseteq \sigma') \implies ((\varphi,\widetilde{i});\Phi\vdash \widetilde{S} \sqsubseteq \widetilde{T}),\\ 
+        %
+        (\widetilde{c_\gamma},\{\texttt{out}\}\subseteq \sigma') \implies ((\varphi,\widetilde{i});\Phi\vDash K \leq K')%,\\
+        %
+        %
+        % (\widetilde{c_\gamma},\{\texttt{in},\texttt{out}\}\subseteq \sigma') \implies ((\varphi,\widetilde{i});\Phi\vdash \widetilde{T} \sqsubseteq \widetilde{S}),\\ 
+        % %
+        % (\widetilde{c_\gamma},\{\texttt{in},\texttt{out}\}\subseteq \sigma') \implies ((\varphi,\widetilde{i});\Phi\vdash \widetilde{S} \sqsubseteq \widetilde{T}),\\
+        % %
+        % (\widetilde{c_\gamma},\{\texttt{in},\texttt{out}\}\subseteq \sigma') \implies ((\varphi,\widetilde{i});\Phi\vDash K = K')
+        \end{matrix} \right\},K'')\\
+        %
+        % (\Gamma,\mathcal{C} \cup \{\varphi;\Phi\vdash \forall_I\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T}) \sqsubseteq \forall_J\widetilde{i}.\texttt{serv}^{\{\texttt{out}\}}_{K'}(\widetilde{S})\},K'') \leadsto&\; (\Gamma,\mathcal{C} \cup \left\{ \begin{matrix} \{\texttt{out}\} \subseteq \sigma, I \sim J, (\varphi,\widetilde{i});\Phi\vdash \widetilde{S} \sqsubseteq \widetilde{T},\\ (\varphi,\widetilde{i});\Phi\vDash K \leq K' \end{matrix} \right\},K'')\\
+        % %
+        % (\Gamma,\mathcal{C} \cup \{\varphi;\Phi\vdash \forall_I\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T}) \sqsubseteq \forall_J\widetilde{i}.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_{K'}(\widetilde{S})\},K'') \leadsto&\; (\Gamma,\mathcal{C} \cup \left\{ \begin{matrix} \{\texttt{in},\texttt{out}\} \subseteq \sigma, I \sim J,\\ (\varphi,\widetilde{i});\Phi\vdash \widetilde{T} \sqsubseteq \widetilde{S},\\ (\varphi,\widetilde{i});\Phi\vdash \widetilde{S} \sqsubseteq \widetilde{T},\\ (\varphi,\widetilde{i});\Phi\vDash K' = K \end{matrix} \right\},K'')
+        %
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Rules for reduction of conditional subsumption constraints.}
+    \label{tab:inferencerulesss}
+\end{table*}
+
+
+
+
+
+In Table \ref{tab:inferencerulessim}, we show rules for reducing type equivalence constraints. Such constraints are satisfied only if the two operands are equivalent, and so we simply replace them with new equivalence constraints for their constituents. Example \ref{examp:consredu} shows how a set of type constraints can be reduced. \\ %Note that the first rule requires indices to be in expanded form. This is a reasonable requirement, as any index has an equivalent expanded form. \\
+
+\begin{table*}[!ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        %
+        % (\Gamma,\mathcal{C} \cup \{\alpha \sim n\},K) \leadsto&\; [\alpha \mapsto n](\Gamma,\mathcal{C},K)\\
+        % %
+        % (\Gamma,\mathcal{C} \cup \{n \sim \alpha\},K) \leadsto&\; [\alpha \mapsto n](\Gamma,\mathcal{C},K)\\
+        % %
+        % (\Gamma,\mathcal{C} \cup \{\alpha \sim \alpha'\},K) \leadsto&\; [\alpha \mapsto \alpha'](\Gamma,\mathcal{C},K)\\
+        % %
+        % (\Gamma,\mathcal{C} \cup \{n \sim m\},K) \leadsto&\; \left\{ \begin{matrix}
+        % (\Gamma,\mathcal{C},K) & \text{if}\; m = n \\
+        % (\Gamma,\{\texttt{false}\},K) & \text{if}\; m\neq n\\
+        %
+        %\end{matrix} \right.
+        %
+        %%%%%%%%%%(\Gamma,\mathcal{C} \cup \{\mathbf{c}_0 + \mathbf{c}_1 i_1 + \cdots + \mathbf{c}_n i_n \sim \mathbf{c}_0' + \mathbf{c}_1' i_1 + \cdots + \mathbf{c}_n' i_n\},K) \leadsto&\; (\Gamma,\mathcal{C} \cup \{ \mathbf{c}_j \sim \mathbf{c}_j' \mid 1 \leq j \leq n \},K)\\
+        %
+        %(\Gamma,\mathcal{C} \cup \{\sigma \sim \sigma' \},K) \leadsto&\; (\Gamma,\mathcal{C} \cup \{\sigma \subseteq \sigma', \sigma' \subseteq \sigma\}, K) \\
+        %
+        (\Gamma,\mathcal{C} \cup \{\texttt{Nat}[I,J] \sim \texttt{Nat}[I',J']\},K) \leadsto&\; (\Gamma,\mathcal{C} \cup \{ I \sim I', J \sim J' \},K)\\
+        %
+        (\Gamma,\mathcal{C} \cup \{\texttt{ch}^\sigma_I(\widetilde{T}) \sim \texttt{ch}^{\sigma'}_J(\widetilde{S})\},K) \leadsto&\; (\Gamma,\mathcal{C} \cup \{ \sigma \subseteq \sigma', \sigma' \subseteq \sigma, I \sim J, \widetilde{T} \sim \widetilde{S} \},K)\\
+        %
+        (\Gamma,\mathcal{C} \cup \{\forall_I\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T}) \sim \forall_J\widetilde{i}.\texttt{serv}^{\sigma'}_{K'}(\widetilde{S})\},K'') \leadsto&\; (\Gamma,\mathcal{C} \cup \{ \sigma \subseteq \sigma', \sigma' \subseteq \sigma, I \sim J, K \sim K', \widetilde{T} \sim \widetilde{S} \},K'')
+        %
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Rules for reduction of type equivalence constraints.}
+    \label{tab:inferencerulessim}
+\end{table*}
+%
+\begin{example}\label{examp:consredu}
+We now return to the example from the previous section, and show how the inferred type constraints can be reduced to use-constraints. As there are no time invariance constraints in the example, we first apply the reduction rules of conditional subsumption constraints iteratively, until no changes can be made to the set of constraint. The result is
+
+\begin{align*}
+    \{&\texttt{ch}^{\gamma_2}_{I_2}()\sim\texttt{ch}^{\gamma_1}_{I_1}()\{J_1/i\},
+    %
+    %\cdot;\cdot\vdash \texttt{ch}^{\gamma_3}_{I_3}() \sqsubseteq \texttt{ch}^{\gamma_2}_{I_2}(),\\
+    %
+    \gamma_2 \subseteq \gamma_3, I_3\sim I_2,\\
+    %
+    &\texttt{Nat}[0,0] \sim \texttt{Nat}[J_2,J_3],
+    %
+    %\cdot;\cdot\vdash\texttt{Nat}[J_2 + 1,J_3 + 1] \sqsubseteq \texttt{Nat}[J_4,J_5],\\
+    %
+    \cdot;\cdot\vDash J_4 \leq J_2+1, \cdot;\cdot\vDash J_3+1 \leq J_5 ,\\
+    %
+    &\texttt{Nat}[J_4,J_5] \sim \texttt{Nat}[J_6,J_7], 
+    %
+    %\cdot;\cdot\vdash \texttt{Nat}[J_6+1,J_7+1] \sqsubseteq \texttt{Nat}[J_8,J_9],\\
+    %
+    \cdot;\cdot\vDash J_8 \leq J_6+1,\cdot;\cdot\vDash J_7+1 \leq J_9,\\
+    %
+    &  \texttt{Nat}[J_{10},J_{11}] \sim \texttt{Nat}[J_{12},J_{13}]\{J_1/i\},
+    %
+    %\cdot;\cdot\vdash \texttt{Nat}[J_8,J_9] \sqsubseteq \texttt{Nat}[J_{10},J_{11}],\\
+    %
+    \cdot;\cdot\vDash J_{10} \leq J_8, \cdot;\cdot\vDash J_9 \leq J_{11} , \\
+    %
+    & \{\texttt{out}\} \subseteq \gamma_4,
+    %
+    \cdot;\cdot\vDash I_4 + K_1\{J_1/i\} \leq K_2,\\
+    %
+    & \{\texttt{in}\} \subseteq \gamma_5,\cdot;\cdot\vDash K_3 + I_5 \leq K_4,\texttt{ch}^{\gamma_3}_{I_3}() \sim \texttt{ch}^{\gamma_5}_{I_5}(),K_2 \sim K_4\}
+\end{align*}
+%
+We then apply the rules to reduce type equivalence constraints. The result is
+%
+\begin{align*}
+    %\{&\texttt{ch}^{\gamma_2}_{I_2}()\sim\texttt{ch}^{\gamma_1}_{I_1}()\{J_1/i\},
+    %
+    &\gamma_2 \subseteq \gamma_1, \gamma_1 \subseteq \gamma_2, I_2 \sim I_1\{J_1/i\},\gamma_2 \subseteq \gamma_3, I_3\sim I_2,\\
+    %
+    %&\texttt{Nat}[0,0] \sim \texttt{Nat}[J_2,J_3],
+    %
+    & 0 \sim J_2, 0 \sim J_3,
+    %
+    %\cdot;\cdot\vdash\texttt{Nat}[J_2 + 1,J_3 + 1] \sqsubseteq \texttt{Nat}[J_4,J_5],\\
+    %
+    \cdot;\cdot\vDash J_4 \leq J_2+1, \cdot;\cdot\vDash J_3+1 \leq J_5 ,\\
+    %
+    %&\texttt{Nat}[J_4,J_5] \sim \texttt{Nat}[J_6,J_7], 
+    %
+    & J_4 \sim J_6, J_5 \sim J_7,
+    %
+    %\cdot;\cdot\vdash \texttt{Nat}[J_6+1,J_7+1] \sqsubseteq \texttt{Nat}[J_8,J_9],\\
+    %
+    \cdot;\cdot\vDash J_8 \leq J_6+1,\cdot;\cdot\vDash J_7+1 \leq J_9,\\
+    %
+    %&  \texttt{Nat}[J_{10},J_{11}] \sim \texttt{Nat}[J_{12},J_{13}]\{J_1/i\},
+    %
+    & J_{10} \sim J_{12}\{J_1/i\}, J_{11} \sim J_{13}\{J_1/i\},
+    %
+    %\cdot;\cdot\vdash \texttt{Nat}[J_8,J_9] \sqsubseteq \texttt{Nat}[J_{10},J_{11}],\\
+    %
+    \cdot;\cdot\vDash J_{10} \leq J_8, \cdot;\cdot\vDash J_9 \leq J_{11} , \\
+    %
+    & \{\texttt{out}\} \subseteq \gamma_4,
+    %
+    \cdot;\cdot\vDash I_4 + K_1\{J_1/i\} \leq K_2,\\
+    %
+    & \{\texttt{in}\} \subseteq \gamma_5,\cdot;\cdot\vDash K_3 + I_5 \leq K_4,\\
+    %& \texttt{ch}^{\gamma_3}_{I_3}() \sim \texttt{ch}^{\gamma_5}_{I_5}(),K_2 \sim K_4,\{\texttt{in},\texttt{out}\} \subseteq \gamma_3\}
+    %
+    & \gamma_3 \subseteq \gamma_5, \gamma_5 \subseteq \gamma_3, I_3 \sim I_5,K_2 \sim K_4\}
+\end{align*}
+\end{example}
+%
+\subsection{Reduction from use-constraints to index constraints}
+
+We are now ready to consider reduction from a set of use-constraints to a set of index constraints. We take inspiration from previous work on type reconstruction of linear input/output types by Igarashi and Kobayashi \cite{IgarashiKobayashi2000}, for which constraints on use-capabilities are solved using an algorithm that iteratively assigns capabilities to use-variables until all use-constraints are satisfied or the process can be deemed ill-typed. A necessary condition for termination is that all operations on use-capabilities must be monotonic. For our purposes, it suffices to use set-union, and so the condition is trivially satisfied.\\
+
+We define Algorithm \ref{alg:ioalgsolv} that takes a set of use-constraints as input, and returns a set of index constraints. The algorithm iteratively computes a valuation of sets of use-capabilities for free use-variables in the set of constraints, by extending the use-capabilities assigned to some variable with the least set necessary to satisfy a corresponding use-constraint. When it is no longer possible to satisfy more use-constraints by extension of use-capability sets, we check for the existence of an unsatisfied constraint on use-capabilities. If one exists, we return the set $\{\texttt{false}\}$ to denote that the process is ill-typed. Otherwise, we discard all constraints on use-capabilities. Conditional index inequality constraints are discarded if their antecedents are not satisfied, and are otherwise replaced by their consequents. When using the algorithm to solve a set of constraints on use-capabilities, we apply the computed use-variable valuation on our type context. We write ${c_\gamma}_f$ for the condition that $c_\gamma$ is satisfied when its variables are instantiated according to valuation $f$. We extend this to sequences of constraints on use-capabilities, writing $\widetilde{c_\gamma}_f$ for the condition ${c_\gamma}^1_f\land\cdots\land {c_\gamma}^n_f$ where $\widetilde{c_\gamma} = {c_\gamma}^1\land\cdots\land {c_\gamma}^n$.
+%
+\SetKwComment{Comment}{// }{ }
+%
+\begin{algorithm}
+\caption{Iterative use-constraint solver}\label{alg:ioalgsolv}
+\KwData{$\mathcal{C}_{IO}$ \Comment*[r]{A set of use-constraints}}
+\KwResult{$(\mathcal{C}_I,f)$ \Comment*[r]{An index constraint set and a use-variable valuation}}
+$f,f' \gets \text{Use-variable valuations with}\;f(\gamma)=f'(\gamma)=\emptyset\;\text{for}\;\gamma\in\text{ftv}(\mathcal{C}_{IO})$\;
+%
+\Repeat{$f'(\gamma) = f(\gamma)\;\text{for}\;\gamma\in\text{ftv}(\mathcal{C}_{IO})$}{
+      $f \gets f'$\;
+      %
+      \uIf{$\exists (\widetilde{c_\gamma} \implies \gamma\subseteq \gamma')\in\mathcal{C}_{IO}.\widetilde{c_\gamma}_f\; \text{and} \;f(\gamma)\not\subseteq f(\gamma')$}{$f' \gets f[\gamma' \mapsto f(\gamma) \cup f(\gamma')]$}
+      %
+      \ElseIf{$\exists(\widetilde{c_\gamma} \implies \sigma \subseteq \gamma')\in\mathcal{C}_{IO}.\widetilde{c_\gamma}_f\; \text{and} \;\sigma\not\subseteq f(\gamma')$}{$f' \mapsto f[\gamma'\mapsto \sigma \cup f(\gamma'))]$}
+      %
+    %   \ElseIf{$\exists(\gamma \subseteq \sigma')\in\mathcal{C}_{IO}.f(\gamma)\not\subseteq \sigma'$}{ $\mathcal{C}_I \gets \{\texttt{false}\} $ }
+      %
+    }
+    %
+    \uIf{$\exists (\widetilde{c_\gamma} \implies c_\gamma')\in\mathcal{C}_{IO}.\widetilde{c_\gamma}\land\neg {c_\gamma'}_f$}{$\mathcal{C}_I \gets \{\texttt{false}\}$}
+    \Else{
+    $\mathcal{C}_I \gets \emptyset$\;
+    \lForEach{$(\widetilde{c_\gamma} \implies (\varphi;\Phi\vDash I \leq J))\in\mathcal{C}_{IO}.\widetilde{c_\gamma}_f$}{$\mathcal{C}_I \gets \mathcal{C}_I \cup \{\varphi;\Phi\vDash I \leq J\}$}
+    \lForEach{$c_I \in \mathcal{C}_{IO}$}{$\mathcal{C}_I \gets \mathcal{C}_I \cup \{c_I\}$}
+    }
+\end{algorithm}
+%
+
+
+
+\subsection{Solving constraint satisfaction problems}\label{sec:solvcons}
+
+In this section, we show how a solution to a set of index constraints can be over-approximated by a set of potentially polynomial inequalities. We first consider index equivalence constraints. Due to the restrictions on how indices may be formed, such constraints can be directly reduced to coefficient-wise equivalence constraints, by the following reduction rule
+\begin{equation*}
+    (\Gamma,\mathcal{C}_I \cup \{\mathbf{c}_0 + \mathbf{c}_1 i_1 + \cdots + \mathbf{c}_n i_n \sim \mathbf{c}_0' + \mathbf{c}_1' i_1 + \cdots + \mathbf{c}_n' i_n\},K) \leadsto (\Gamma,\mathcal{C}_I \cup \{ \mathbf{c}_j \sim \mathbf{c}_j' \mid 1 \leq j \leq n \},K)
+\end{equation*}
+Thus, equivalence constraints can be given directly to existing constraint satisfaction solvers. An index inequality constraint $(\cdot,\widetilde{i});(\cdot,C_1,\dots,C_n)\vDash I \leq J$ is more difficult to solve, as it can be seen as a Horn-clause with $C_1,\dots,C_n$ as antecedents and $I\leq J$ as a single consequent, existentially quantified over coefficient variables and universally quantified over $\widetilde{i}$, i.e. it takes the form
+\begin{equation*}
+    \exists\widetilde{\alpha}.\forall\widetilde{i}.C_1\land\cdots\land C_n \implies I \leq J
+\end{equation*}
+Such constraints are intractable in general, and so we must over-approximate them. We first present a useful result in Lemma \ref{lemma:remconsok}. That is, it is an over-approximation to discard index variable constraints.
+%
+\begin{lemma}\label{lemma:remconsok}
+If $\varphi;\Phi\vDash C$ and $\Phi\subseteq\Phi'$ then $\varphi;\Phi'\vDash C$.
+\begin{proof}
+Follows directly from $\mathcal{M}_\varphi(\Phi') \subseteq \mathcal{M}_\varphi(\Phi)$.
+\end{proof}
+\end{lemma}
+%
+However, discarding antecedents comes at the price of expressiveness and precision. Consider for instance the judgement
+\begin{equation*}
+    (\cdot,i);(\cdot,i\geq 1)\vDash (i-1) + 1 \leq i
+\end{equation*}
+It holds precisely because $i\geq 1$, ensuring $-1$ and $1$ cancel out. If we discard the antecedent, the consequent must hold under valuation $\rho(i)=0$, which is not the case due to the monus operator, i.e. $[\![(i-1)+1]\!]_\rho = 1$. Based on our experience, we believe only bounds on constant time servers can be inferred without antecedents of the form $i\geq 1$ (using our inference algorithm), therefore we show how they can be simulated by substitution in some cases.\\
+
+For constraints of the form $(\varphi,i);(\Phi,i\geq I)\vDash C$, we substitute $i+I$ for $i$, i.e. $(\varphi,i);\Phi\{i+I/i\}\vDash C\{i+I/i\}$. For the above example, we then have the trivially satisfied judgement 
+\begin{equation*}
+    (\cdot,i);\cdot\vDash (i+1-1) + 1 \leq i+1
+\end{equation*}
+This applies to index variable equality constraints as well. They can be simulated by substitution when one side is a single index variable. For instance $\varphi;(\Phi,i=I)\vDash C$ if and only if $\varphi;\Phi\vDash C\{I/i\}$. Therefore, we can safely assume that $\Phi$ is empty, at the cost of expressiveness and precision. We can now try to solve our constraints using an existing constraint satisfaction solver, which may be possible in some cases. Another option is to perform naive quantifier elimination. A reasonable but restrictive over-approximation is to reduce inequality constraints to coefficient-wise inequality constraints. Using this approach, we end up with a set of possibly polynomial equality and inequality constraints that is hopefully solvable in practice.
+%
+\subsection{Simplification of constraint satisfaction problems}
+The number of constraints introduced by our inference algorithm grows rapidly with the size of processes, thereby making it difficult to find solutions, greatly exacerbated by polynomial constraints from substitutions. This is exemplified by terms of natural numbers, as the successor constructor introduces a constraint. Thus, whereas we introduce $4$ constraints for the expression $s(s(s(0)))$, we require $6$ for $s(s(s(s(s(0)))))$, and so the number of constraints scales linearly with the size of inputs to servers. However, it suffices to introduce $2$ constraints for either expression, by treating a sequence of successors as a single joint successor using a rule of the form
+\begin{align*}
+    &\kern-15em\runa{I-succ*}\;\infrule{\varphi;\dot{\Gamma}\vdash_{\mathcal{C}} e : (\Gamma,\texttt{Nat}[I,J])}{\varphi;\dot{\Gamma}\vdash_{\mathcal{C} \cup \{\varphi;\cdot\vdash \texttt{Nat}[I+n,J+n] \sqsubseteq \texttt{Nat}[I',J']\}} \widetilde{s}(e) : (\Gamma,\texttt{Nat}[I',J'])}\\
+    &\kern-12em {\text{where}\; I',J' = \text{fresh}(\varphi)}\\
+    &\kern-9.3em \widetilde{s}(e) = \overbrace{s(\cdots s}^n (e) \cdots ) 
+\end{align*}
+Another concern is the flexibility of server types in the work of Baillot and Ghyselen \cite{BaillotGhyselen2021}. That is, the quantified index variables introduced in a server type need not be associated with the size of a natural number, which forces us to treat all unknown sizes as templates for indices. However, many interesting primitive recursive functions can be encoded as servers using types of the form
+\begin{align*}
+    \forall_I{i_1,\dots,i_{2n}}.\texttt{serv}^\sigma_K(\texttt{Nat}[i_1,i_2],\dots,\texttt{Nat}[i_{2n-1},i_{2n}],\texttt{ch}^{\sigma'}_{I'}(\widetilde{T}))
+\end{align*}
+That is, each size bound on \textit{outer-most} natural message types of the server is a unique index variable, and the time-tags and sizes of all other message types are indices quantified over these index variables. If we enforce server types to be of this form, we can greatly decrease the number of coefficient variables needed. Moreover, restricting index variables to be quantified over size bounds on naturals enables us to directly derive the substitution needed to instantiate a server. Consider for instance the server \textit{f} bound to type $\forall_{I_1}{i,j}.\texttt{serv}^\sigma_K(\texttt{Nat}[i,j],\texttt{ch}^{\sigma'}_{I_2}(\texttt{Nat}[J_1,J_2]))$. Then, for some expression $e$ with type $\texttt{Nat}[J_3,J_4]$, the following constraints are sufficient for the judgement $\varphi;\Phi;(\Gamma,f: \forall_{I_1}{i,j}.\texttt{serv}^\sigma_K(\texttt{Nat}[i,j],\texttt{ch}^{\sigma'}_{I_2}(\texttt{Nat}[J_1,J_2])))\vdash \asyncoutputch{f}{e}{} \triangleleft K'$
+\begin{align*}
+    \varphi;\Phi\vdash \texttt{Nat}[J_3,J_4] \sqsubseteq \texttt{Nat}[L_1,L_2]\\
+    \varphi;\Phi\vdash \texttt{ch}^{\sigma'}_{I_2}(\texttt{Nat}[J_1,J_2]) \sqsubseteq \texttt{ch}^{\sigma''}_{I_3}(\texttt{Nat}[J_5,J_6])\{L_1/i, L_2/j\}\\
+    \varphi;\Phi\vDash I_1 + K\{L_1/i,L_2/j\} \leq K'
+\end{align*}
+where $L_1$, $L_2$, $I_3$, $J_5$, $J_6$ and $\sigma''$ are \textit{fresh}. Another benefit of restricting server types to this form is that we can more often simulate antecedents in index inequality constraints. That is, we can utilize that size bounds on message natural types have exactly one positive coefficient on an index variable, i.e. $\texttt{Nat}[i,j]$, and as we often pattern match on naturals received on replicated inputs, we would expect our antecedents to often be of the form $i\geq 1$. However, this is complicated by subsumption constraints. That is, as we may increase the upper bound on a natural type, we introduce a fresh copy of the natural type, i.e. $\texttt{Nat}[I,J]$ with the constraint  $\varphi;\cdot\vdash \texttt{Nat}[i,j] \sqsubseteq \texttt{Nat}[I,J]$. Thus, our antecedents will typically be of the form $J \geq 1$, which is more difficult to simulate as an index variable is not isolated. However, due to our over-approximation of the constraint $\varphi;\cdot\vDash j \leq J$, i.e. pair-wise coefficient inequality constraints, we can deduce that $J = L + cj$ with $c$ being positive for some index $L$ with index variables in $\varphi\setminus\{j\}$. Thus, we can safely isolate $j$ and simulate the antecedent by substituting $(1-L)/c + j$ for $j$. Note that this may be an under-approximation of the antecedent (due to constraint over-approximation) and thereby an over-approximation of the constraint, and so for maximum expressiveness, we may try all combinations of discarding and simulating antecedents.
+%
+\subsection{Haskell implementation}
+
+We have implemented our type inference algorithm in Haskell using the Z3 SMT-solver \cite{Z3}. We use the over-approximations from the previous section, and we further omit lower-bounds on natural sizes, i.e. they are always 0. These together simplify the generated constraint satisfaction problems substantially, for some of the processes we have tested. Moreover, the simulation of antecedents described in the previous section enables us to infer bounds on some linear time servers, which we have not been able to do when antecedents are simply discarded. Our implementation is available at GitHub\footnote{\url{https://github.com/MikkelLauridsen/bg-inference}.}. \\
+
+We optimize solutions to the reduced and over-approximated constraint satisfaction problems, by minimizing the coefficients of the complexity bound inferred for a process by our inference algorithm. This works quite well in practice, however, for servers that are not invoked, we might get imprecise bounds on server complexities. This can be alleviated by either using a different objective function (minimizing the server complexity bound) or by invoking the server with arguments with sizes based on new index variables.\\
+
+We are now ready to show some examples of processes that we can and cannot infer reasonable bounds on, respectively. We first consider two simple \textit{recursive} servers that differ only by tick-placement. The processes are shown below, where $m$ is a free variable with the type $\texttt{Nat}[0,j]$, and so $P_{\text{npar}}$ has a span of $1$ and work of $j$ whereas $P_{\text{npar}}'$ has a span and work of $j$. Our Haskell implementation can infer these bounds in a few seconds when run on a normal desktop workstation. In particular, we infer the two types $\forall_{0}{i_{0}}.\texttt{serv}^{\{\texttt{in}, \texttt{out}\}}_{1 + 0i_{0}}(\texttt{Nat}[0, 0 + 1i_{0}], \texttt{ch}^{\{\texttt{out}\}}_{1 + 0i_{0}}())$ and $\forall_{0}{i_{0}}.\texttt{serv}^{\{\texttt{in}, \texttt{out}\}}_{0 + 1i_{0}}(\texttt{Nat}[0, 0 + 1i_{0}], \texttt{ch}^{\{\texttt{out}\}}_{0 + 1i_{0}}())$ for server \textit{npar} in the two processes, respectively. The inferred and reduced constraint satisfaction problems are available in Appendix \ref{app:runningexm}.
+
+\begin{minipage}{0.42\textwidth}
+\begin{align*}
+    &\kern0em P_{\text{npar}} \defeq\\
+    &(\nu \text{npar})(\\
+    &\kern2em !\text{npar}(n,r).\texttt{match}\; n\; \{\\
+    &\kern3em 0 \mapsto \asyncoutputch{r}{}{}\\
+    &\kern3em s(x) \mapsto (\nu r' )(\nu r'' )(\\
+    &\kern4em {\color{blue} \tick{{\color{black} \asyncoutputch{r'}{}{}}} } \mid
+ \asyncoutputch{\text{npar}}{x,r''}{} \mid \inputch{r'}{}{}{\inputch{r''}{}{}{\asyncoutputch{r}{}{}}}) \} \\
+    &\kern2em \mid \\
+    &(\nu r)( \asyncoutputch{\text{npar}}{m,r}{} \mid \inputch{r}{}{}{\nil} ))
+\end{align*}
+\end{minipage}
+\begin{minipage}{0.42\textwidth}
+\begin{align*}
+    &\kern0em P_{\text{npar}}' \defeq\\
+    &(\nu \text{npar})(\\
+    &\kern2em !\text{npar}(n,r).\texttt{match}\; n\; \{\\
+    &\kern3em 0 \mapsto \asyncoutputch{r}{}{}\\
+    &\kern3em s(x) \mapsto (\nu r' )(\nu r'' ) {\color{blue}\texttt{tick}}. (\\ &\kern4em {\asyncoutputch{r'}{}{}} \mid
+ \asyncoutputch{\text{npar}}{x,r''}{} \mid \inputch{r'}{}{}{\inputch{r''}{}{}{\asyncoutputch{r}{}{}}}) \} \\
+    &\kern2em \mid \\
+    &(\nu r)( \asyncoutputch{\text{npar}}{m,r}{} \mid \inputch{r}{}{}{\nil} ))
+\end{align*}
+\end{minipage}\\
+
+As for processes that we cannot infer reasonable bounds on, we distinguish between those where imprecise bounds are inferred, those where the constraint satisfaction problems are not solved in reasonable time and those where our over-approximations lead to unsatisfiable constraint satisfaction problems. We have not been able to find an example of the former, but even for quite simple processes, our inferred constraint satisfaction problems are sometimes difficult to solve. Consider for instance the encoding of the addition operator of naturals as a server seen below. Although the process contains zero ticks, we were unable to infer a bound on its span within $3$ hours. 
+\begin{align*}
+    P_\text{add}\defeq&\;\bang\inputch{\text{add}}{x,y,r}{}{
+        \texttt{match}\; x\; \{
+             0 \mapsto \asyncoutputch{r}{y}{};
+            \succc{z} \mapsto \asyncoutputch{\text{add}}{z,\succc{y},r}{}\}}
+    %
+\end{align*}
+An example of a process for which the corresponding over-approximated constraint satisfaction problem is unsatisfiable is the Fibonacci number encoding from Chapter \ref{ch:bgts}. Although its span is linear, the size upper-bound on the \textit{returned} natural is not linear in the size of the \textit{parameter} natural number, and so it cannot be expressed using our restricted server types.
+%
+%\section{Notes on extension to usage types}
+
+% \input{sections/timeinference/baillotghyselen}
+% \input{sections/timeinference/usages}
+% \input{sections/timeinference/type_system}
+% \input{sections/timeinference/soundness}
+% \input{sections/timeinference/examples}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../esop2023"
+%%% End:

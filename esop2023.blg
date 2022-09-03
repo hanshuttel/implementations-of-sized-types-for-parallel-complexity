@@ -3,44 +3,46 @@ Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
 The top-level auxiliary file: esop2023.aux
 The style file: plain.bst
 Database file #1: bibliography/esop2023-sources.bib
-You've used 19 entries,
+Warning--can't use both author and editor fields in Karp1972
+You've used 24 entries,
             2118 wiz_defined-function locations,
-            648 strings with 7668 characters,
-and the built_in function-call counts, 6935 in all, are:
-= -- 722
-> -- 256
-< -- 9
-+ -- 102
-- -- 79
-* -- 445
-:= -- 1089
-add.period$ -- 66
-call.type$ -- 19
-change.case$ -- 94
+            694 strings with 8795 characters,
+and the built_in function-call counts, 8808 in all, are:
+= -- 915
+> -- 308
+< -- 10
++ -- 123
+- -- 94
+* -- 577
+:= -- 1376
+add.period$ -- 82
+call.type$ -- 24
+change.case$ -- 114
 chr.to.int$ -- 0
-cite$ -- 19
-duplicate$ -- 314
-empty$ -- 550
-format.name$ -- 79
-if$ -- 1535
+cite$ -- 25
+duplicate$ -- 392
+empty$ -- 721
+format.name$ -- 94
+if$ -- 1949
 int.to.chr$ -- 0
-int.to.str$ -- 19
-missing$ -- 17
-newline$ -- 100
-num.names$ -- 46
-pop$ -- 90
+int.to.str$ -- 24
+missing$ -- 24
+newline$ -- 125
+num.names$ -- 58
+pop$ -- 109
 preamble$ -- 1
-purify$ -- 75
+purify$ -- 91
 quote$ -- 0
-skip$ -- 262
+skip$ -- 319
 stack$ -- 0
-substring$ -- 434
-swap$ -- 114
-text.length$ -- 9
+substring$ -- 613
+swap$ -- 136
+text.length$ -- 10
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 76
-warning$ -- 0
-while$ -- 63
-width$ -- 21
-write$ -- 230
+type$ -- 94
+warning$ -- 1
+while$ -- 85
+width$ -- 26
+write$ -- 288
+(There was 1 warning)
