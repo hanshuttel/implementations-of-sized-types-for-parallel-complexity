@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.5.29)  31 AUG 2022 19:22
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.5.29)  3 SEP 2022 09:53
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -313,6 +313,16 @@ Package: framed 2011/10/22 v 0.96: framed or shaded text with page breaks
 \FrameRule=\dimen150
 \FrameSep=\dimen151
 )
+(/usr/local/texlive/2018/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+
+(/usr/local/texlive/2018/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\symAMSa=\mathgroup6
+\symAMSb=\mathgroup7
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+))
 (/usr/local/texlive/2018/texmf-dist/tex/latex/listings/listings.sty
 \lst@mode=\count138
 \lst@gtempboxa=\box64
@@ -772,7 +782,7 @@ File: pgflibraryplotmarks.code.tex 2015/08/03 v3.0.1a (rcs-revision 1.14)
 )))
 (/usr/local/texlive/2018/texmf-dist/tex/latex/jknapltx/mathrsfs.sty
 Package: mathrsfs 1996/01/01 Math RSFS package v1.0 (jk)
-\symrsfs=\mathgroup6
+\symrsfs=\mathgroup8
 )
 (/usr/local/texlive/2018/texmf-dist/tex/generic/pgfplots/libs/tikzlibrarypgfplo
 ts.external.code.tex
@@ -930,6 +940,253 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 82.
 )
 \Hy@SectionHShift=\skip59
+)
+(/usr/local/texlive/2018/texmf-dist/tex/latex/ebproof/ebproof.sty
+(/usr/local/texlive/2018/texmf-dist/tex/latex/l3kernel/expl3.sty
+Package: expl3 2018/03/05 L3 programming layer (loader) 
+
+(/usr/local/texlive/2018/texmf-dist/tex/latex/l3kernel/expl3-code.tex
+Package: expl3 2018/03/05 L3 programming layer (code)
+\c_max_int=\count183
+\l_tmpa_int=\count184
+\l_tmpb_int=\count185
+\g_tmpa_int=\count186
+\g_tmpb_int=\count187
+\g__intarray_font_int=\count188
+\g__prg_map_int=\count189
+\c_log_iow=\count190
+\l_iow_line_count_int=\count191
+\l__iow_line_target_int=\count192
+\l__iow_one_indent_int=\count193
+\l__iow_indent_int=\count194
+\c_zero_dim=\dimen278
+\c_max_dim=\dimen279
+\l_tmpa_dim=\dimen280
+\l_tmpb_dim=\dimen281
+\g_tmpa_dim=\dimen282
+\g_tmpb_dim=\dimen283
+\c_zero_skip=\skip60
+\c_max_skip=\skip61
+\l_tmpa_skip=\skip62
+\l_tmpb_skip=\skip63
+\g_tmpa_skip=\skip64
+\g_tmpb_skip=\skip65
+\c_zero_muskip=\muskip12
+\c_max_muskip=\muskip13
+\l_tmpa_muskip=\muskip14
+\l_tmpb_muskip=\muskip15
+\g_tmpa_muskip=\muskip16
+\g_tmpb_muskip=\muskip17
+\l_keys_choice_int=\count195
+\c__fp_leading_shift_int=\count196
+\c__fp_middle_shift_int=\count197
+\c__fp_trailing_shift_int=\count198
+\c__fp_big_leading_shift_int=\count199
+\c__fp_big_middle_shift_int=\count266
+\c__fp_big_trailing_shift_int=\count267
+\c__fp_Bigg_leading_shift_int=\count268
+\c__fp_Bigg_middle_shift_int=\count269
+\c__fp_Bigg_trailing_shift_int=\count270
+\c__fp_rand_size_int=\count271
+\c__fp_rand_four_int=\count272
+\c__fp_rand_eight_int=\count273
+\l__sort_length_int=\count274
+\l__sort_min_int=\count275
+\l__sort_top_int=\count276
+\l__sort_max_int=\count277
+\l__sort_true_max_int=\count278
+\l__sort_block_int=\count279
+\l__sort_begin_int=\count280
+\l__sort_end_int=\count281
+\l__sort_A_int=\count282
+\l__sort_B_int=\count283
+\l__sort_C_int=\count284
+\l__tl_build_start_index_int=\count285
+\l__tl_build_index_int=\count286
+\l__tl_analysis_normal_int=\count287
+\l__tl_analysis_index_int=\count288
+\l__tl_analysis_nesting_int=\count289
+\l__tl_analysis_type_int=\count290
+\l__regex_internal_a_int=\count291
+\l__regex_internal_b_int=\count292
+\l__regex_internal_c_int=\count293
+\l__regex_balance_int=\count294
+\l__regex_group_level_int=\count295
+\l__regex_mode_int=\count296
+\c__regex_cs_in_class_mode_int=\count297
+\c__regex_cs_mode_int=\count298
+\l__regex_catcodes_int=\count299
+\l__regex_default_catcodes_int=\count300
+\c__regex_catcode_D_int=\count301
+\c__regex_catcode_S_int=\count302
+\c__regex_catcode_L_int=\count303
+\c__regex_catcode_O_int=\count304
+\c__regex_catcode_A_int=\count305
+\c__regex_all_catcodes_int=\count306
+\l__regex_show_lines_int=\count307
+\l__regex_min_state_int=\count308
+\l__regex_max_state_int=\count309
+\l__regex_left_state_int=\count310
+\l__regex_right_state_int=\count311
+\l__regex_capturing_group_int=\count312
+\l__regex_min_pos_int=\count313
+\l__regex_max_pos_int=\count314
+\l__regex_curr_pos_int=\count315
+\l__regex_start_pos_int=\count316
+\l__regex_success_pos_int=\count317
+\l__regex_curr_char_int=\count318
+\l__regex_curr_catcode_int=\count319
+\l__regex_last_char_int=\count320
+\l__regex_case_changed_char_int=\count321
+\l__regex_curr_state_int=\count322
+\l__regex_step_int=\count323
+\l__regex_min_active_int=\count324
+\l__regex_max_active_int=\count325
+\l__regex_replacement_csnames_int=\count326
+\l__regex_match_count_int=\count327
+\l__regex_min_submatch_int=\count328
+\l__regex_submatch_int=\count329
+\l__regex_zeroth_submatch_int=\count330
+\g__regex_trace_regex_int=\count331
+\c_empty_box=\box79
+\l_tmpa_box=\box80
+\l_tmpb_box=\box81
+\g_tmpa_box=\box82
+\g_tmpb_box=\box83
+\l__box_top_dim=\dimen284
+\l__box_bottom_dim=\dimen285
+\l__box_left_dim=\dimen286
+\l__box_right_dim=\dimen287
+\l__box_top_new_dim=\dimen288
+\l__box_bottom_new_dim=\dimen289
+\l__box_left_new_dim=\dimen290
+\l__box_right_new_dim=\dimen291
+\l__box_internal_box=\box84
+\l__coffin_internal_box=\box85
+\l__coffin_internal_dim=\dimen292
+\l__coffin_offset_x_dim=\dimen293
+\l__coffin_offset_y_dim=\dimen294
+\l__coffin_x_dim=\dimen295
+\l__coffin_y_dim=\dimen296
+\l__coffin_x_prime_dim=\dimen297
+\l__coffin_y_prime_dim=\dimen298
+\c_empty_coffin=\box86
+\l__coffin_aligned_coffin=\box87
+\l__coffin_aligned_internal_coffin=\box88
+\l_tmpa_coffin=\box89
+\l_tmpb_coffin=\box90
+\l__coffin_display_coffin=\box91
+\l__coffin_display_coord_coffin=\box92
+\l__coffin_display_pole_coffin=\box93
+\l__coffin_display_offset_dim=\dimen299
+\l__coffin_display_x_dim=\dimen300
+\l__coffin_display_y_dim=\dimen301
+\l__coffin_bounding_shift_dim=\dimen302
+\l__coffin_left_corner_dim=\dimen303
+\l__coffin_right_corner_dim=\dimen304
+\l__coffin_bottom_corner_dim=\dimen305
+\l__coffin_top_corner_dim=\dimen306
+\l__coffin_scaled_total_height_dim=\dimen307
+\l__coffin_scaled_width_dim=\dimen308
+)
+(/usr/local/texlive/2018/texmf-dist/tex/latex/l3kernel/l3pdfmode.def
+File: l3pdfmode.def 2017/03/18 v L3 Experimental driver: PDF mode
+\l__driver_color_stack_int=\count332
+))
+(/usr/local/texlive/2018/texmf-dist/tex/latex/l3packages/xparse/xparse.sty
+Package: xparse 2018/02/21 L3 Experimental document command parser
+\l__xparse_current_arg_int=\count333
+\g__xparse_grabber_int=\count334
+\l__xparse_m_args_int=\count335
+\l__xparse_mandatory_args_int=\count336
+\l__xparse_v_nesting_int=\count337
+)
+Package: ebproof 2017/05/17 v2.0 EB's proof trees
+\l_ebproof_separation_dim=\dimen309
+\l_ebproof_rule_margin_dim=\dimen310
+\l_ebproof_rule_thickness_dim=\dimen311
+\l_ebproof_rule_separation_dim=\dimen312
+\l_ebproof_rule_dash_length_dim=\dimen313
+\l_ebproof_rule_dash_space_dim=\dimen314
+\l_ebproof_label_separation_dim=\dimen315
+\l_ebproof_label_axis_dim=\dimen316
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofnewrulestyle with sig. 'mm' on line 78.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofnewstyle with sig. 'mm' on line 140.
+.................................................
+\l_ebproof_transit_dim=\dimen317
+\g_ebproof_level_int=\count338
+\g_ebproof_stack_box=\box94
+\l_ebproof_a_box=\box95
+\l_ebproof_b_box=\box96
+\l_ebproof_c_box=\box97
+\l_ebproof_d_box=\box98
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofset with sig. 'm' on line 615.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofhypo with sig. 'O{}m' on line 623.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofinfer with sig. 'O{}mO{}m' on line 635.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofellipsis with sig. 'mm' on line 659.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofrewrite with sig. 'm' on line 686.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofdelims with sig. 'mm' on line 712.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofAlter with sig. 'm' on line 722.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofDelims with sig. '' on line 724.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofEllipsis with sig. '' on line 726.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofHypo with sig. '' on line 728.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-command"
+. 
+. Defining command \ebproofInfer with sig. '' on line 730.
+.................................................
+.................................................
+. LaTeX info: "xparse/define-environment"
+. 
+. Defining environment 'prooftree' with sig. 'sO{}' on line 763.
+.................................................
 ))
 (./definitions/defs.tex) (./esop2023.aux)
 \openout1 = `esop2023.aux'.
@@ -948,21 +1205,21 @@ LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 9.
 LaTeX Font Info:    ... okay on input line 9.
 LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 9.
 LaTeX Font Info:    ... okay on input line 9.
-\c@lstlisting=\count183
+\c@lstlisting=\count339
 
 ABD: EveryShipout initializing macros
 (/usr/local/texlive/2018/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count184
-\scratchdimen=\dimen278
-\scratchbox=\box79
-\nofMPsegments=\count185
-\nofMParguments=\count186
+\scratchcounter=\count340
+\scratchdimen=\dimen318
+\scratchbox=\box99
+\nofMPsegments=\count341
+\nofMParguments=\count342
 \everyMPshowfont=\toks46
-\MPscratchCnt=\count187
-\MPscratchDim=\dimen279
-\MPnumerator=\count188
-\makeMPintoPDFobject=\count189
+\MPscratchCnt=\count343
+\MPscratchDim=\dimen319
+\MPnumerator=\count344
+\makeMPintoPDFobject=\count345
 \everyMPtoPDFconversion=\toks47
 ) (/usr/local/texlive/2018/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
 Package: epstopdf-base 2016/05/15 v2.6 Base part for package epstopdf
@@ -987,7 +1244,7 @@ ick labels; missing features). Consider writing \pgfplotsset{compat=1.16} into
 your preamble.
  on input line 9.
 
-\AtBeginShipoutBox=\box80
+\AtBeginShipoutBox=\box100
 Package hyperref Info: Link coloring ON on input line 9.
 (/usr/local/texlive/2018/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
@@ -995,7 +1252,7 @@ Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
 (/usr/local/texlive/2018/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
 Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 )
-\c@section@level=\count190
+\c@section@level=\count346
 )
 LaTeX Info: Redefining \ref on input line 9.
 LaTeX Info: Redefining \pageref on input line 9.
@@ -1009,6 +1266,16 @@ LaTeX Font Info:    Try loading font information for U+wasy on input line 11.
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/wasysym/uwasy.fd
 File: uwasy.fd 2003/10/30 v2.0 Wasy-2 symbol font definitions
+)
+LaTeX Font Info:    Try loading font information for U+msa on input line 11.
+
+(/usr/local/texlive/2018/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 11.
+
+(/usr/local/texlive/2018/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    Try loading font information for U+rsfs on input line 11.
 
@@ -1040,9 +1307,6 @@ Underfull \vbox (badness 5105) has occurred while \output is active []
  [4]
 
 LaTeX Warning: Reference `ch:bgts' on page 5 undefined on input line 34.
-
-
-LaTeX Warning: Reference `ch:typecheck' on page 5 undefined on input line 34.
 
 
 LaTeX Warning: Reference `ch:timeinference' on page 5 undefined on input line 3
@@ -1159,24 +1423,1198 @@ Overfull \hbox (47.44098pt too wide) in paragraph at lines 127--144
  [][] 
  []
 
-[8] [9]) (./esop2023.bbl [10]) [11] (./esop2023.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 32.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 32.
+[8] [9]) (./sections/sizedtypes.tex [10] [11]
+Overfull \hbox (6.39449pt too wide) detected at line 53
+\OMS/cmsy/m/n/10 M[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 ^^H\OT1/cmr/m/n/10 ) \OMS
+/cmsy/m/n/10 \ M[]\OT1/cmr/m/n/10 (\OMS/cmsy/m/n/10 f\OML/cmm/m/it/10 C[]\OMS/c
+msy/m/n/10 g\OT1/cmr/m/n/10 ) = \OMS/cmsy/m/n/10 ; []  [] 
+ []
+
+
+Overfull \hbox (12.79932pt too wide) in paragraph at lines 62--63
+[]\OT1/cmr/m/n/10 Given in-dex vari-ables $\OML/cmm/m/it/10 ' \OT1/cmr/m/n/10 =
+ \OMS/cmsy/m/n/10 f\OML/cmm/m/it/10 i; j; k\OMS/cmsy/m/n/10 g$ \OT1/cmr/m/n/10 
+and con-straints $\OML/cmm/m/it/10 ^^H \OT1/cmr/m/n/10 = \OMS/cmsy/m/n/10 f\OML
+/cmm/m/it/10 C[]; C[]; C[]; C[]\OMS/cmsy/m/n/10 g$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--71
+
+ []
+
+[12]
+Overfull \hbox (98.98882pt too wide) detected at line 89
+[]
+ []
+
+
+Overfull \hbox (52.3952pt too wide) detected at line 99
+[]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 108--111
+
+ []
+
+[13]
+
+LaTeX Warning: Citation `PierceSangiorgi1996' on page 14 undefined on input lin
+e 123.
+
+
+Overfull \hbox (12.46191pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (26.92786pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (132.50452pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (83.89304pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (88.61798pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (40.154pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (12.46191pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (26.92786pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (132.50452pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (83.89304pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (88.61798pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (40.154pt too wide) detected at line 145
+[] 
+ []
+
+
+Overfull \hbox (146.60857pt too wide) detected at line 145
+[]
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 153--155
+
+ []
+
+
+Overfull \hbox (16.24329pt too wide) detected at line 163
+[] 
+ []
+
+
+Overfull \hbox (89.05983pt too wide) detected at line 163
+[] 
+ []
+
+
+Overfull \hbox (16.24329pt too wide) detected at line 163
+[] 
+ []
+
+
+Overfull \hbox (89.05983pt too wide) detected at line 163
+[] 
+ []
+
+
+Overfull \hbox (126.1087pt too wide) detected at line 163
+[]
+ []
+
+[14]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [15]
+Underfull \hbox (badness 10000) in paragraph at lines 214--215
+
+ []
+
+[16]
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 225.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 225.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 225.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 225.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 225.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 225.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 225.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 225.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 243.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 243.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 243.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 243.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 243.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 243.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 243.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 243.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 250.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 250.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 250.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 250.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 250.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 250.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 250.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 250.
+
+
+Overfull \hbox (83.43456pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (247.34526pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (23.05338pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (253.28867pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (62.46999pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (67.4723pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (83.43456pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (247.34526pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (23.05338pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (253.28867pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (62.46999pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (67.4723pt too wide) detected at line 268
+[] 
+ []
+
+
+Overfull \hbox (150.12854pt too wide) detected at line 268
+[]
+ []
+
+) (./sections/typechecking.tex
+
+LaTeX Warning: Reference `ch:bgts' on page 17 undefined on input line 2.
+
+[17] [18] [19]
+Underfull \hbox (badness 10000) in paragraph at lines 64--65
+
+ []
+
+
+Overfull \hbox (28.55966pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (119.99474pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (106.5749pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (122.83382pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (3.30928pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (14.65897pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (28.55966pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (119.99474pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (106.5749pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (122.83382pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (3.30928pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (14.65897pt too wide) detected at line 175
+[] 
+ []
+
+
+Overfull \hbox (91.69342pt too wide) detected at line 175
+[]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 182--183
+
+ []
+
+[20]
+
+LaTeX Warning: Reference `ch:bgts' on page 21 undefined on input line 184.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 184--185
+
+ []
+
+[21]
+
+LaTeX Warning: Citation `Karp1972' on page 22 undefined on input line 186.
+
+
+Overfull \hbox (4.40472pt too wide) in paragraph at lines 186--188
+[]\OT1/cmr/m/n/10 We now prove the NP-completeness of the smaller prob-lem of c
+heck-ing whether
+ []
+
+[22]
+Underfull \hbox (badness 10000) in paragraph at lines 221--237
+
+ []
+
+[23]
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 253.
+
+
+Overfull \hbox (116.53677pt too wide) in paragraph at lines 253--287
+\OT1/cmr/m/n/10 match at most $\OML/cmm/m/it/10 j$ \OT1/cmr/m/n/10 times on nat
+-u-ral $\OML/cmm/m/it/10 x$\OT1/cmr/m/n/10 . No-tably we have that $[]((\OML/cm
+m/m/it/10 i; j; k; l; m; n; o\OT1/cmr/m/n/10 )\OML/cmm/m/it/10 ; []\OT1/cmr/m/n
+/10 [0\OML/cmm/m/it/10 ; j[]\OT1/cmr/m/n/10 1]\OML/cmm/m/it/10 ; []\OT1/cmr/m/n
+/10 [1\OML/cmm/m/it/10 ; l \OT1/cmr/m/n/10 +
+ []
+
+
+LaTeX Warning: Reference `ch:bgts' on page 24 undefined on input line 306.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 306--307
+
+ []
+
+[24]
+Overfull \hbox (16.18558pt too wide) detected at line 311
+[] 
+ []
+
+
+Overfull \hbox (16.18558pt too wide) detected at line 311
+[] 
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 324--325
+
+ []
+
+[25] [26]
+
+LaTeX Warning: Reference `app:sizedtypesoundness' on page 27 undefined on input
+ line 557.
+
+[27] [28]
+Underfull \hbox (badness 10000) in paragraph at lines 689--690
+
+ []
+
+
+LaTeX Warning: Reference `app:sizedtypesoundness' on page 29 undefined on input
+ line 696.
+
+
+LaTeX Warning: Reference `app:sizedtypesoundness' on page 29 undefined on input
+ line 746.
+
+[29]
+
+LaTeX Font Warning: Font shape `OT1/cmr/bx/sc' undefined
+(Font)              using `OT1/cmr/bx/n' instead on input line 858.
+
+[30] [31] [32]
+
+LaTeX Warning: Reference `ch:bgts' on page 33 undefined on input line 1473.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1473--1474
+
+ []
+
+[33]
+Overfull \hbox (18.01376pt too wide) detected at line 1515
+[]
+ []
+
+
+Underfull \vbox (badness 3009) has occurred while \output is active []
+
+ [34]
+
+LaTeX Warning: Citation `Hilbert1902' on page 35 undefined on input line 1532.
+
+
+LaTeX Warning: Citation `Davis1973' on page 35 undefined on input line 1532.
+
+[35]
+Overfull \hbox (111.43153pt too wide) detected at line 1558
+[]
+ []
+
+[36] [37]
+Overfull \hbox (0.45091pt too wide) in paragraph at lines 1628--1630
+\OT1/cmr/m/it/10 in-dex vari-ables $\OML/cmm/m/it/10 i[]; [] ; i[]$ \OT1/cmr/m/
+it/10 into an equiv-a-lent nor-mal-ized in-dex $\OMS/cmsy/m/n/10 N\OT1/cmr/m/n/
+10 (\OML/cmm/m/it/10 I\OT1/cmr/m/n/10 ) \OMS/cmsy/m/n/10 2 \U/msb/m/n/10 Z\OT1/
+cmr/m/n/10 [\OML/cmm/m/it/10 i[]; [] ; i[]\OT1/cmr/m/n/10 ]$
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1705--1706
+
+ []
+
+[38]
+Underfull \hbox (badness 10000) in paragraph at lines 1707--1708
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1709--1710
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1716--1718
+
+ []
+
+[39]
+Underfull \hbox (badness 10000) in paragraph at lines 1725--1727
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1773--1774
+
+ []
+
+[40]
+Overfull \hbox (28.82907pt too wide) in paragraph at lines 1792--1793
+\OT1/cmr/m/n/10 si-ble so-lu-tion, and so we con-clude that the con-straint jud
+ge-ment $\OMS/cmsy/m/n/10 f\OML/cmm/m/it/10 i; j; k\OMS/cmsy/m/n/10 g\OT1/cmr/m
+/n/10 ; \OMS/cmsy/m/n/10 f\OML/cmm/m/it/10 C[]; C[]; C[]\OMS/cmsy/m/n/10 g \U/m
+sa/m/n/10 ^^O
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1971--1974
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1975--1976
+
+ []
+
+[41]
+
+LaTeX Warning: Citation `abelruffinitheorem' on page 42 undefined on input line
+ 1977.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1977--1978
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 1979--1980
+
+ []
+
+[42]
+Underfull \hbox (badness 10000) in paragraph at lines 1993--1994
+
+ []
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2001.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2001.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2001.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2001.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2001.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2001.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2001.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2001.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2006.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2014.
+
+[43]
+Overfull \hbox (8.03404pt too wide) detected at line 2039
+[]
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2180--2181
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2182--2183
+
+ []
+
+[44]
+Underfull \hbox (badness 10000) in paragraph at lines 2187--2190
+
+ []
+
+
+Overfull \hbox (141.25041pt too wide) detected at line 2199
+[] 
+ []
+
+
+Overfull \hbox (141.25041pt too wide) detected at line 2199
+[] 
+ []
+
+
+Overfull \hbox (129.59631pt too wide) detected at line 2208
+[] 
+ []
+
+
+Overfull \hbox (129.59631pt too wide) detected at line 2208
+[] 
+ []
+
+
+Overfull \hbox (141.89386pt too wide) detected at line 2216
+[] 
+ []
+
+
+Overfull \hbox (141.89386pt too wide) detected at line 2216
+[] 
+ []
+
+[45]
+Underfull \hbox (badness 10000) in paragraph at lines 2216--2227
+
+ []
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2269.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2269.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2269.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2269.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2269.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2269.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2269.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2269.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2284.
+
+
+Overfull \hbox (17.80188pt too wide) detected at line 2284
+[]
+ []
+
+[46]
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2289.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2289.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2289.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2289.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2289.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2289.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2289.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2289.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2371.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2371.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2371.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2371.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2371.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2371.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2371.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2371.
+
+
+Overfull \hbox (49.16762pt too wide) detected at line 2371
+[]
+ []
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2385.
+
+
+Overfull \hbox (41.45578pt too wide) detected at line 2385
+[]
+ []
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+
+LaTeX Font Warning: Command \tiny invalid in math mode on input line 2392.
+
+[47]) (./esop2023.bbl [48]) [49] (./esop2023.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 33.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 33.
 Package rerunfilecheck Info: File `esop2023.out' has not changed.
 (rerunfilecheck)             Checksum: C438D8334FF0F3E601986B3684789332;118.
+
+
+LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 
 LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 29186 strings out of 492649
- 688617 string characters out of 6129622
- 870969 words of memory out of 5000000
- 32467 multiletter control sequences out of 15000+600000
- 19957 words of font info for 78 fonts, out of 8000000 for 9000
+ 38096 strings out of 492649
+ 871176 string characters out of 6129622
+ 1031667 words of memory out of 5000000
+ 41191 multiletter control sequences out of 15000+600000
+ 549477 words of font info for 100 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 64i,18n,96p,1280b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 64i,21n,96p,10377b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
 ></usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb>
 </usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx9.pfb></
@@ -1185,24 +2623,33 @@ usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></u
 sr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex9.pfb>
 </usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmitt10.pfb>
 </usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><
-/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></u
-sr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr
-/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr
-/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/l
-ocal/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/loca
-l/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/t
-exlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/te
-xlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texl
-ive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texliv
-e/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/local/texlive/
-2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2
-018/texmf-dist/fonts/type1/public/amsfonts/cm/cmti9.pfb></usr/local/texlive/201
-8/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2018
-/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb>
-Output written on esop2023.pdf (11 pages, 287955 bytes).
+/usr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></u
+sr/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr
+/local/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/l
+ocal/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/loc
+al/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr/loc
+al/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local
+/texlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local/te
+xlive/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texli
+ve/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/
+2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/201
+8/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2018
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2018/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2018/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2018/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/local/texlive/2018/texmf-d
+ist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2018/texmf-di
+st/fonts/type1/public/amsfonts/cm/cmti7.pfb></usr/local/texlive/2018/texmf-dist
+/fonts/type1/public/amsfonts/cm/cmti9.pfb></usr/local/texlive/2018/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2018/texmf-dist/fo
+nts/type1/public/amsfonts/cm/cmtt8.pfb></usr/local/texlive/2018/texmf-dist/font
+s/type1/public/amsfonts/cm/cmtt9.pfb></usr/local/texlive/2018/texmf-dist/fonts/
+type1/public/amsfonts/symbols/msam10.pfb></usr/local/texlive/2018/texmf-dist/fo
+nts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on esop2023.pdf (49 pages, 542452 bytes).
 PDF statistics:
- 304 PDF objects out of 1000 (max. 8388607)
- 220 compressed objects within 3 object streams
- 49 named destinations out of 1000 (max. 500000)
+ 732 PDF objects out of 1000 (max. 8388607)
+ 584 compressed objects within 6 object streams
+ 188 named destinations out of 1000 (max. 500000)
  21 words of extra memory for PDF output out of 10000 (max. 10000000)
 

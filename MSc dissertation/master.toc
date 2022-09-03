@@ -1,0 +1,45 @@
+\contentsline {chapter}{\chapternumberline {1}Introduction}{7}{chapter.1}
+\contentsline {section}{\numberline {1.1}Complexity analysis and type systems}{7}{section.1.1}
+\contentsline {section}{\numberline {1.2}Our contributions}{8}{section.1.2}
+\contentsline {section}{\numberline {1.3}Related work}{9}{section.1.3}
+\contentsline {chapter}{\chapternumberline {2}The $\pi $-calculus}{13}{chapter.2}
+\contentsline {section}{\numberline {2.1}Syntax and semantics}{13}{section.2.1}
+\contentsline {section}{\numberline {2.2}Parallel complexity}{15}{section.2.2}
+\contentsline {chapter}{\chapternumberline {3}Sized types for parallel complexity}{19}{chapter.3}
+\contentsline {section}{\numberline {3.1}Indices and constraint judgements}{19}{section.3.1}
+\contentsline {subsection}{\numberline {3.1.1}Alternative formulations of constraint judgements}{20}{subsection.3.1.1}
+\contentsline {section}{\numberline {3.2}Types and subtyping}{22}{section.3.2}
+\contentsline {section}{\numberline {3.3}Non-algorithmic type rules}{24}{section.3.3}
+\contentsline {section}{\numberline {3.4}Soundness}{25}{section.3.4}
+\contentsline {chapter}{\chapternumberline {4}Type checking sized types for parallel complexity}{27}{chapter.4}
+\contentsline {section}{\numberline {4.1}Auxiliary functions}{27}{section.4.1}
+\contentsline {section}{\numberline {4.2}Algorithmic type rules}{28}{section.4.2}
+\contentsline {section}{\numberline {4.3}Soundness}{34}{section.4.3}
+\contentsline {subsection}{\numberline {4.3.1}Augmented language and type system}{34}{subsection.4.3.1}
+\contentsline {subsection}{\numberline {4.3.2}Intermediary lemmas}{35}{subsection.4.3.2}
+\contentsline {subsection}{\numberline {4.3.3}Subject reduction}{38}{subsection.4.3.3}
+\contentsline {subsection}{\numberline {4.3.4}Upper bound on parallel complexity}{42}{subsection.4.3.4}
+\contentsline {section}{\numberline {4.4}Verification of constraint judgements}{43}{section.4.4}
+\contentsline {subsection}{\numberline {4.4.1}Subtraction of naturals}{43}{subsection.4.4.1}
+\contentsline {subsection}{\numberline {4.4.2}Undecidability of polynomial constraint judgements}{45}{subsection.4.4.2}
+\contentsline {subsection}{\numberline {4.4.3}Normalization of linear indices}{46}{subsection.4.4.3}
+\contentsline {subsection}{\numberline {4.4.4}Checking for emptiness of model space}{48}{subsection.4.4.4}
+\contentsline {subsection}{\numberline {4.4.5}Reducing polynomial constraints to linear constraints}{50}{subsection.4.4.5}
+\contentsline {subsection}{\numberline {4.4.6}Trivial judgements}{52}{subsection.4.4.6}
+\contentsline {section}{\numberline {4.5}Examples}{53}{section.4.5}
+\contentsline {chapter}{\chapternumberline {5}Inference of sized types for parallel complexity}{59}{chapter.5}
+\contentsline {section}{\numberline {5.1}The principal typing property}{59}{section.5.1}
+\contentsline {subsection}{\numberline {5.1.1}Inference of simple types}{62}{subsection.5.1.1}
+\contentsline {subsection}{\numberline {5.1.2}Inference of constraints on use-capabilities and coefficients}{63}{subsection.5.1.2}
+\contentsline {section}{\numberline {5.2}Reduction of constraint satisfaction problems}{66}{section.5.2}
+\contentsline {subsection}{\numberline {5.2.1}Reduction from type constraints to use-constraints}{66}{subsection.5.2.1}
+\contentsline {subsection}{\numberline {5.2.2}Reduction from use-constraints to index constraints}{69}{subsection.5.2.2}
+\contentsline {section}{\numberline {5.3}Solving constraint satisfaction problems}{70}{section.5.3}
+\contentsline {subsection}{\numberline {5.3.1}Simplification of constraint satisfaction problems}{71}{subsection.5.3.1}
+\contentsline {section}{\numberline {5.4}Haskell implementation}{72}{section.5.4}
+\contentsline {chapter}{\chapternumberline {6}Conclusion}{75}{chapter.6}
+\contentsline {section}{\numberline {6.1}Results}{75}{section.6.1}
+\contentsline {section}{\numberline {6.2}Discussion}{76}{section.6.2}
+\contentsline {section}{\numberline {6.3}Future work}{76}{section.6.3}
+\contentsline {appendix}{\chapternumberline {A}Soundness of sized type implementation}{79}{appendix.A}
+\contentsline {appendix}{\chapternumberline {B}Type inference examples}{85}{appendix.B}

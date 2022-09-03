@@ -1,0 +1,29 @@
+\BOOKMARK [0][-]{chapter.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.1.1}{Complexity analysis and type systems}{chapter.1}% 2
+\BOOKMARK [1][-]{section.1.2}{Our contributions}{chapter.1}% 3
+\BOOKMARK [1][-]{section.1.3}{Related work}{chapter.1}% 4
+\BOOKMARK [0][-]{chapter.2}{The -calculus}{}% 5
+\BOOKMARK [1][-]{section.2.1}{Syntax and semantics}{chapter.2}% 6
+\BOOKMARK [1][-]{section.2.2}{Parallel complexity}{chapter.2}% 7
+\BOOKMARK [0][-]{chapter.3}{Sized types for parallel complexity}{}% 8
+\BOOKMARK [1][-]{section.3.1}{Indices and constraint judgements}{chapter.3}% 9
+\BOOKMARK [1][-]{section.3.2}{Types and subtyping}{chapter.3}% 10
+\BOOKMARK [1][-]{section.3.3}{Non-algorithmic type rules}{chapter.3}% 11
+\BOOKMARK [1][-]{section.3.4}{Soundness}{chapter.3}% 12
+\BOOKMARK [0][-]{chapter.4}{Type checking sized types for parallel complexity}{}% 13
+\BOOKMARK [1][-]{section.4.1}{Auxiliary functions}{chapter.4}% 14
+\BOOKMARK [1][-]{section.4.2}{Algorithmic type rules}{chapter.4}% 15
+\BOOKMARK [1][-]{section.4.3}{Soundness}{chapter.4}% 16
+\BOOKMARK [1][-]{section.4.4}{Verification of constraint judgements}{chapter.4}% 17
+\BOOKMARK [1][-]{section.4.5}{Examples}{chapter.4}% 18
+\BOOKMARK [0][-]{chapter.5}{Inference of sized types for parallel complexity}{}% 19
+\BOOKMARK [1][-]{section.5.1}{The principal typing property}{chapter.5}% 20
+\BOOKMARK [1][-]{section.5.2}{Reduction of constraint satisfaction problems}{chapter.5}% 21
+\BOOKMARK [1][-]{section.5.3}{Solving constraint satisfaction problems}{chapter.5}% 22
+\BOOKMARK [1][-]{section.5.4}{Haskell implementation}{chapter.5}% 23
+\BOOKMARK [0][-]{chapter.6}{Conclusion}{}% 24
+\BOOKMARK [1][-]{section.6.1}{Results}{chapter.6}% 25
+\BOOKMARK [1][-]{section.6.2}{Discussion}{chapter.6}% 26
+\BOOKMARK [1][-]{section.6.3}{Future work}{chapter.6}% 27
+\BOOKMARK [0][-]{appendix.A}{Soundness of sized type implementation}{}% 28
+\BOOKMARK [0][-]{appendix.B}{Type inference examples}{}% 29

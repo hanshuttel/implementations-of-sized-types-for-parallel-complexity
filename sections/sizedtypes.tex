@@ -1,0 +1,298 @@
+\section{Sized types for parallel complexity}
+
+In this section, we introduce the type system for parallel complexity of message-passing processes introduced in Baillot and Ghyselen \cite{BaillotGhyselen2021}. This type system builds on the foundations of indices and constraint judgements and formalizes parallel complexity analysis of $\pi$-calculus processes. Due to extensive use of subtyping and the challenges involved in verifying and satisfying constraint judgements, substantial modifications must be made to enable type checking and type inference of processes. 
+
+The type system for parallel complexity of message-passing processes introduced by Baillot and Ghyselen uses sized types to express parametric complexity of replicated input invocation, and thereby achieves precise bounds on primitively recursive processes: A class of processes behaving as primitively recursive functions. This requires a notion of polymorphism in the message types of replicated inputs. Baillot and Ghyselen introduce size polymorphism by bounding sizes of algebraic terms and synchronizations on channels with indices that may contain index variables representing unknown sizes. We may interpret an index with an index valuation that maps its index variables to naturals, such that the index may be evaluated to a natural number.
+
+We first formally define indices and constraints on the valuations of indices. We give both a predicate logic and a model-theoretic interpretation of judgements on such constraints, referring to these as \textit{constraint judgements}. We then define sized types, the subtyping relation and introduce non-algorithmic type rules.
+
+\subsection{Indices and constraint judgements}\label{sec:indicesandjudgements}
+In the type system by Baillot and Ghyselen, indices are used to keep track of sizes of inputs received on replicated inputs. As these sizes may be parametric, in that they may be dependent on the sizes of values received on replicated inputs, we view indices as algebraic expressions consisting of index variables $i,j,k\in\mathcal{V}$ ranging over a countable set, and function symbols, using meta-variable $f$, that may represent natural number constants as nullary functions as well as algebraic operators
+\begin{align*}
+    I,J ::= i \mid f(I_1,I_2,\dots,I_n)
+\end{align*}
+Each function symbol $f$ has an arity $\text{ar}(f)$ and an interpretation $[\![f]\!] : \mathbb{N}^{\text{ar}(f)} \rightarrow \mathbb{N}$. For the interpretation of binary difference, we assume that $[\![-]\!](n,m) = 0$ when $m \geq n$, which we refer to as the \textit{monus} operator. As indices may contain index variables, we assume some index valuation $\rho : \mathcal{V} \rightarrow \mathbb{N}$, and extend the definition of interpretations to indices, such that $[\![I]\!]_\rho$ is a natural number instance of index $I$, according to index valuation $\rho$, where for all $i$ in $I$, $\rho(i)$ substitutes for $i$ denoted $I\{\rho(i)/i\}$. Index substitution is defined in Definition \ref{def:indexsubstitution}. Based on the structure of the process that indices are used in the typing of, we may be able to establish relationships between the instances of these indices. For instance, a replicated input may receive values of sizes defined by an interval of two indices $[I,J]$. Then, we are only interested in index valuations $\rho$ that satisfy $[\![I]\!]_\rho \leq [\![J]\!]_\rho$. To express such relationships, we define binary constraints on indices in Definition \ref{def:indexconstr}.
+
+\begin{definition}\label{def:indexsubstitution}
+    We define index substitution by the following rules
+    \begin{align*}
+        i\substi{I}{j} &= j \text{ if } i = j\\
+        i\substi{I}{j} &= i \text{ if } i \not = j\\
+        f(I_1, I_2, \dots, I_n)\substi{J}{i} &= f(I_1\substi{J}{i}, I_2\substi{J}{i}, \dots, I_n\substi{J}{i})
+    \end{align*}
+\end{definition}
+
+\begin{definition}[Index constraints]\label{def:indexconstr}
+    Given a finite set of index variables $\varphi\subset \mathcal{V}$, we define a constraint $C$ on $\varphi$ to be an expression of the form $I \bowtie J$, where $I$ and $J$ are indices with all free index variables in $\varphi$ and $\bowtie\;\in\{\leq,=,\geq\}$ is a binary relation on $\mathbb{N}$. A finite set of constraints is represented by meta-variable $\Phi$.
+\end{definition}
+%
+A constraint $I \bowtie J$ on $\varphi$ is satisfied given an index valuation $\rho : \varphi \longrightarrow \mathbb{N}$ when $[\![I]\!]_\rho \bowtie [\![J]\!]_\rho$ is satisfied, denoted $\rho \vDash I \bowtie J$. For a finite set of constraints $\Phi$, we write $\rho\vDash \Phi$ when $\rho \vDash C$ holds for all $C \in \Phi$. Finally, $\varphi;\Phi\vDash C$ holds when for all index valuations $\rho$ such that $\rho\vDash \Phi$ holds, we also have $\rho\vDash C$. That is, $\varphi;\Phi\vDash C$ holds exactly when $C$ does not impose further restrictions on index valuations on $\varphi$. Such judgements are fundamental to the type system by Baillot and Ghyselen, especially ones of the form $\varphi;\Phi\vDash I \leq J$, as they impose a partial order on indices wrt. how indices may be interpreted. This enables a notion of subtyping for parametric complexities, such that only indices that are greater or equal may substitute, thus preserving upper bounds on the global parallel complexity, as we shall see in the following sections.
+
+\subsection{Alternative formulations of constraint judgements}\label{sec:cjalternativeform}
+
+There are several equivalent formulations of the problem of verifying the judgement $\varphi;\Phi\vDash C_0$. One such formulation is that the judgement holds, when the conjunction of constraints in $\Phi$ implies $C_0$, i.e. assuming that $n \bowtie m$ evaluates to a truth value based on membership in the relation $\bowtie$, the predicate formula $C_1 \land \cdots \land C_n \implies C_0$, where $\Phi = \{C_1,\dots,C_n\}$, must be satisfied for all valuations $\rho$ over $\varphi$. That is, let $C_i = I_i \bowtie_i J_i$, then for any valuation $\rho : \varphi \rightarrow \mathbb{N}$, the formula $([\![I_1]\!]_\rho \bowtie_1 [\![J_1]\!]_\rho) \land \cdots \land ([\![I_n]\!]_\rho \bowtie_n [\![J_n]\!]_\rho) \implies [\![I_0]\!]_\rho \bowtie_0 [\![J_0]\!]_\rho$ must be satisfied. Another interpretation of the problem is that the intersection of the feasible regions of all (inequality) constraints in $\Phi$ must be contained in the feasible region of $C_0$, or equivalently, the set of all valuations over $\varphi$ that satisfy all the constraints in $\Phi$, referred to as the model space of $\Phi$ wrt. $\varphi$, $\mathcal{M}_\varphi(\Phi)$ must be a subset of the model space of $C_0$ wrt. $\varphi$ \begin{equation*}
+    \mathcal{M}_\varphi(\Phi) \subseteq \mathcal{M}_\varphi(\{C_0\})\quad\text{where}\quad\mathcal{M}_\varphi(\Phi)=\{\rho : \varphi \rightarrow \mathbb{N} \mid \rho \vDash C\;\text{for}\; C \in \Phi\}
+\end{equation*}
+or equivalently
+\begin{equation*}
+    \forall \rho \in \mathcal{M}_\varphi(\Phi) (\rho \in \mathcal{M}_\varphi(\{C_0\}))
+\end{equation*}
+
+Finally, given the fact that the current statement of the problem is expressed using a universal quantifier, we can negate the problem, obtaining a problem that can instead be expressed using an existential quantifier by the fact that $\neg \forall x P(x)$ is equivalent to $\exists x \neg P(x)$. This means the problem can also be expressed as 
+%
+\begin{equation*}
+    \neg (\exists \rho \in \mathcal{M}_\varphi(\Phi) (\rho \not\in \mathcal{M}_\varphi(\{C_0\})))
+\end{equation*}
+or equivalently
+\begin{equation*}
+    \mathcal{M}_\varphi(\Phi) \cap \mathcal{M}_\varphi'(\{C_0\}) = \emptyset \quad\text{where}\quad
+    \begin{matrix}
+        \mathcal{M}_\varphi(\Phi)=\{\rho : \varphi \rightarrow \mathbb{N} \mid \rho \vDash C\;\text{for all}\; C \in \Phi\}\\
+        \mathcal{M'}_\varphi(\Phi)=\{\rho : \varphi \rightarrow \mathbb{N} \mid \rho \not\vDash C\;\text{for some}\; C \in \Phi\}
+    \end{matrix}
+\end{equation*}
+Notice that $\mathcal{M}_\varphi'(\{C\})$ is equivalent to $\mathcal{M}_\varphi(\{C'\})$ where $C'$ is the inverse constraint of constraint $C$, and so $\mathcal{M}_\varphi(\Phi) \cap \mathcal{M}_\varphi'(\{C_0\}$) = $\mathcal{M}_\varphi(\Phi \cup \{C_0'\})$ given some method to invert constraints. Thus, the problem can also be expressed simply as
+\begin{equation*}
+    \mathcal{M}_\varphi(\Phi \cup \{C_0'\}) = \emptyset \quad \text{where } C_0' = \text{inverse of } C_0
+\end{equation*}
+
+In Example \ref{exmp:judgementsatisfaction}, we show how a judgement can be verified manually using the predicate logic and model-theoretic interpretations of judgements provided above.
+%
+\begin{example}\label{exmp:judgementsatisfaction}
+    Given index variables $\varphi = \{i, j, k\}$ and constraints $\Phi = \{C_1, C_2, C_3, C_4\}$ where
+    \begin{align*}
+        C_1 &= i \geq 4\\
+        C_2 &= j \geq 2\\
+        C_3 &= -k + 3 < 0\\ % k \leq 4
+        C_4 &= i + j + k \leq 11
+    \end{align*}
+    we want to check if $\varphi; \Phi \vDash 2i + j^2 + 3k \geq 20$ always holds. %For this example we assume interpretations are as expected from usual mathematical notation.\\
+    Namely, we are interested in verifying whether the constraint $2i + j^2 + 3k \geq 20$ imposes any additional constraints to the index variables $i$, $j$ and $k$ given the existing constraints $C_1$, $C_2$, $C_3$ and $C_4$. In this case, we can notice that the minimum values of $i$, $j$ and $k$ are $4$, $2$ and $4$ respectively. As such, given these constraints, the minimum value $2i + j^2 + 3k$ may evaluate to is $2 \cdot 4 + 2^2 + 3 \cdot 4 = 24$. As such, we can conclude that $\varphi; \Phi \vDash 2i + j^2 + 3k \geq 20$ always holds.\\
+    
+    We can also consider the predicate logic interpretation of the example. It suffices to only consider the index valuations that satisfy the conjunction of constraints, of which there are four. Here, we represent a valuation $\rho$ as a set of pairs of the form $\{(i,\rho(i)) \mid i\in\varphi\}$, and so we have $\{(i,4),(j,2),(k,4)\}$, $\{(i,5),(j,2),(k,4)\}$, $\{(i,4),(j,3),(k,4)\}$ and $\{(i,4),(j,2),(k,5)\}$. We can then verify the corresponding implications to show that the judgement holds
+    %
+    \begin{align*}
+        (4 \geq 4) \land (2 \geq 2) \land ({-4}+3 < 0) \implies 4+2+4 \leq 11\\
+        %
+        (5 \geq 4) \land (2 \geq 2) \land ({-4}+3 < 0) \implies 5+2+4 \leq 11\\
+        %
+        (4 \geq 4) \land (3 \geq 2) \land ({-4}+3 < 0) \implies 4+3+4 \leq 11\\
+        %
+        (4 \geq 4) \land (2 \geq 2) \land ({-5}+3 < 0) \implies 4+2+5 \leq 11
+    \end{align*}
+    Or correspondingly in model-theoretic notation
+    {\small
+    \begin{align*}
+        \mathcal{M}_\varphi(\Phi) =&\; \{\{(i,4),(j,2),(k,4)\}, \{(i,5),(j,2),(k,4)\}, \{(i,4),(j,3),(k,4)\}, \{(i,4),(j,2),(k,5)\}\}\\
+        \mathcal{M}_\varphi(\{2i+j^2+3k\geq 20\}) =&\; \{\{(i,n_1),(j,n_2),(k,n_3)\} \mid n_1,n_2,n_3\in\mathbb{N},\; 2n_1 + n_2^2 + 3n_3 \geq 20 \}\\
+        \mathcal{M}_\varphi(\Phi) \subseteq&\; \mathcal{M}_\varphi(\{2i+j^2+3k\geq 20\})
+    \end{align*}}
+    % \begin{align*}
+    %     \mathcal{M}_\varphi(\Phi) = \left\{\{(i,4),(j,2),(k,4)\}, \{(i,5),(j,2),(k,4)\}, \{(i,4),(j,3),(k,4)\}, \{(i,4),(j,2),(k,5)\}\right\}
+    % \end{align*}
+    
+    We can also solve the inverse of the mode-theoretic interpretation of the problem. Then we want to show that $\mathcal{M}_\varphi(\Phi) \cap \mathcal{M}_\varphi'(\{2i+j^2+3k\geq 20\}) = \emptyset$ or equivalently $\mathcal{M}_\varphi(\Phi \cup \{2i+j^2+3k < 20\}) = \emptyset$. 
+    %
+    \begin{align*}
+        \mathcal{M}_\varphi(\{2i+j^2+3k < 20\}) =&\; \{\{(i,n_1),(j,n_2),(k,n_3)\} \mid n_1,n_2,n_3\in\mathbb{N},\; 2n_1 + n_2^2 + 3n_3 < 20 \}\\
+        &\kern-9em\mathcal{M}_\varphi(\Phi) \cap \mathcal{M}_\varphi'(\{2i+j^2+3k\geq 20\}) = \mathcal{M}_\varphi(\Phi \cup \{2i+j^2+3k < 20\}) = \emptyset
+    \end{align*}
+  \end{example}
+  
+\subsection{Types and subtyping}\label{sec:typesandsubs}
+
+We now introduce the types from the type system of Baillot and Ghyselen. The types include a base type describing naturals as algebraic terms with sizes bounded by an interval consisting of two indices. This enables us to statically reason about how sizes of data structures change throughout reduction of processes, providing us termination guarantees for some forms of recursion. The type system of Baillot and Ghyselen contains lists as an additional base type, however for conciseness of the type system, we only consider naturals.
+%
+\begin{align*}
+    T,S ::=&\; \texttt{Nat}[I,J] \mid \texttt{ch}_I^\sigma(\widetilde{T}) \mid \forall_I\widetilde{i}.\texttt{serv}_K^\sigma(\widetilde{T})
+\end{align*}
+%
+We use input/output types for channels, and we further distinguish between channels that have replicated inputs, i.e. channels that have recursive behavior, and those that do not. We refer to the former as \textit{servers}, and we more specifically require all inputs on such channels to be replicated for technical convenience. Both servers and normal channels are annotated with an index $I$ that for a normal channel represents the number of time steps remaining before the channel synchronizes, and for a server the remaining time before it becomes available. Note that this imposes a temporal linearity constraint onto normal channels, as such channels can synchronize at exactly one time step. For servers we have an additional index $K$ that represents the parametric complexity of invoking the continuation of a replicated input on the server. Finally, the set $\sigma \subseteq \{\texttt{in},\texttt{out}\}$ is a subset of use-capabilities. Since types consist partly of indices, we define index substitution on types in Definition \ref{def:typeindexsubstitution}.\\
+
+\begin{definition}\label{def:typeindexsubstitution}
+    We define index substitution on types by the following rules
+    \begin{align*}
+        \natinterval{I}{J}\substi{K}{i} &= \natinterval{I\substi{K}{i}}{J\substi{K}{i}}\\
+        \chant{\sigma}{I}{\widetilde{T}}\substi{J}{i} &= \chant{\sigma}{I\substi{J}{i}}{\widetilde{T}\substi{J}{i}}\\
+        \servt{I}{\widetilde{i}}{\sigma}{K}{\widetilde{T}}\substi{J}{j} &= \servt{I\substi{J}{j}}{\widetilde{i}}{\sigma}{K}{\widetilde{T}} \text{ if } j \in \widetilde{i}\\
+        \servt{I}{\widetilde{i}}{\sigma}{K}{\widetilde{T}}\substi{J}{j} &= \servt{I\substi{J}{j}}{\widetilde{i}}{\sigma}{K\substi{J}{j}}{\widetilde{T}\substi{J}{j}} \text{ if } j \not\in \widetilde{i}
+    \end{align*}
+\end{definition}
+
+
+Subtyping for base types and types is the least reflexive relation $\sqsubseteq$ that satisfies the subtyping rules in Table \ref{tab:subtypeSized}. As the type system should provide upper bounds on the parallel complexity of processes, it is safe to weaken the bounds on the sizes of natural types. That is, we may decrease the lower bound and increase the upper bound on the sizes of such terms. For server and channel types, we may relax use-capabilities and use the subtyping relation on parameter types as well as modify the complexity bounds on servers, depending on the use-capabilities. Servers and channels of input/output capability are invariant, those of input capability are covariant and those of output capability are contravariant. That is, if a server or channel that inputs a value of type $T$ is required, then we can safely use a server or channel that inputs a subtype of $T$, respectively. Conversely, when a server or channel of output capability is required, we can safely use a channel or server that outputs a supertype of the required parameter type \cite{PierceSangiorgi1996}. This becomes apparent when we assume types $\texttt{Integer}$ and $\texttt{Real}$ such that $\texttt{Integer} \sqsubseteq \texttt{Real}$, as any process that receives reals can also safely receive integers, and any process that output reals can also safely output integers. Unlike Baillot and Ghyselen \cite{BaillotGhyselen2021}, we do not discard associations from our type contexts, rather we discard use-capabilities from channels and servers. Thus, to ensure the type checker is sound, we introduce rules $\runa{BGS-cempty}$ and $\runa{BGS-sempty}$ such that channel and server types are super types of ones with no use-capabilities.
+
+%
+\begin{table*}[h!]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern0em\runa{BGS-nweak}\;\infrule{\varphi;\Phi\vDash I' \leq I\quad\quad \varphi;\Phi\vDash J \leq J'}{
+        \varphi;\Phi\vdash \texttt{Nat}[I,J] \sqsubseteq \texttt{Nat}[I',J']}
+        %
+        \kern3em\runa{BGS-cinvar}\;\infrule{\varphi;\Phi\vdash \widetilde{T}\sqsubseteq\widetilde{S}\quad\quad \varphi;\Phi\vdash \widetilde{S}\sqsubseteq\widetilde{T}}{\varphi;\Phi\vdash\texttt{ch}_I^{\{\texttt{in},\texttt{out}\}}(\widetilde{T}) \sqsubseteq \texttt{ch}_I^{\{\texttt{in},\texttt{out}\}}(\widetilde{S})}\kern7em\\[-1em]
+        %
+        \vspace{-0.5em}
+        &\kern-0em\runa{BGS-ccovar}\;\infrule{\{\texttt{in}\}\subseteq\sigma\quad\varphi;\Phi\vdash \widetilde{T}\sqsubseteq\widetilde{S}}{\varphi;\Phi\vdash \texttt{ch}_I^{\sigma}(\widetilde{T})\sqsubseteq\texttt{ch}_I^{\{\texttt{in}\}}(\widetilde{S})}\quad\quad\runa{BGS-ccontra}\;\infrule{\{\texttt{out}\}\subseteq\sigma\quad\varphi;\Phi\vdash \widetilde{S}\sqsubseteq\widetilde{T}}{\varphi;\Phi\vdash \texttt{ch}_I^{\sigma}(\widetilde{T})\sqsubseteq \texttt{ch}_I^{\{\texttt{out}\}}(\widetilde{S})}\\[-1em]
+        %
+        &\kern4em\runa{BGS-sinvar}\;\infrule{(\varphi,\widetilde{i});\Phi\vdash \widetilde{T}\sqsubseteq\widetilde{S}\quad\quad (\varphi,\widetilde{i});\Phi\vdash \widetilde{S}\sqsubseteq\widetilde{T}\quad\quad (\varphi,\widetilde{i});\Phi\vDash K = K'}{\varphi;\Phi\vdash
+        \forall_I\widetilde{i}.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_K(\widetilde{T})
+        \sqsubseteq \forall_I\widetilde{i}.\texttt{serv}^{\{\texttt{in},\texttt{out}\}}_{K'}(\widetilde{S})}\\[-1em]
+        %
+        \vspace{-0.5em}
+        &\kern5em\runa{BGS-scovar}\;\infrule{\{\texttt{in}\}\subseteq\sigma\quad(\varphi,\widetilde{i});\Phi\vdash \widetilde{T}\sqsubseteq\widetilde{S}\quad (\varphi,\widetilde{i});\Phi\vDash K' \leq K}{\varphi;\Phi\vdash \forall_I\widetilde{i}.\texttt{serv}^{\sigma}_K(\widetilde{T})\sqsubseteq\forall_I\widetilde{i}.\texttt{serv}^{\{\texttt{in}\}}_{K'}(\widetilde{S})}\\[-1em]
+        &\kern4.5em\runa{BGS-scontra}\;\infrule{\{\texttt{out}\}\subseteq\sigma\quad(\varphi,\widetilde{i});\Phi\vdash \widetilde{S}\sqsubseteq\widetilde{T}\quad (\varphi,\widetilde{i});\Phi\vDash K \leq K'}{\varphi;\Phi\vdash \forall_I\widetilde{i}.\texttt{serv}^{\sigma}_K(\widetilde{T})\sqsubseteq \forall_I\widetilde{i}.\texttt{serv}^{\{\texttt{out}\}}_{K'}(\widetilde{S})}\\[-1em]
+        %
+        &\kern0em\runa{BGS-cempty}\;\infrule{}{\varphi;\Phi\vdash \texttt{ch}^\sigma_I(\widetilde{S}) \sqsubseteq \texttt{ch}^\emptyset_I(\widetilde{T})}\quad\runa{BGS-sempty}\;\infrule{}{\varphi;\Phi\vdash \forall_I\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{S}) \sqsubseteq \forall_I\widetilde{i}.\texttt{serv}^\emptyset_{K'}(\widetilde{T})}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Rules for subtyping of base types and types.}
+    \label{tab:subtypeSized}
+  \end{table*}
+
+\subsection{Non-algorithmic type rules}
+
+We first consider the type rules for expressions, which are shown in Table \ref{tab:sizedtypedexpressiontypes}. The zero term $0$ intuitively receives the type $\texttt{Nat}[0,0]$ and a successor to a natural term has the same type as its predecessor, but with 1 added to its lower and upper bounds. Finally, a variable receives a type if it is bound in the type context.\\
+%Lists are typed similarly, aside from the addition of an element base type. For the element type of a list, we simply use the least lower bound and greatest upper bound on the size amongst the elements of the list.
+
+\begin{table*}[ht]
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern2em
+        \runa{BG-nzero}\;\infrule{}{\varphi;\Phi;\Gamma\vdash\withtype{0}{\typenat[0,0]}}\kern0em
+        \runa{BG-nsucc}\;\infrule{\varphi;\Phi;\Gamma \vdash \withtype{e}{\typenat[I, J]}}{\varphi;\Phi;\Gamma \vdash \withtype{\succc{e}}{\typenat[I + 1, J + 1]}}\\[-1em]
+        %
+        &\kern1em\runa{BG-sub}\;\infrule{\varphi;\Phi;\Delta\vdash e : S\quad\quad \varphi;\Phi\vdash \Gamma\sqsubseteq \Delta\quad\quad \varphi;\Phi\vdash S \sqsubseteq T}{\varphi;\Phi;\Gamma\vdash e : T}\kern11em\runa{BG-var}\;\infrule{}{\varphi;\Phi;\Gamma, \withtype{v}{T} \vdash \withtype{v}{T}}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Type rules for expressions.}
+    \label{tab:sizedtypedexpressiontypes}
+\end{table*}
+
+Before introducing the type rules for processes, we first introduce a function $\downarrow^{\varphi;\Phi}_I\!\!(T)$ in Definition \ref{def:delaysized} that \textit{advances} the time of type $T$ by $I$ units of time complexity. For a channel type $\texttt{ch}^\sigma_J(\widetilde{S})$, we subtract $I$ from $J$ whenever we can guarantee that $J\geq I$ under the constraints imposed on $\varphi$ by $\Phi$. Otherwise, the advancement of $I$ units of time complexity is undefined for type $\texttt{ch}^\sigma_J(\widetilde{S})$, to ensure bounds on communication are not violated. For a server type $\forall_J\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{S})$, corresponding outputs are well-typed for any timestep $I$ with $I\geq J$, and so a server simply loses input capability whenever we cannot guarantee that $J \geq I$. We extend advancement of time to contexts such that $\downarrow^{\varphi;\Phi}_I(\Gamma)(v)=\;\downarrow^{\varphi;\Phi}_I(\Gamma(v))$. When it is clear from context, we may omit $\varphi$ and $\Phi$.
+
+\begin{definition}[Advancement of Time]\label{def:delaysized}
+Let $\varphi$ be a set of index variables, $\Phi$ a set of constraints on indices, $T$ a type and $J$ an index. Then $T$ after $J$ units of time complexity, $\susume{T}{\varphi}{\Phi}{I}$, is given by the rules below
+\begin{align*}
+    \susume{\natinterval{I}{J}}{\varphi}{\Phi}{I} =&\; \natinterval{I}{J}\\
+    %
+    %\susume{\texttt{List}[J,K](\mathcal{B})}{\varphi}{\Phi}{I} =&\; \texttt{List}[J,K](\mathcal{B})\\
+    %
+    \susume{\texttt{ch}^\sigma_J(\widetilde{T})}{\varphi}{\Phi}{I} =&\; \left\{ \begin{matrix}
+        %\texttt{ch}^\emptyset_J(\widetilde{T}) & \text{if}\; \sigma = \emptyset\\
+        %
+        \texttt{ch}^\sigma_{J-I}(\widetilde{T}) & \text{if}\; \varphi;\Phi \vDash J \geq I\\
+        %
+        \texttt{ch}^\emptyset_{0}(\widetilde{T}) & \text{if}\; \varphi;\Phi \nvDash J \geq I
+    \end{matrix} \right.\\
+    %
+    %\texttt{ch}^\sigma_{J-I}(\widetilde{T}) & \text{if}\; \varphi;\Phi \vDash J \geq I\\
+    %
+    % \susume{\inchanneltypeS{J}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; 
+    %  \inchanneltypeS{J-I}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    % %
+    % \susume{\outchanneltypeS{J}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; 
+    %  \outchanneltypeS{J-I}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    %
+    \susume{\forall_J\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T})}{\varphi}{\Phi}{I} =&\; \left\{ \begin{matrix}
+        \forall_{J-I}\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T}) & \text{if}\; \varphi;\Phi \vDash J \geq I\\
+        %
+        \forall_{J-I}\widetilde{i}.\texttt{serv}^{\sigma \cap \{\texttt{out}\}}_K(\widetilde{T}) & \text{if}\; \varphi;\Phi \nvDash J \geq I
+    \end{matrix} \right.
+    %  \servS{J - I}{\widetilde{i}}{K}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    % %
+    % \susume{\servS{J}{\widetilde{i}}{K}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; \oservS{J - I}{\widetilde{i}}{K}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \not\geq I \\          
+    % %
+    % \susume{\iservS{J}{\widetilde{i}}{K}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; 
+    %  \iservS{J - I}{\widetilde{i}}{K}{\widetilde{T}} & \text{if}\; \varphi;\Phi \vDash J \geq I \\
+    % %
+    % \susume{\oservS{J}{\widetilde{i}}{K}{\widetilde{T}}}{\varphi}{\Phi}{I} =&\; \oservS{J - I}{\widetilde{i}}{K}{\widetilde{T}}
+\end{align*}
+\end{definition}
+
+\begin{definition}[Time invariance]\label{def:timeinvariance}
+Let $\Gamma$ be a type context. We say that $\Gamma$ is \textit{time invariant} if it only contains variables of either base types or server type with time $0$ and use-capabilities $\sigma$ such that $\sigma\subseteq\{\texttt{out}\}$, i.e. $\forall_0\widetilde{i}.\texttt{serv}^{\sigma}_K(\widetilde{T})$ for some index variables $\widetilde{i}$, types $\widetilde{T}$ and index $K$.
+\end{definition}
+
+We now present the type rules of the type system by Baillot and Ghyselen, adapted to fit our syntax. Type judgements are of the form $\varphi;\Phi;\Gamma \vdash P \triangleleft K$, which means that process $P$ has complexity $K$ given constraints $\Phi$ with index variables in $\varphi$ and given a type environment $\Gamma$. The type rules are defined in Table \ref{tab:bgprocesstypingrules}. Rule $\runa{BG-iserv}$ handles replicated inputs and ensures that name $a$ is bound to a server type with input capability in the type context. We must also make sure that in the continuation $P$, the type context must be time invariant as the replicated input may be invoked any number of times after $I$ units of time have elapsed. Thus, only free naturals and servers with no input capability are safe. Rule $\runa{BS-ich}$ is similar except we do not require the type context in the continuation to be time invariant as it is only used once. Rule $\runa{BG-oserv}$ types output servers and most notably uses polymorphism in the index variables $\widetilde{i}$. As such, when typing the expressions sent on the server, we must ensure that we can \textit{instantiate} the index variables of the server using a substitution. Finally, type rule $\runa{BG-match}$ shows how index constraints are introduced when typing processes by utilizing information gained from the two branches of the match expression.\\
+
+% Examples
+We now show how a server calculating the $n$th digit of the Fibonacci sequence can be typed. Before presenting the process for the implementation of Fibonacci's sequence, we first need to encode addition in the $\pi$-calculus, which we do using the \textit{add} server as follows.
+%
+\begin{align*}
+    P_\text{add}\defeq&\;\bang\inputch{\text{add}}{x,y,r}{}{
+        \texttt{match}\; x\; \{
+             0 \mapsto \asyncoutputch{r}{y}{};
+            \succc{z} \mapsto \asyncoutputch{\text{add}}{z,\succc{y},r}{}\}}
+    %
+\end{align*}
+
+The \textit{add} server needs three inputs $x$, $y$, and $r$. The parameters $x$ and $y$ represent two naturals to be added, and $r$ represents the channel intended for receiving the result. Note that no ticks are included in the server as we assume that addition can be done in constant time. The following process for calculating the $n$th number of the Fibonacci sequence is a naïve recursive implementation calculating $\textit{fib}(n)=\textit{fib}(n-1)+\textit{fib}(n-2)$. The server takes two parameters $n$ and $r$ where $n$ is the number of the Fibonacci sequence to calculate and $r$ represents the channel intended for receiving the result.
+%
+\newcommand{\funcf}[0]{l}
+\newcommand{\funcg}[0]{l}
+\newcommand{\funcgp}[0]{l-1}
+\newcommand{\funcgpp}[0]{l-2}
+\newcommand{\funcgppp}[0]{l-1}
+\begin{align*}
+    P_\text{fib}\defeq&\; \bang\inputch{\text{fib}}{n,r}{}{
+         \texttt{match}\; n\; \{ 0 \mapsto \asyncoutputch{r}{0}{}\!;\;
+              \succc{n_1} \mapsto\\ 
+              &\quad\texttt{match}\; n_1\; \{
+                    0 \mapsto \asyncoutputch{r}{\succc{0}}{}\!;\;
+                    \succc{n_2} \mapsto\\ &\quad\quad\newvar{r_1,r_2,r_3}{(\asyncoutputch{\text{fib}}{n_1,r_1}{}\mid\asyncoutputch{\text{fib}}{n_2,r_2}{}\\
+    &\quad\quad\mid\inputch{r_2}{m_2}{}{\inputch{r_1}{m_1}{}{\tick{\asyncoutputch{\text{add}}{m_1,m_2,r_3}{}}}\mid \inputch{r_3}{m_3}{}{\asyncoutputch{r}{m_3}{}}})}\}\}
+    }
+\end{align*}
+
+Finally we present a type context $\Gamma$ under which the two servers \textit{add} and \textit{fib} are well-typed. Note that even though we use a naïve implementation of the Fibonacci sequence, we can still get a linear bound as the program runs in parallel.
+%
+\begin{align*}
+    \Gamma \defeq&\; \text{add} : \servt{0}{i,j,k}{\{\texttt{in},\texttt{out}\}}{0}{\texttt{Nat}[0,i],\texttt{Nat}[j,k],\channeltypeS{0}{\texttt{Nat}[j,i+k]}},\\
+    &\;\text{fib} : \servt{0}{l}{\{\texttt{in},\texttt{out}\}}{\funcf}{\texttt{Nat}[0,l],\channeltypeS{\funcg}{\texttt{Nat}[0,\textit{fib}(l)]}}
+\end{align*}
+
+\begin{table*}
+    \begin{framed}\vspace{-1em}\begin{align*}
+        &\kern46em\\[-2em] % Stretch frame
+        &\kern0em\runa{BG-zero}\infrule{}{\varphi;\Phi;\Gamma \vdash \withcomplex{\nil}{0}}\!\!
+        \runa{BG-subtype}\;\infrule{\varphi;\Phi;\Delta \vdash \withcomplex{P}{K} \quad \varphi;\Phi \vdash \Gamma \sqsubseteq \Delta \quad \varphi; \Phi \vDash K \leq K'}{\varphi;\Phi;\Gamma \vdash \withcomplex{P}{K'}}
+        \\[-1em]
+        %
+        &\kern-0em\runa{BG-match}\;\infrule{\varphi;\Phi;\Gamma \vdash \withtype{e}{\natinterval{I}{J}} \quad \varphi;\Phi, I \leq 0;\Gamma \vdash \withcomplex{P}{K} \quad \varphi;\Phi, J \geq 1;\Gamma, \withtype{x}{\natinterval{I\monus 1}{J\monus 1}} \vdash \withcomplex{Q}{K}}{\varphi;\Phi;\Gamma \vdash \withcomplex{\match{e}{P}{x}{Q}}{K}}\\[-1em]
+        %
+        &\kern4em\runa{BG-par}\;\infrule{\varphi;\Phi;\Gamma\vdash P \triangleleft K\quad \varphi;\Phi;\Gamma\vdash Q \triangleleft K}{\varphi;\Phi;\Gamma\vdash \parcomp{P}{Q} \triangleleft K}\quad\quad\quad\quad\quad\quad \runa{BG-tick}\;\infrule{\varphi;\Phi;\susumesim{\Gamma}{1}\vdash P \triangleleft K}{\varphi;\Phi;\Gamma\vdash \tick P \triangleleft K + 1}\\[-1em]
+        %
+        &\kern-0em\runa{BG-iserv}\;\infrule{\texttt{in}\in\sigma\quad \varphi;\Phi\vdash\;\susumesim{\Gamma}{I},a:\forall_0\widetilde{i}.\texttt{serv}^\sigma_K(\widetilde{T}) \sqsubseteq \Gamma'\;\text{and}\; \Gamma'\;\text{time invariant}\quad \varphi,\widetilde{i};\Phi;\Gamma',\widetilde{v} : \widetilde{T}\vdash P \triangleleft K}{\varphi;\Phi;\Gamma,\Delta,a : \servt{I}{\widetilde{i}}{\sigma}{K}{\widetilde{T}}\vdash\; \bang\inputch{a}{\widetilde{v}}{}{P}\triangleleft I}\\[-1em]
+        %
+        &\kern-0em\runa{BG-ich}\;\infrule{\texttt{in}\in\sigma\quad \varphi;\Phi;\susumesim{\Gamma}{I},\widetilde{v} : \widetilde{T}, a : \chant{\sigma}{0}{\widetilde{T}}\vdash P \triangleleft K}{\varphi;\Phi;\Gamma, a : \chant{\sigma}{I}{\widetilde{T}}\vdash \inputch{a}{\widetilde{v}}{}{P}\triangleleft K + I}\kern8.5em \runa{BG-och}\;\infrule{\texttt{out}\in\sigma\quad \varphi;\Phi;\susumesim{\Gamma}{I}\vdash \widetilde{e} : \widetilde{T}}{\varphi;\Phi;\Gamma,a:\chant{\sigma}{I}{\widetilde{T}}\vdash \asyncoutputch{a}{\widetilde{e}}{} \triangleleft I}\\[-1em]
+        %
+        &\kern2em\runa{BG-oserv}\;\infrule{\texttt{out}\in\sigma\quad \varphi;\Phi;\susumesim{\Gamma}{I}\vdash \widetilde{e} : \widetilde{T}\substi{\widetilde{J}}{\widetilde{i}}}{\varphi;\Phi;\Gamma, a : \servt{I}{\widetilde{i}}{\sigma}{K}{\widetilde{T}}\vdash \asyncoutputch{a}{\widetilde{e}}{} \triangleleft K\!\substi{\widetilde{J}}{\widetilde{i}} + I}\kern12em \runa{BG-nu}\;\infrule{\varphi;\Phi;\Gamma,\withtype{a}{T} \vdash \withcomplex{P}{K}}{\varphi;\Phi;\Gamma \vdash \newvar{a}{\withcomplex{P}{K}}}
+    \end{align*}\vspace{-1em}\end{framed}
+    \smallskip
+    \caption{Sized typing rules for parallel complexity of processes.}
+    \label{tab:bgprocesstypingrules}
+  \end{table*}
+
+  
+\subsection{Soundness}
+
+Baillot and Ghyselen \cite{BaillotGhyselen2021} prove the soundness of their type system with respect to parallel complexity, using a subject reduction property and a safety property. The subject reduction property states that the reduction relation $\Longrightarrow$ is type-preserving, and is proved by induction on the rules defining $\Longrightarrow$. The safety property states that the index assigned to a well-typed process is an upper bound on the parallel complexity of the process, which follows from subject reduction and the definition of local complexity.
+
+\begin{theorem}[Subject reduction]
+If $\varphi;\Phi;\Gamma\vdash P \triangleleft K$ and $P \Rightarrow Q$ then $\varphi;\Phi;\Gamma\vdash Q \triangleleft K$.
+\begin{proof}
+By induction on the reduction rules defining $\Longrightarrow$ \cite{BaillotGhyselen2021}.
+\end{proof}
+\end{theorem}
+%
+
+%
+\begin{theorem}[Parallel complexity]
+Let $P$ be an annotated process and $m$ be its parallel complexity. Then, for a typing $\varphi;\Phi;\Gamma\vdash P \triangleleft K$ we have that $\varphi;\Phi\vDash K \geq m$.
+\begin{proof}
+Follows from subject reduction and the definition of local complexity \cite{BaillotGhyselen2021}. 
+\end{proof}
+\end{theorem}
+  
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../esop2023"
+%%% End:
