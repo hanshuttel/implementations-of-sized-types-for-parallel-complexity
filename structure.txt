@@ -1,4 +1,4 @@
-1. Introduction
+1. Introduction [must be written from scratch!]
 
 - type inference and its main challenges
    (and why is it interesting?)
@@ -29,8 +29,19 @@
    - short description of the implementation
    - how it was evaluated (benchmark as a set of processes to be analysed)
 
-6. Related work (other than what was mentioned in Section 1)
+6. Related work (other than what was mentioned in Section 1) [some of
+this can be gleaned from the intro of the MSc thesis]
 
 7. Conclusion
 
    - comparisons with results of related work
+
+
+--
+
+Plan of immediate work (by Friday 23 September)
+
+Section 1: Naoki and Hans
+Sections 2 and 3: Mikkel and Thomas
+
+Later: Section 4 (needs new type rules for input servers)
