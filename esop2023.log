@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.5.29)  3 SEP 2022 10:19
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.5.29)  8 SEP 2022 15:51
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -3323,22 +3323,22 @@ Underfull \hbox (badness 10000) in paragraph at lines 19--20
  []
 
 [66]
-Underfull \hbox (badness 10000) in paragraph at lines 35--36
+Underfull \hbox (badness 10000) in paragraph at lines 36--37
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 37--38
+Underfull \hbox (badness 10000) in paragraph at lines 38--39
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 39--40
+Underfull \hbox (badness 10000) in paragraph at lines 40--41
 
  []
 
 
-LaTeX Warning: Citation ` Kobayashi2005' on page 67 undefined on input line 43.
+LaTeX Warning: Citation ` Kobayashi2005' on page 67 undefined on input line 44.
 
 
 [67]) (./esop2023.bbl [68]) [69] (./esop2023.aux)
@@ -3353,12 +3353,15 @@ LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 LaTeX Warning: There were undefined references.
 
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
  ) 
 Here is how much of TeX's memory you used:
- 39306 strings out of 492649
- 889720 string characters out of 6129622
+ 39308 strings out of 492649
+ 889769 string characters out of 6129622
  1066829 words of memory out of 5000000
- 42310 multiletter control sequences out of 15000+600000
+ 42311 multiletter control sequences out of 15000+600000
  551254 words of font info for 108 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  64i,24n,96p,10377b,609s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -3396,10 +3399,10 @@ nts/type1/public/amsfonts/symbols/msam7.pfb></usr/local/texlive/2018/texmf-dist
 /fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2018/texmf-
 dist/fonts/type1/public/stmaryrd/stmary10.pfb></usr/local/texlive/2018/texmf-di
 st/fonts/type1/public/stmaryrd/stmary6.pfb>
-Output written on esop2023.pdf (69 pages, 641520 bytes).
+Output written on esop2023.pdf (69 pages, 641773 bytes).
 PDF statistics:
- 951 PDF objects out of 1000 (max. 8388607)
- 754 compressed objects within 8 object streams
- 245 named destinations out of 1000 (max. 500000)
+ 952 PDF objects out of 1000 (max. 8388607)
+ 755 compressed objects within 8 object streams
+ 246 named destinations out of 1000 (max. 500000)
  21 words of extra memory for PDF output out of 10000 (max. 10000000)
 

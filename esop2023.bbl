@@ -79,6 +79,11 @@ John Hughes, Lars Pareto, and Amr Sabry.
   Principles of Programming Languages}, POPL '96, page 410–423, New York, NY,
   USA, 1996. Association for Computing Machinery.
 
+\bibitem{IgarashiKobayashi2000}
+Atsushi Igarashi and Naoki Kobayashi.
+\newblock Type reconstruction for linear $\pi$-calculus with i/o subtyping.
+\newblock {\em Information and Computation}, 161(1):1--44, 2000.
+
 \bibitem{Karp1972}
 Richard~M. Karp.
 \newblock {\em Reducibility among Combinatorial Problems}, pages 85--103.

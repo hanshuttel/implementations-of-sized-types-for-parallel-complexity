@@ -1,48 +1,52 @@
 This is BibTeX, Version 0.99d (TeX Live 2018)
 Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
 The top-level auxiliary file: esop2023.aux
+White space in argument---line 219 of file esop2023.aux
+ : \citation{KobayashiEtAl2000,
+ :                              Kobayashi2005}
+I'm skipping whatever remains of this command
 The style file: plain.bst
 Database file #1: bibliography/esop2023-sources.bib
 Warning--can't use both author and editor fields in Karp1972
-You've used 24 entries,
+You've used 25 entries,
             2118 wiz_defined-function locations,
-            694 strings with 8795 characters,
-and the built_in function-call counts, 8808 in all, are:
-= -- 915
-> -- 308
+            701 strings with 8971 characters,
+and the built_in function-call counts, 9104 in all, are:
+= -- 944
+> -- 321
 < -- 10
-+ -- 123
-- -- 94
-* -- 577
-:= -- 1376
-add.period$ -- 82
-call.type$ -- 24
-change.case$ -- 114
++ -- 128
+- -- 98
+* -- 599
+:= -- 1427
+add.period$ -- 85
+call.type$ -- 25
+change.case$ -- 119
 chr.to.int$ -- 0
-cite$ -- 25
-duplicate$ -- 392
-empty$ -- 721
-format.name$ -- 94
-if$ -- 1949
+cite$ -- 26
+duplicate$ -- 403
+empty$ -- 745
+format.name$ -- 98
+if$ -- 2011
 int.to.chr$ -- 0
-int.to.str$ -- 24
-missing$ -- 24
-newline$ -- 125
-num.names$ -- 58
-pop$ -- 109
+int.to.str$ -- 25
+missing$ -- 25
+newline$ -- 130
+num.names$ -- 60
+pop$ -- 112
 preamble$ -- 1
-purify$ -- 91
+purify$ -- 95
 quote$ -- 0
-skip$ -- 319
+skip$ -- 327
 stack$ -- 0
-substring$ -- 613
-swap$ -- 136
+substring$ -- 630
+swap$ -- 137
 text.length$ -- 10
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 94
+type$ -- 98
 warning$ -- 1
-while$ -- 85
-width$ -- 26
-write$ -- 288
-(There was 1 warning)
+while$ -- 88
+width$ -- 27
+write$ -- 299
+(There was 1 error message)

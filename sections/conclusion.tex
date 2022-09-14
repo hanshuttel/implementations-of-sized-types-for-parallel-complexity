@@ -32,6 +32,7 @@ We also notice the importance of antecedents in constraint judgements. When all 
 %   Consequences of our over-approximations:  0 <= I means all coefficients in I are non-negative!
 
 \subsection{Future work}
+
 We have introduced algorithmic type rules for the type system by Baillot and Ghyselen \cite{BaillotGhyselen2021}, enabling us to implement a type checker that given some type environment and process, can verify if process is well-typed under the environment, and thereby provide us a bound on the parallel complexity. As such, a natural next step is to implement the type checker in for instance Haskell.\\
 
 We have primarily limited ourselves to linear indices, and thereby linear complexity bounds, as the corresponding constraint judgements are then simpler to verify or satisfy. It may be worthwhile to explore how this restriction may be relaxed. Hofmann and Hoffmann \cite{HofmannAndHoffmann2010} and Hoffmann et al. \cite{HoffmannEtAl2012}, show how linear constraints can be derived from polynomial bounds, by representing polynomials as sums of binomial coefficients. However, this is in the setting of first-order functional programs, and so it may be interesting to see if this method can be applied to message-passing processes.\\

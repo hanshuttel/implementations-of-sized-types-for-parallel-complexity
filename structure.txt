@@ -1,0 +1,36 @@
+1. Introduction
+
+- type inference and its main challenges
+   (and why is it interesting?)
+   - index polymorphism (why is it challenging? how did we solve
+   this problem?)
+   - related work
+   - differences from existing work (esp. Hoffmann)
+- limitations
+   (undecidability of inference for partially annotated terms)
+- this has even been implemented (how good is it? how did we evaluate
+   the implementation?)
+
+2. Pi-calculus (in our setting)   [can be gleaned from MSc thesis]
+
+3. Our version of the B&G type system [can be gleaned from MSc thesis]
+   - this is a simplified version
+   - soundness results for the type system
+
+4. Type inference [can the rules be simplified?]
+
+   - the inference strategy
+   - examples of using inference
+   - discussion of the complexity (due to constraint solving)
+   - undecidability for partially annotated terms
+
+5. An implementation
+
+   - short description of the implementation
+   - how it was evaluated (benchmark as a set of processes to be analysed)
+
+6. Related work (other than what was mentioned in Section 1)
+
+7. Conclusion
+
+   - comparisons with results of related work
