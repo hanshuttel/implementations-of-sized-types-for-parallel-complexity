@@ -1,0 +1,25 @@
+1. The implementation
+2. The plan for further work
+
+
+1. The problem with the implementation appears to be one related to division by zero (which is allowed by Z3!). Integer division appears in quantifier elimination.
+
+2. We should finish the sections that are still not entirely complete. This means section 4 and the evaluation of the implementation. Only then should we trim the paper down to size. The full paper (which should be 25 to 30 pages) can become a technical report version that we can refer to in the short version.
+
+As for the implementation, Mikkel and Thomas will update the implementation using Naoki's suggestion that division can be expressed as a double inequality:
+
+z = x div y    iff  y * z <= x < (z+1) y
+
+As for Section 4, we should find out which processes we should use for benchmarking. We choose an example from the paper by Baillot and Ghyselen – and one that has linear time complexity. An example could be the toyfib process from their journal paper.
+
+Mikkel and Thomas will encode the toyfib process.
+
+When we meet again, we will discuss this example.
+
+Hans will work on the section/subsection on related work.
+
+We meet again on 19 November at 10:00 CET. We will discuss
+
+- the toyfib example: Does it work for us? 
+- the related work section
+- how far are we from a 25-30 page full paper?
