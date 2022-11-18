@@ -1,0 +1,40 @@
+LiPiCS: 15 pages plus references plus appendix
+
+Guiding example: https://drops.dagstuhl.de/opus/volltexte/2022/16293/pdf/LIPIcs-FSCD-2022-12.pdf
+
+
+-- Structure of paper:
+
+Introduction (2 pages)
+
+	- examples of what BGs type system lead to (typings)
+	- some related work
+
+Pi-calculus (syntax and semantics) (< 3 pages)
+
+Type system (3 pages) 
+
+	- only essential rules
+
+Inference of sized types for parallel complexity (5 pages)
+
+	- return to example
+	- implementation with example presented
+
+Conclusion (< 1 page)
+
+Appendix:
+	
+	- what can we use it for? (check FSCD guidelines)
+
+---
+
+Use "definition by example" as a principle when necessary (due to the page limit)
+
+	- Candidate: Certain simplifications of constraints
+	- Short explanation of how constraint judgements are verified
+
+--
+
+Full paper available on WWW
+

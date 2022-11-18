@@ -1,0 +1,31 @@
+\section{Related work}\label{sec:relatedwork}
+
+Hughes et al. \cite{HughesEtAl1996} introduce the concept of sized types in the domain of reactive systems to prove the absence of deadlocks and non-termination in embedded programs. This notion statically bounds the maximum size that variables may take during run-time using linear functions over size variables, which they refer to as \textit{size indices}. Later work on sized types includes that of Hofmann and Jost \cite{HofmannAndJost2003} who use them for analyzing the space complexity of sequential programs and implement a type inference algorithm for an analysis that restricts its attention to linear bounds and is therefore able to apply linear programming.
+
+Hoffmann and Hofmann \cite{HofmannAndHoffmann2010} introduce a type system that utilizes a potential-based amortized analysis to infer resource bounds on sequential programs. This system is able to analyze certain polynomial bounds by deriving linear constraints on the coefficients of the polynomials and is able to infer sums of univariate polynomials. Hoffmann et al. \cite{HoffmannEtAl2012} show how this can be extended to multivariate polynomials.
+
+% Dal Lago and Gaboardi \cite{DalLagoGaboardi2011} present a family of type systems using sized types and indices. They rely on an underlying logic of indices, that has partly unspecified function symbols. However, they require that the function symbols of indices include the addition and monus operators. This is not unlike the type systems by both Baillot and Ghyselen \cite{BaillotGhyselen2021} as well as Baillot et al. \cite{BaillotEtAl2021}. Dal Lago and Gaboardi prove soundness of the family of type systems as well as \textit{relative completeness}. They only prove relative completeness as the actual completeness of any type system in the family depends on the completeness of the underlying logic of indices of that type system. As such, they also provide no implementation of type checking nor type inference. Instead, they discuss the undecidability of type checking in the general sense, which is the case due to semantic assumptions of indices as well as subtyping judgements.
+
+For complexity analyses of parallel programs,  Hoffmann and Shao \cite{HoffmannShao2015}, introduce a type system for deriving complexity bounds on parallel first-order functional programs wrt. the notions of work and span. Again, the type inference problem is reduced to that of linear programming. A limitation is that no communication is allowed between subprograms.
+
+In the setting of $\pi$-calculus, Das et al. \cite{DasEtAl2018} describe a type system for parallel complexity of the $\pi$-calculus using binary session types extended with temporal modalities. The system does not use sized types, and only constant time complexity bounds can be expressed.
+
+In the work by Baillot et al. another approach to behavioural types is used, namely that of \textit{usages} which has its roots in work by Kobayashi \cite{Kobayashi1998}, where usages are used to partially ensure deadlock-freedom. Usages describe the behavior of channels by indicating how they are used for input and output in parallel and sequentially. 
+
+The type systems based on sized types differ in their choice of
+underlying logic for indices, and the algorithmic properties of the
+logic therefore affects the properties of the type system. Some
+systems specify a specific logic (e.g.
+\cite{HughesEtAl1996,HofmannAndJost2003,HofmannAndHoffmann2010,HoffmannEtAl2012}),
+others do not (e.g.
+\cite{BaillotGhyselen2021,BaillotEtAl2021,DalLagoGaboardi2011}). For
+the latter, completeness is relative to the choice of logic.
+%
+% One such possible choice of logic is that of Presburger arithmetic \cite{PresburgerArithmetic}. Presburger arithmetic has the advantage that it is consistent, complete, and decidable, and so it is always possible to decide if a given statement can be derived from its axioms or not. However, to obtain such properties, Presburger arithmetic only allows very specific operations consisting of addition and equality. As such, it is not possible to express neither subtraction nor multiplication, which is very restrictive in the domain of complexity analysis. Additionally, the worst-case complexity of the decision problem of Presburger arithmetic is at least doubly exponential, making it impractical to use for a real implementation of a type checker.
+
+The rest of our paper is structured as follows: In Section \ref{ch:picalc}, we present the variant of the $\pi$-calculus and the notion of parallel complexity used in the type systems by Baillot and Ghyselen \cite{BaillotGhyselen2021} and Baillot et al. \cite{BaillotEtAl2021}. In Section \ref{ch:bgts}, we discuss sized types and provide an overview of the type system by Baillot and Ghyselen, aiming to establish familiarity with these topics. In Section \ref{ch:typecheck}, we define a type checker for this type system, first presenting algorithmic type rules and then showing how premises can be verified using integer programming. We prove that our algorithmic type rules are sound with respect to parallel complexity. In Section \ref{ch:timeinference}, we define a type inference algorithm for the type system, automating parallel complexity analysis of message-passing processes. We also provide a Haskell implementation of our algorithm. Finally, we conclude and discuss future work in Section \ref{ch:conclusion}.
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../esop2023"
+%%% End:
